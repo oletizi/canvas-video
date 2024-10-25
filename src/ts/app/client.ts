@@ -1,22 +1,44 @@
 import p5 from 'p5'
+import {MotionText} from "./glib"
 
+const FRAME_RATE = 24
+const textEaseFn = (t) => t + (1 - t) * 0.01;
 
+const textStart = {x: window.innerWidth, y: 300};
+const textEnd = {x: 0, y: 300};
+let textLaunchTime = 0
+const textLaunchInterval = 200
+const words = []
+const lyrics = "All those trees along the bank reached into the earth and drank, watched our raft float slowly by"
+    + " underneath an angry sky."
+    + " All we'd ever known was gone, we were barely holding on"
+    + " victims both of shipwrecks underneath an angry sky... underneath an angry sky"
 
-let sketch = function(p) {
-    let x = 100;
-    let y = 100;
+for (const word of lyrics.split(' ')) {
+    words.push(new MotionText(word, textStart, textEnd, textEaseFn, textEaseFn, textLaunchTime))
+    textLaunchTime += textLaunchInterval * word.length
+}
 
-    p.setup = function() {
+let sketch = function (p) {
+    let time = 0
+    p.setup = function () {
         p.createCanvas(window.innerWidth, window.innerHeight);
-    };
+        p.textSize(16)
+        p.frameRate(FRAME_RATE)
+    }
 
-    p.draw = function() {
-        p.background(0);
+    p.draw = function () {
+        time += 1 / FRAME_RATE * 1000
+        p.background(127);
         p.fill(255);
-        p.rect(x, y, 50, 50);
-    };
-};
+
+        p.textSize(48)
+        for (const word of words) {
+            word.setTime(time)
+            word.draw(p)
+        }
+    }
+}
 
 const p = new p5(sketch)
-
 
