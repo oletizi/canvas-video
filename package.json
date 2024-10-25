@@ -1,0 +1,28 @@
+{
+  "name": "p5-env",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "watch:build": "nodemon --watch 'src/*' -e scss,html,ts -x \"npm run build\"",
+    "watch:main": "nodemon --watch 'src/*' -e ts -x \"npm run main\"",
+    "sass-build": "npx sass src/scss/styles.scss build/site/styles.css",
+    "bundler-build": "npx esbuild src/ts/app/client.ts --bundle --outfile=build/site/client.js",
+    "build": "tsx build.ts && npm run sass-build && npm run bundler-build",
+    "main": "npm run build && tsx src/ts/app/server.ts",
+    "test": "TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\"}' c8 mocha 'test/**/*.test.{js,ts,tsx}'"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "bootstrap": "^5.3.3",
+    "express": "^4.21.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "sass": "^1.80.4",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.3"
+  }
+}
