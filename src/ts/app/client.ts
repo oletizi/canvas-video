@@ -1,8 +1,8 @@
 import p5 from 'p5'
 import {MotionText} from "./glib"
 
-const FRAME_RATE = 24
-const textEaseFn = (t) => t + (1 - t) * 0.01;
+const FRAME_RATE = 60
+const textEaseFn = (t) => t + (1 - t) * 0.0047;
 
 const textStart = {x: window.innerWidth, y: 300};
 const textEnd = {x: 0, y: 300};
