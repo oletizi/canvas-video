@@ -16,6 +16,10 @@ app.get('/client.js', async (req, res) => {
     res.sendFile(path.join(process.cwd(), 'build', 'site', 'client.js'))
 })
 
+app.get('/lyrics/waves.txt', async (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'build', 'site', 'lyrics', 'waves.txt'))
+})
+
 app.listen(port, () => {
     console.log(`Converter app listening on port ${port}`)
 })
