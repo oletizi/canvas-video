@@ -14,12 +14,16 @@ const textEnd = {x: 0, y: lowerThird};
 let textLaunchTime = 0
 const textLaunchInterval = 100
 const timeTexts = []
-
 doIt().then(() => {
     console.log('Done.')
+
 })
 
+
+
 async function doIt() {
+
+    let audiator
 
     const res = await fetch('/lyrics/waves.txt')
     const lyrics = await res.text()
@@ -27,7 +31,6 @@ async function doIt() {
     const parsed = parseLyrics(lyrics)
     const tt0 = parsed[0]
     const t0 = timecode2Millis(SOURCE_FRAME_RATE, parsed[0].time)
-
     for (const line of parsed) {
         textLaunchTime = timecode2Millis(SOURCE_FRAME_RATE, line.time)// - t0
         const words = line.text.split(' ')
@@ -71,15 +74,20 @@ async function doIt() {
 
 
             p.mousePressed = function () {
+                if (audiator == undefined) {
+                    audiator = new Audiator(new AudioContext())
+                }
                 // When the canvas is clicked, check to see if the videos are
                 // paused or playing. If they are playing, pause the videos.
                 if (playing) {
                     console.log(`Pausing!`)
-                    video.pause();
+                    video.pause()
+                    audiator.pause()
                 } else {
                     // If they are paused, play the videos.
                     console.log(`Playing!`)
-                    video.loop();
+                    video.loop()
+                    audiator.play()
                 }
 
                 // Change the playing value to the opposite boolean.
