@@ -4,7 +4,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "watch:build": "nodemon --watch 'src/*' -e scss,html,ts -x \"npm run build\"",
+    "watch:build": "nodemon --watch 'src/*' -e scss,html,ts,txt -x \"npm run build\"",
     "watch:main": "nodemon --watch 'src/*' -e ts -x \"npm run main\"",
     "sass-build": "npx sass src/scss/styles.scss build/site/styles.css",
     "bundler-build": "npx esbuild src/ts/app/client.ts --bundle --outfile=build/site/client.js",
