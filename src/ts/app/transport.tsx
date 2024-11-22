@@ -12,7 +12,7 @@ export interface Transport {
     getPosition(): number
 }
 
-export function newTransport() {
+export function newTransport() : Transport {
     return new BasicTransport()
 }
 
