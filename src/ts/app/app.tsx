@@ -5,13 +5,14 @@ import {Provider} from "@/components/chakra/provider"
 import p5 from "p5";
 import {Button} from "@/components/chakra/button";
 import {newTransport} from "@/app/transport";
-import {MdOutlinePlayArrow, MdOutlineSkipPrevious, MdOutlineStop, MdPlayArrow} from "react-icons/md"
+import {MdOutlinePlayArrow, MdOutlineSkipPrevious, MdOutlineStop} from "react-icons/md"
 import {newBasicSketch} from "@/sketches/sketch-common";
 const r = document.getElementById('app')
 
 const transport = newTransport()
 
 new p5(newBasicSketch(transport));
+
 
 if (r) {
     const root = createRoot(r)
