@@ -1,7 +1,11 @@
+import {AudioContext, OscillatorNode} from 'standardized-audio-context'
+
+
 export class Audiator {
     private audioContext: AudioContext;
     private osc: OscillatorNode;
-    constructor(audioContext:AudioContext) {
+
+    constructor(audioContext: AudioContext) {
         this.audioContext = audioContext
         this.osc = audioContext.createOscillator()
         this.osc.type = 'sine'
@@ -17,3 +21,4 @@ export class Audiator {
         this.osc.stop(this.audioContext.currentTime)
     }
 }
+
