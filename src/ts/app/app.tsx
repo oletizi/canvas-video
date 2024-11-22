@@ -5,7 +5,7 @@ import {Provider} from "@/components/chakra/provider"
 import p5 from "p5";
 import {Button} from "@/components/chakra/button";
 import {newTransport} from "@/app/transport";
-
+import {MdOutlinePlayArrow, MdOutlineSkipPrevious, MdOutlineStop, MdPlayArrow} from "react-icons/md"
 const r = document.getElementById('app')
 
 const transport = newTransport()
@@ -37,9 +37,9 @@ if (r) {
             <Container>
                 <h1>Hello.</h1>
                 <Group attached>
-                    <Button onClick={() => transport.reset()}>Rew</Button>
-                    <Button onClick={() => transport.start()}>Start</Button>
-                    <Button onClick={() => transport.stop()}>Stop</Button>
+                    <Button onClick={() => transport.reset()}><MdOutlineSkipPrevious/></Button>
+                    <Button onClick={() => transport.start()}><MdOutlinePlayArrow/></Button>
+                    <Button onClick={() => transport.stop()}><MdOutlineStop/></Button>
                 </Group>
             </Container>
         </Provider>
