@@ -6,12 +6,30 @@ import p5 from "p5";
 import {Button} from "@/components/chakra/button";
 import {newTransport} from "@/app/transport";
 import {MdOutlinePlayArrow, MdOutlineSkipPrevious, MdOutlineStop} from "react-icons/md"
-import {newBasicSketch} from "@/sketches/sketch-common";
+import {newBasicSketch, Options} from "@/sketches/sketch-common";
 const r = document.getElementById('app')
 
 const transport = newTransport()
-
-new p5(newBasicSketch(transport));
+const height = 10
+const opts: Options = {
+        height: height,
+        width: window.innerWidth,
+    background: {
+            red: 100,
+        green: 100,
+        blue:100,
+        alpha: 255
+    },
+        domain: {min: 0, max: window.innerWidth},
+        range: {min: height / 2 - height / 6, max: height / 2 + height / 6},
+        color: {
+            red: {min: 255, max: 255},
+            green: {min: 0, max: 255},
+            blue: {min: 0, max: 255},
+            alpha: {min: 255, max: 255}
+        }
+    };
+new p5(newBasicSketch(transport, opts))
 
 
 if (r) {

@@ -17,11 +17,20 @@ interface ColorRange {
     alpha: Range
 }
 
-interface Options {
+interface Color {
+    red: number
+    green: number
+    blue: number
+    alpha: number
+}
+
+export interface Options {
+    height: number
+    width: number
+    background: Color
     domain: Range
     range: Range
     color: ColorRange
-
 }
 
 function noiseBand(img: p5.Image, opts: Options) {
@@ -37,7 +46,9 @@ function noiseBand(img: p5.Image, opts: Options) {
                     rand(opts.color.alpha.min, opts.color.alpha.max)
                 ])
                 // const pixel: number[] = img.pixels[x][y]
-             }
+             } else {
+                img.set(x,y, [opts.background.red, opts.background.green, opts.background.blue, opts.background.alpha])
+            }
             // else {
             //     img.set(x, y, 100)
             // }
@@ -47,7 +58,7 @@ function noiseBand(img: p5.Image, opts: Options) {
     img.updatePixels()
 }
 
-export function newBasicSketch(transport: Transport) {
+export function newBasicSketch(transport: Transport, opts:Options) {
 
     return (p: p5) => {
         let canvas
@@ -61,23 +72,18 @@ export function newBasicSketch(transport: Transport) {
             canvas.parent('app-canvas')
 
             p.background(127);
-            const height = 20
-            img = p.createImage(window.innerWidth, height)
+            img = p.createImage(window.innerWidth, opts.height)
             // let fillRange = [1, 2]
-            let opts = {
-                domain: {min: 0, max: img.width},
-                range: {min: height / 2 - height / 6, max: height / 2 + height / 6},
-                color: {
-                    red: {min: 255, max: 255},
-                    green: {min: 0, max: 255},
-                    blue: {min: 0, max: 255},
-                    alpha: {min: 255, max: 255}
-                }
-            };
-            noiseBand(img, opts)
-            opts.range = {min: height / 2, max: height / 2 +1}
-            opts.color.green.min = 200
-
+            // let opts = {
+            //     domain: {min: 0, max: img.width},
+            //     range: {min: height / 2 - height / 6, max: height / 2 + height / 6},
+            //     color: {
+            //         red: {min: 255, max: 255},
+            //         green: {min: 0, max: 255},
+            //         blue: {min: 0, max: 255},
+            //         alpha: {min: 255, max: 255}
+            //     }
+            // };
             noiseBand(img, opts)
         }
 
