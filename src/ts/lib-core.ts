@@ -3,3 +3,7 @@ export function scale(value: number | string, xmin: number | string, xmax: numbe
     const yrange = Number(ymax) - Number(ymin)
     return (Number(value) - Number(xmin)) * yrange / xrange + Number(ymin)
 }
+
+export function rand(min: number, max: number) {
+    return Math.floor(Math.max(min, Math.random() * max));
+}

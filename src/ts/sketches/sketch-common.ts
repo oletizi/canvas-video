@@ -1,10 +1,6 @@
-import {scale} from "@/lib-core"
+import {rand, scale} from "@/lib-core"
 import {Transport} from "@/app/transport"
 import p5 from "p5"
-
-function rand(min: number, max: number) {
-    return Math.floor(Math.max(min, Math.random() * max));
-}
 
 interface Range {
     min: number
@@ -63,7 +59,8 @@ export interface RandomBandOptions {
 
     // Opacity (alpha) [0-1]
     getOpacity(): number
-    setOpacity(o:number)
+
+    setOpacity(o: number)
 
     // dirty
     isDirty(): boolean
@@ -220,18 +217,19 @@ function noiseBand(p: p5, optset: RandomBandOptions[]) {
     return rv
 }
 
-export function newBasicSketch(transport: Transport, optset: RandomBandOptions[]) {
+export function newBasicSketch(transport: Transport, gap: number = 100, optset: RandomBandOptions[]) {
 
     return (p: p5) => {
-        let canvas
+        let height = 500
         let img
+        let canvas
         const opts = optset.length > 0 ? optset[0] : null
         p.preload = () => {
             // img = p.loadImage('/img/avatar.jpg')
         }
 
         p.setup = () => {
-            canvas = p.createCanvas(window.innerWidth, 500)
+            canvas = p.createCanvas(window.innerWidth, height)
             canvas.parent('app-canvas')
 
             p.background(127);
@@ -244,11 +242,17 @@ export function newBasicSketch(transport: Transport, optset: RandomBandOptions[]
             p.background(127)
             p.fill(255);
             p.rect(30 + transport.getPosition(), 20, 55, 55)
-            if (optset.filter(o => o.isDirty()).length > 0) {
+            let dirty = optset.filter(o => o.isDirty()).length > 0;
+            if (dirty) {
                 img = noiseBand(p, optset)
                 p.tint(255, scale(optset[0].getOpacity(), 0, 1, 0, 255))
             }
-            if (img) p.image(img, 0, 100)
+            // if (img) p.image(img, 0, 100)
+            if (gap > 0) {
+                for (let i = 0; i < height; i += gap) {
+                    p.image(img, 0, i)
+                }
+            }
             transport.tick()
         }
     }

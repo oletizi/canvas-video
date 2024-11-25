@@ -29,7 +29,8 @@ bg.a = 0
 core.setBackground(bg)
 
 const optset = [opts, core];
-new p5(newBasicSketch(transport, optset))
+let gap = 10
+new p5(newBasicSketch(transport, gap, optset))
 
 
 if (r) {
