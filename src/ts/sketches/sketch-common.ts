@@ -44,6 +44,7 @@ export interface RandomBandOptions {
     getBandRange(): Range
 
     getBandRatio(): number
+
     /**
      * @param r ratio of band height to total height. 0 - 1
      */
@@ -152,35 +153,47 @@ export function newRandomBandOptions(width, height) {
     return new BasicOptions(width, height)
 }
 
-function noiseBand(img: p5.Image, opts: RandomBandOptions) {
-    img.resize(opts.getWidth(), opts.getHeight())
-    img.loadPixels()
-    const range = opts.getBandRange()
-    for (let x = 0; x < img.width; x++) {
-        for (let y = 0; y < img.height; y++) {
-            if (y >= range.min && y < range.max) {
-                let c = opts.getColorRange();
-                img.set(x, y, [
-                    rand(c.r.min, c.r.max),
-                    rand(c.g.min, c.g.max),
-                    rand(c.b.min, c.b.max),
-                    rand(c.a.min, c.a.max)
-                ])
-            } else {
-                let bg = opts.getBackground();
-                img.set(x, y, [bg.r, bg.g, bg.b, bg.a])
+function noiseBand(p: p5, optset: RandomBandOptions[]) {
+    let rv
+    for (let i = 0; i < optset.length; i++) {
+        const opts = optset[i]
+        const img = p.createImage(opts.getWidth(), opts.getHeight())
+        const range = opts.getBandRange()
+        for (let x = 0; x < img.width; x++) {
+            for (let y = 0; y < img.height; y++) {
+                if (y >= range.min && y < range.max) {
+                    let c = opts.getColorRange();
+                    img.set(x, y, [
+                        rand(c.r.min, c.r.max),
+                        rand(c.g.min, c.g.max),
+                        rand(c.b.min, c.b.max),
+                        rand(c.a.min, c.a.max)
+                    ])
+                } else {
+                    const bg = opts.getBackground();
+                    if (bg) {
+                        img.set(x, y, [bg.r, bg.g, bg.b, bg.a])
+                    }
+                }
             }
         }
+        img.updatePixels()
+        opts.setClean()
+        if (! rv) {
+            rv = img
+        } else {
+            rv.copy(img, 0, 0, img.width, img.height, 0, 0, rv.width, rv.height)
+        }
     }
-    img.updatePixels()
-    opts.setClean()
+    return rv
 }
 
-export function newBasicSketch(transport: Transport, opts: RandomBandOptions) {
+export function newBasicSketch(transport: Transport, optset: RandomBandOptions[]) {
 
     return (p: p5) => {
         let canvas
         let img
+        const opts = optset.length > 0 ? optset[0] : null
         p.preload = () => {
             // img = p.loadImage('/img/avatar.jpg')
         }
@@ -190,20 +203,21 @@ export function newBasicSketch(transport: Transport, opts: RandomBandOptions) {
             canvas.parent('app-canvas')
 
             p.background(127);
-            img = p.createImage(window.innerWidth, opts.getHeight())
-            noiseBand(img, opts)
-            opts.setClean()
+            if (opts) {
+                // img = p.createImage(window.innerWidth, opts.getHeight())
+                img = noiseBand(p, optset)
+            }
         }
 
         p.draw = () => {
             p.background(127)
             p.fill(255);
             p.rect(30 + transport.getPosition(), 20, 55, 55)
-            if (opts.isDirty()) {
-                noiseBand(img, opts)
+            if (opts && opts.isDirty()) {
+                noiseBand(p, optset)
                 opts.setClean()
             }
-            p.image(img, 0, 100)
+            if (img) p.image(img, 0, 100)
             transport.tick()
         }
     }

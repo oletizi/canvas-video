@@ -14,8 +14,21 @@ const r = document.getElementById('app')
 const transport = newTransport()
 const height = 10
 
-let opts = newRandomBandOptions(window.innerWidth, 10);
-new p5(newBasicSketch(transport, opts))
+let opts = newRandomBandOptions(window.innerWidth, 10)
+let core = newRandomBandOptions(window.innerWidth, 10)
+core.setBandRatio(0.1)
+const c = core.getColorRange()
+c.r = {min: 255, max: 255}
+c.g = {min: 255, max: 255}
+c.b = {min: 0, max: 0}
+core.setColorRange(c)
+
+const bg = core.getBackground()
+bg.a = 0
+core.setBackground(bg)
+
+const optset = [opts, core];
+new p5(newBasicSketch(transport, optset))
 
 
 if (r) {
@@ -33,7 +46,7 @@ if (r) {
                             <Button onClick={() => transport.stop()}><MdOutlineStop/></Button>
                         </Group>
                             Height: <NumberInputRoot maxW={'5rem'} defaultValue={"" + opts.getHeight()}
-                                                     onValueChange={(e) => opts.setHeight(Number.parseInt(e.value))}>
+                                                     onValueChange={(e) => optset.forEach(o => o.setHeight(Number.parseInt(e.value)))}>
                             <NumberInputField/> </NumberInputRoot>
 
                             Ratio: <NumberInputRoot maxW={'5rem'}
