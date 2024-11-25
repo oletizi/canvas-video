@@ -48,19 +48,29 @@ if (r) {
                         </Group>
                         Height: <NumberInputRoot maxW={'5rem'} defaultValue={"" + opts.getHeight()}
                                                  onValueChange={(e) => optset.forEach(o => o.setHeight(Number.parseInt(e.value)))}>
-                        <NumberInputField/> </NumberInputRoot>
+                        <NumberInputField/></NumberInputRoot>
+                        Blur: <NumberInputRoot maxW={'5rem'} defaultValue={"" + opts.getBlur()}
+                                               min={0}
+                                               max={10}
+                                               step={1}
+                                               onValueChange={(e) => opts.setBlur(Number.parseInt(e.value))}>
+
+                        <NumberInputField/></NumberInputRoot>
 
                         Ratio: <NumberInputRoot maxW={'5rem'}
                                                 defaultValue={"" + opts.getBandRatio()}
-                                                step={0.1}
                                                 min={0}
                                                 max={1}
+                                                step={0.1}
                                                 onValueChange={e => opts.setBandRatio(Number.parseFloat(e.value))}>
                         <NumberInputField/></NumberInputRoot>
                         Core ratio: <NumberInputRoot maxW={'5rem'}
                                                      defaultValue={"" + core.getBandRatio()}
+                                                     min={0}
+                                                     max={1}
                                                      step={0.1}
-                                                     onValueChange={e => core.setBandRatio(Number.parseFloat(e.value))}><NumberInputField/></NumberInputRoot>
+                                                     onValueChange={e => core.setBandRatio(Number.parseFloat(e.value))}>
+                        <NumberInputField/></NumberInputRoot>
                     </Center>
                 </Flex>
             </Container>

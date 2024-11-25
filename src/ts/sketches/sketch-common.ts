@@ -55,6 +55,11 @@ export interface RandomBandOptions {
 
     setColorRange(c: ColorRange)
 
+    // Blur
+    getBlur(): number
+
+    setBlur(b: number)
+
     // dirty
     isDirty(): boolean
 
@@ -70,6 +75,7 @@ class BasicOptions implements RandomBandOptions {
     private colorRange: ColorRange;
     private dirty: boolean;
     private bandRatio: number;
+    private blur: number;
 
     constructor(width, height) {
         this.width = width
@@ -147,6 +153,15 @@ class BasicOptions implements RandomBandOptions {
     getBandRatio() {
         return this.bandRatio;
     }
+
+    getBlur(): number {
+        return this.blur;
+    }
+
+    setBlur(b: number) {
+        this.blur = b
+        this.dirty = true
+    }
 }
 
 export function newRandomBandOptions(width, height) {
@@ -154,7 +169,7 @@ export function newRandomBandOptions(width, height) {
 }
 
 function noiseBand(p: p5, optset: RandomBandOptions[]) {
-    let rv
+    let rv: p5.Image
     for (let i = 0; i < optset.length; i++) {
         const opts = optset[i]
         const img = p.createImage(opts.getWidth(), opts.getHeight())
@@ -179,12 +194,14 @@ function noiseBand(p: p5, optset: RandomBandOptions[]) {
         }
         img.updatePixels()
         opts.setClean()
-        if (! rv) {
+        if (!rv) {
             rv = img
         } else {
             rv.copy(img, 0, 0, img.width, img.height, 0, 0, rv.width, rv.height)
         }
     }
+    rv.filter('blur', optset[0].getBlur())
+
     return rv
 }
 
@@ -204,7 +221,6 @@ export function newBasicSketch(transport: Transport, optset: RandomBandOptions[]
 
             p.background(127);
             if (opts) {
-                // img = p.createImage(window.innerWidth, opts.getHeight())
                 img = noiseBand(p, optset)
             }
         }
@@ -213,7 +229,7 @@ export function newBasicSketch(transport: Transport, optset: RandomBandOptions[]
             p.background(127)
             p.fill(255);
             p.rect(30 + transport.getPosition(), 20, 55, 55)
-            if (optset.filter(o=>o.isDirty()).length > 0) {
+            if (optset.filter(o => o.isDirty()).length > 0) {
                 img = noiseBand(p, optset)
             }
             if (img) p.image(img, 0, 100)
