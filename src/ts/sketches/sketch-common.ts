@@ -43,6 +43,7 @@ export interface RandomBandOptions {
     // Band range
     getBandRange(): Range
 
+    getBandRatio(): number
     /**
      * @param r ratio of band height to total height. 0 - 1
      */
@@ -142,6 +143,9 @@ class BasicOptions implements RandomBandOptions {
         this.dirty = false
     }
 
+    getBandRatio() {
+        return this.bandRatio;
+    }
 }
 
 export function newRandomBandOptions(width, height) {
