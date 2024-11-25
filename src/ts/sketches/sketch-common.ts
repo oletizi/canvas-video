@@ -213,9 +213,8 @@ export function newBasicSketch(transport: Transport, optset: RandomBandOptions[]
             p.background(127)
             p.fill(255);
             p.rect(30 + transport.getPosition(), 20, 55, 55)
-            if (opts && opts.isDirty()) {
-                noiseBand(p, optset)
-                opts.setClean()
+            if (optset.filter(o=>o.isDirty()).length > 0) {
+                img = noiseBand(p, optset)
             }
             if (img) p.image(img, 0, 100)
             transport.tick()

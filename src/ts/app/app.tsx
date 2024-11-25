@@ -21,6 +21,7 @@ const c = core.getColorRange()
 c.r = {min: 255, max: 255}
 c.g = {min: 255, max: 255}
 c.b = {min: 0, max: 0}
+c.a = {min: 0, max: 255}
 core.setColorRange(c)
 
 const bg = core.getBackground()
@@ -45,18 +46,21 @@ if (r) {
                             <Button onClick={() => transport.start()}><MdOutlinePlayArrow/></Button>
                             <Button onClick={() => transport.stop()}><MdOutlineStop/></Button>
                         </Group>
-                            Height: <NumberInputRoot maxW={'5rem'} defaultValue={"" + opts.getHeight()}
-                                                     onValueChange={(e) => optset.forEach(o => o.setHeight(Number.parseInt(e.value)))}>
-                            <NumberInputField/> </NumberInputRoot>
+                        Height: <NumberInputRoot maxW={'5rem'} defaultValue={"" + opts.getHeight()}
+                                                 onValueChange={(e) => optset.forEach(o => o.setHeight(Number.parseInt(e.value)))}>
+                        <NumberInputField/> </NumberInputRoot>
 
-                            Ratio: <NumberInputRoot maxW={'5rem'}
-                                                    defaultValue={"" + opts.getBandRatio()}
-                                                    step={0.1}
-                                                    min={0}
-                                                    max={1}
-                                                    onValueChange={e => opts.setBandRatio(Number.parseFloat(e.value))}>
-                            <NumberInputField/></NumberInputRoot>
-
+                        Ratio: <NumberInputRoot maxW={'5rem'}
+                                                defaultValue={"" + opts.getBandRatio()}
+                                                step={0.1}
+                                                min={0}
+                                                max={1}
+                                                onValueChange={e => opts.setBandRatio(Number.parseFloat(e.value))}>
+                        <NumberInputField/></NumberInputRoot>
+                        Core ratio: <NumberInputRoot maxW={'5rem'}
+                                                     defaultValue={"" + core.getBandRatio()}
+                                                     step={0.1}
+                                                     onValueChange={e => core.setBandRatio(Number.parseFloat(e.value))}><NumberInputField/></NumberInputRoot>
                     </Center>
                 </Flex>
             </Container>
