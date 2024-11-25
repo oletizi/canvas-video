@@ -32,12 +32,10 @@ if (r) {
                             <Button onClick={() => transport.start()}><MdOutlinePlayArrow/></Button>
                             <Button onClick={() => transport.stop()}><MdOutlineStop/></Button>
                         </Group>
-                        <Group>
                             Height: <NumberInputRoot maxW={'5rem'} defaultValue={"" + opts.getHeight()}
                                                      onValueChange={(e) => opts.setHeight(Number.parseInt(e.value))}>
                             <NumberInputField/> </NumberInputRoot>
-                        </Group>
-                        <Group>
+
                             Ratio: <NumberInputRoot maxW={'5rem'}
                                                     defaultValue={"" + opts.getBandRatio()}
                                                     step={0.1}
@@ -45,7 +43,7 @@ if (r) {
                                                     max={1}
                                                     onValueChange={e => opts.setBandRatio(Number.parseFloat(e.value))}>
                             <NumberInputField/></NumberInputRoot>
-                        </Group>
+
                     </Center>
                 </Flex>
             </Container>
