@@ -24,7 +24,6 @@ if (r) {
         <Provider>
             <div id="app-canvas"></div>
             <Container>
-
                 <Flex>
                     <Center gap={3}>
 
@@ -37,6 +36,9 @@ if (r) {
                         Height: <NumberInputRoot defaultValue={"" + Math.round(opts.getHeight())}
                                                 onValueChange={(e) => {
                                                     opts.setHeight( Number.parseInt(e.value))
+                                                    const r = opts.getBandRange()
+                                                    console.log(`height: ${opts.getHeight()}`)
+                                                    console.log(`band range: ${r.max - r.min}`)
                                                 }}><NumberInputField/></NumberInputRoot>
                     </Center>
                 </Flex>

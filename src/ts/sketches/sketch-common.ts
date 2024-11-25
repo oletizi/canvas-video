@@ -79,7 +79,7 @@ class BasicOptions implements RandomBandOptions {
             b: {min: 0, max: 255},
             a: {min: 255, max: 255}
         }
-        this.bandRatio = 0.3
+        this.bandRatio = 0.2
         this.dirty = true
     }
 
@@ -89,9 +89,11 @@ class BasicOptions implements RandomBandOptions {
 
     getBandRange(): Range {
         const bandHeight = this.bandRatio * this.height
+        const half = Math.round(bandHeight / 2)
+        const middle = Math.round(this.height / 2)
         return {
-            min: Math.round(this.height / 2) - Math.round(bandHeight / 2),
-            max: Math.round(this.height / 2) + Math.round(bandHeight / 2)
+            min: middle - half,
+            max: middle + (half == 1 ? 0 : half)
         }
     }
 
@@ -149,10 +151,10 @@ export function newRandomBandOptions(width, height) {
 function noiseBand(img: p5.Image, opts: RandomBandOptions) {
     img.resize(opts.getWidth(), opts.getHeight())
     img.loadPixels()
+    const range = opts.getBandRange()
     for (let x = 0; x < img.width; x++) {
         for (let y = 0; y < img.height; y++) {
-            if (x >= opts.getBandRange().min && x <= opts.getBandRange().max
-                && y >= opts.getBandRange().min && y <= opts.getBandRange().max) {
+            if (y > range.min && y <= range.max) {
                 let c = opts.getColorRange();
                 img.set(x, y, [
                     rand(c.r.min, c.r.max),
