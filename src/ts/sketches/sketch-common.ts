@@ -1,4 +1,5 @@
-import {Transport} from "@/app/transport";
+import {scale} from "@/lib-core"
+import {Transport} from "@/app/transport"
 import p5 from "p5"
 
 function rand(min: number, max: number) {
@@ -60,6 +61,10 @@ export interface RandomBandOptions {
 
     setBlur(b: number)
 
+    // Opacity (alpha) [0-1]
+    getOpacity(): number
+    setOpacity(o:number)
+
     // dirty
     isDirty(): boolean
 
@@ -75,7 +80,8 @@ class BasicOptions implements RandomBandOptions {
     private colorRange: ColorRange;
     private dirty: boolean;
     private bandRatio: number;
-    private blur: number;
+    private blur: number = 0;
+    private opacity: number = 1;
 
     constructor(width, height) {
         this.width = width
@@ -162,6 +168,15 @@ class BasicOptions implements RandomBandOptions {
         this.blur = b
         this.dirty = true
     }
+
+    getOpacity(): number {
+        return this.opacity;
+    }
+
+    setOpacity(o: number) {
+        this.opacity = o
+        this.dirty = true
+    }
 }
 
 export function newRandomBandOptions(width, height) {
@@ -231,6 +246,7 @@ export function newBasicSketch(transport: Transport, optset: RandomBandOptions[]
             p.rect(30 + transport.getPosition(), 20, 55, 55)
             if (optset.filter(o => o.isDirty()).length > 0) {
                 img = noiseBand(p, optset)
+                p.tint(255, scale(optset[0].getOpacity(), 0, 1, 0, 255))
             }
             if (img) p.image(img, 0, 100)
             transport.tick()

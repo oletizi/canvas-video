@@ -49,11 +49,19 @@ if (r) {
                         Height: <NumberInputRoot maxW={'5rem'} defaultValue={"" + opts.getHeight()}
                                                  onValueChange={(e) => optset.forEach(o => o.setHeight(Number.parseInt(e.value)))}>
                         <NumberInputField/></NumberInputRoot>
+
                         Blur: <NumberInputRoot maxW={'5rem'} defaultValue={"" + opts.getBlur()}
                                                min={0}
                                                max={10}
                                                step={1}
                                                onValueChange={(e) => opts.setBlur(Number.parseInt(e.value))}>
+                        <NumberInputField/></NumberInputRoot>
+
+                        Opacity: <NumberInputRoot maxW={'5rem'} defaultValue={"" + opts.getOpacity()}
+                                                  min={0}
+                                                  max={1}
+                                                  step={.1}
+                                                  onValueChange={(e) => opts.setOpacity(Number.parseFloat(e.value))}>
 
                         <NumberInputField/></NumberInputRoot>
 
