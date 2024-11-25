@@ -11,54 +11,167 @@ interface Range {
 }
 
 interface ColorRange {
-    red: Range
-    green: Range
-    blue: Range
-    alpha: Range
+    r: Range
+    g: Range
+    b: Range
+    a: Range
 }
 
 interface Color {
-    red: number
-    green: number
-    blue: number
-    alpha: number
+    r: number
+    g: number
+    b: number
+    a: number
 }
 
-export interface Options {
-    height: number
-    width: number
-    background: Color
-    domain: Range
-    range: Range
-    color: ColorRange
+export interface RandomBandOptions {
+    // Height
+    getHeight(): number
+
+    setHeight(h: number)
+
+    // Width
+    getWidth(): number
+
+    setWidth(w: number)
+
+    // Background
+    getBackground(): Color
+
+    setBackground(c: Color)
+
+    // Band range
+    getBandRange(): Range
+
+    /**
+     * @param r ratio of band height to total height. 0 - 1
+     */
+    setBandRatio(r: number)
+
+    // Band color range
+    getColorRange(): ColorRange
+
+    setColorRange(c: ColorRange)
+
+    // dirty
+    isDirty(): boolean
+
+    setClean()
 }
 
-function noiseBand(img: p5.Image, opts: Options) {
+
+class BasicOptions implements RandomBandOptions {
+
+    private width: number;
+    private height: number;
+    private background: Color;
+    private colorRange: ColorRange;
+    private dirty: boolean;
+    private bandRatio: number;
+
+    constructor(width, height) {
+        this.width = width
+        this.height = height
+        this.background = {r: 100, g: 100, b: 100, a: 255}
+        this.colorRange = {
+            r: {min: 255, max: 255},
+            g: {min: 0, max: 255},
+            b: {min: 0, max: 255},
+            a: {min: 255, max: 255}
+        }
+        this.bandRatio = 0.3
+        this.dirty = true
+    }
+
+    getBackground(): Color {
+        return this.background;
+    }
+
+    getBandRange(): Range {
+        const bandHeight = this.bandRatio * this.height
+        return {
+            min: Math.round(this.height / 2) - Math.round(bandHeight / 2),
+            max: Math.round(this.height / 2) + Math.round(bandHeight / 2)
+        }
+    }
+
+    getColorRange(): ColorRange {
+        return this.colorRange;
+    }
+
+    getHeight(): number {
+        return this.height
+    }
+
+    getWidth(): number {
+        return this.width
+    }
+
+    isDirty(): boolean {
+        return this.dirty
+    }
+
+    setBackground(c: Color) {
+        this.background = c
+        this.dirty = true
+    }
+
+    setBandRatio(r: number) {
+        this.bandRatio = r
+        this.dirty = true
+    }
+
+    setColorRange(c: ColorRange) {
+        this.colorRange = c
+        this.dirty = true
+    }
+
+    setHeight(h: number) {
+        this.height = Math.round(h)
+        this.dirty = true
+    }
+
+    setWidth(w: number) {
+        this.width = Math.round(w)
+        this.dirty = true
+    }
+
+    setClean() {
+        this.dirty = false
+    }
+
+}
+
+export function newRandomBandOptions(width, height) {
+    return new BasicOptions(width, height)
+}
+
+function noiseBand(img: p5.Image, opts: RandomBandOptions) {
+    img.resize(opts.getWidth(), opts.getHeight())
+    img.loadPixels()
     for (let x = 0; x < img.width; x++) {
         for (let y = 0; y < img.height; y++) {
-            if (x >= opts.domain.min && x <= opts.domain.max
-                && y >= opts.range.min && y <= opts.range.max) {
-                // img.set(x, y, rand(50, 127))
+            if (x >= opts.getBandRange().min && x <= opts.getBandRange().max
+                && y >= opts.getBandRange().min && y <= opts.getBandRange().max) {
+                let c = opts.getColorRange();
                 img.set(x, y, [
-                    rand(opts.color.red.min, opts.color.red.max),
-                    rand(opts.color.green.min, opts.color.green.max),
-                    rand(opts.color.blue.min, opts.color.blue.max),
-                    rand(opts.color.alpha.min, opts.color.alpha.max)
+                    rand(c.r.min, c.r.max),
+                    rand(c.g.min, c.g.max),
+                    rand(c.b.min, c.b.max),
+                    rand(c.a.min, c.a.max)
                 ])
-                // const pixel: number[] = img.pixels[x][y]
-             } else {
-                img.set(x,y, [opts.background.red, opts.background.green, opts.background.blue, opts.background.alpha])
+            } else {
+                let bg = opts.getBackground();
+                img.set(x, y, [bg.r, bg.g, bg.b, bg.a])
             }
-            // else {
-            //     img.set(x, y, 100)
-            // }
         }
     }
     // img.filter(p5.BLUR, 3)
     img.updatePixels()
+    opts.setClean()
 }
 
-export function newBasicSketch(transport: Transport, opts:Options) {
+export function newBasicSketch(transport: Transport, opts: RandomBandOptions) {
 
     return (p: p5) => {
         let canvas
@@ -72,25 +185,19 @@ export function newBasicSketch(transport: Transport, opts:Options) {
             canvas.parent('app-canvas')
 
             p.background(127);
-            img = p.createImage(window.innerWidth, opts.height)
-            // let fillRange = [1, 2]
-            // let opts = {
-            //     domain: {min: 0, max: img.width},
-            //     range: {min: height / 2 - height / 6, max: height / 2 + height / 6},
-            //     color: {
-            //         red: {min: 255, max: 255},
-            //         green: {min: 0, max: 255},
-            //         blue: {min: 0, max: 255},
-            //         alpha: {min: 255, max: 255}
-            //     }
-            // };
+            img = p.createImage(window.innerWidth, opts.getHeight())
             noiseBand(img, opts)
+            opts.setClean()
         }
 
         p.draw = () => {
             p.background(127)
             p.fill(255);
             p.rect(30 + transport.getPosition(), 20, 55, 55)
+            if (opts.isDirty()) {
+                noiseBand(img, opts)
+                opts.setClean()
+            }
             p.image(img, 0, 100)
             transport.tick()
         }
