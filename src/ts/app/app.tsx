@@ -1,20 +1,21 @@
 import {createRoot} from "react-dom/client"
 import React from 'react'
-import {Center, Container, Flex, Group, Input} from '@chakra-ui/react'
-import {NumberInputField, NumberInputLabel, NumberInputRoot} from '@/components/chakra/number-input'
+import {Container} from '@chakra-ui/react'
 import {Provider} from "@/components/chakra/provider"
 import p5 from "p5";
-import {Button} from "@/components/chakra/button";
-import {newTransport} from "@/app/transport";
-import {MdOutlinePlayArrow, MdOutlineSkipPrevious, MdOutlineStop} from "react-icons/md"
-import {newExperimentSketch, newRandomBandOptions, RandomBandOptions} from "@/sketches/sketch-common";
-import {ControlPanel, newControlPanelModel} from "@/components/control-panel";
-import {newTransportModel} from "@/components/transport";
+import {newExperimentSketch, newSketchModel} from "@/sketch/sketch-common";
+import {
+    NoiseBandControlPanel,
+    newNoiseBandModel,
+    newRandomBandOptions,
+    NoiseBandOptions
+} from "@/components/noise-band-control-panel";
+import {newTransportModel, Transport} from "@/components/transport";
 
 const r = document.getElementById('app')
 
 // const transport = newTransport()
-const height = 10
+const canvasHeight = 10
 
 let opts = newRandomBandOptions(window.innerWidth, 10)
 let core = newRandomBandOptions(window.innerWidth, 10)
@@ -30,11 +31,13 @@ const bg = core.getBackground()
 bg.a = 0
 core.setBackground(bg)
 
-const optset: RandomBandOptions[] = [opts, core];
-let gap = 10
-let cp = newControlPanelModel(newTransportModel(), optset, gap);
-new p5(newExperimentSketch(cp))
+const optset: NoiseBandOptions[] = [opts, core];
+const gap = 10
+const sketchModel = newSketchModel({width: window.innerWidth, height: 500, parentId: 'app-canvas', background: 100})
+const nb = newNoiseBandModel(sketchModel, optset, gap);
+const tp = newTransportModel()
 
+const p = new p5(newExperimentSketch(sketchModel, tp, nb))
 
 if (r) {
     const root = createRoot(r)
@@ -42,7 +45,8 @@ if (r) {
         <Provider>
             <div id="app-canvas"></div>
             <Container>
-                <ControlPanel data={cp}/>
+                <Transport model={tp}/>
+                <NoiseBandControlPanel model={nb}/>
             </Container>
         </Provider>
     )

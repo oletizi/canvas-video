@@ -1,3 +1,16 @@
+import {Group} from "@chakra-ui/react";
+import {Button} from "@/components/chakra/button";
+import {MdOutlinePlayArrow, MdOutlineSkipPrevious, MdOutlineStop} from "react-icons/md";
+import React from "react";
+
+export function Transport({model}: { model: TransportModel }) {
+    return (<Group attached>
+        <Button onClick={() => model.reset()}><MdOutlineSkipPrevious/></Button>
+        <Button onClick={() => model.start()}><MdOutlinePlayArrow/></Button>
+        <Button onClick={() => model.stop()}><MdOutlineStop/></Button>
+    </Group>)
+}
+
 export interface TransportModel {
     start()
 
@@ -12,7 +25,7 @@ export interface TransportModel {
     getPosition(): number
 }
 
-export function newTransportModel() : TransportModel {
+export function newTransportModel(): TransportModel {
     return new BasicTransport()
 }
 
