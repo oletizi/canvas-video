@@ -1,6 +1,6 @@
 import {rand, scale} from "@/lib-core"
-import {Transport} from "@/app/transport"
 import p5 from "p5"
+import {ControlPanelModel} from "@/components/control-panel";
 
 interface Range {
     min: number
@@ -217,8 +217,22 @@ function noiseBand(p: p5, optset: RandomBandOptions[]) {
     return rv
 }
 
-export function newBasicSketch(transport: Transport, gap: number = 100, optset: RandomBandOptions[]) {
+export interface SketchHook {
+    (p: p5): void
+}
 
+export function newSketch(preload: SketchHook, setup: SketchHook, draw: SketchHook) {
+    return (p: p5) => {
+        p.preload = () => preload(p)
+        p.setup = () => setup(p)
+        p.draw = () => draw(p)
+    }
+}
+
+export function newExperimentSketch(cp:ControlPanelModel) {
+    const transport =  cp.transport
+    const optset = cp.bandOptions
+    const gap = cp.bandGap
     return (p: p5) => {
         let height = 500
         let img

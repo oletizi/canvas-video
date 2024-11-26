@@ -1,4 +1,4 @@
-export interface Transport {
+export interface TransportModel {
     start()
 
     stop()
@@ -12,11 +12,11 @@ export interface Transport {
     getPosition(): number
 }
 
-export function newTransport() : Transport {
+export function newTransportModel() : TransportModel {
     return new BasicTransport()
 }
 
-class BasicTransport implements Transport {
+class BasicTransport implements TransportModel {
     private _isRunning: boolean = false
     private _position: number = 0
 
