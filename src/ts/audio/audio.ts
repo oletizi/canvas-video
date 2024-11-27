@@ -69,16 +69,17 @@ class WebAudioSample implements Sample {
 }
 
 export function newSamplePlayer(t: Transport, s: Sample) {
+    const out = newClientOutput('Sample player: ')
     t.addListener({
         position(p: number) {
         }, reset() {
-            console.log(`Transport reset!`)
+            out.log(`Transport reset!`)
             s.reset()
         }, started() {
-            console.log(`Transport started...`)
+            out.log(`Transport started...`)
             s.play()
         }, stopped() {
-            console.log(`Transport stopped.`)
+            out.log(`Transport stopped.`)
             s.stop()
         }, ticked() {
         }
@@ -86,6 +87,7 @@ export function newSamplePlayer(t: Transport, s: Sample) {
 }
 
 export async function loadAudio(c: AudioContext, url: string): Promise<SampleResult> {
+    const out = newClientOutput(`loadAudio: `)
     const rv: SampleResult = {
         data: {} as Sample,
         errors: []
@@ -93,6 +95,7 @@ export async function loadAudio(c: AudioContext, url: string): Promise<SampleRes
     try {
         const response = await fetch(url)
         if (!response.ok) {
+            out.log(`response not ok: ${response.status}: ${response.statusText}`)
             rv.errors.push(new Error(response.statusText))
         } else {
             const audioBuffer = await c.decodeAudioData(await response.arrayBuffer())
@@ -101,6 +104,5 @@ export async function loadAudio(c: AudioContext, url: string): Promise<SampleRes
     } catch (e) {
         rv.errors.push(e)
     }
-
     return rv
 }
