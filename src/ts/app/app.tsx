@@ -14,11 +14,11 @@ import {newTransportModel, Transport} from "@/components/transport";
 
 const r = document.getElementById('app')
 
-// const transport = newTransport()
-const canvasHeight = 10
-
-let opts = newRandomBandOptions(window.innerWidth, 10)
-let core = newRandomBandOptions(window.innerWidth, 10)
+const bandGap = 4
+const bandHeight = 2
+const opacity = 0.2
+let opts = newRandomBandOptions(window.innerWidth, bandHeight)
+let core = newRandomBandOptions(window.innerWidth, bandHeight)
 core.setBandRatio(0.1)
 const c = core.getColorRange()
 c.r = {min: 255, max: 255}
@@ -32,9 +32,8 @@ bg.a = 0
 core.setBackground(bg)
 
 const optset: NoiseBandOptions[] = [opts, core];
-const gap = 10
 const sketchModel = newSketchModel({width: window.innerWidth, height: 500, parentId: 'app-canvas', background: 100})
-const nb = newNoiseBandModel(sketchModel, optset, gap);
+const nb = newNoiseBandModel(sketchModel, optset, bandGap, opacity);
 const tp = newTransportModel()
 
 const p = new p5(newExperimentSketch(sketchModel, tp, nb))

@@ -207,9 +207,8 @@ export interface NoiseBandModel {
     setClean(): void
 }
 
-export function newNoiseBandModel(sketchModel: SketchModel, bandOptions: NoiseBandOptions[], bandGap: number): NoiseBandModel {
+export function newNoiseBandModel(sketchModel: SketchModel, bandOptions: NoiseBandOptions[], bandGap: number, opacity: number): NoiseBandModel {
     const images = []
-    let opacity = 1
 
     function setClean() {
         bandOptions.forEach(o => o.setClean())
@@ -221,7 +220,8 @@ export function newNoiseBandModel(sketchModel: SketchModel, bandOptions: NoiseBa
 
     function update(p: p5) {
         if (images.length < 1 && bandGap > 0) {
-            for (let i = 0; i < sketchModel.getHeight() / bandGap; i += bandGap) {
+            const count = sketchModel.getHeight() / bandGap
+            for (let i = 0; i < count; i++) {
                 images.push(noiseBand(p, bandOptions))
             }
         } else if (isDirty()) {
@@ -264,7 +264,13 @@ export function NoiseBandControlPanel({model}: { model: NoiseBandModel }) {
     return (
         <Center gap={3}>
             Height: <NumberInputRoot maxW={'5rem'} defaultValue={"" + opts.getHeight()}
+                                     min={0}
                                      onValueChange={(e) => optset.forEach(o => o.setHeight(Number.parseInt(e.value)))}>
+            <NumberInputField/></NumberInputRoot>
+
+            Gap: <NumberInputRoot maxW={'5rem'} defaultValue={"" + model.getBandGap()}
+                                  min={1}
+                                  onValueChange={(e) => model.setBandGap(Number.parseInt(e.value))}>
             <NumberInputField/></NumberInputRoot>
 
             Blur: <NumberInputRoot maxW={'5rem'} defaultValue={"" + opts.getBlur()}
