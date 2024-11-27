@@ -12,7 +12,7 @@ import {
 } from "@/components/noise-band-control-panel";
 import {newTransport, TransportView} from "@/components/transportView";
 import {Button} from "@/components/chakra/button";
-import {loadAudio, newSamplePlayer} from "@/audio/audio";
+import {loadAudio, newSamplePlayer, SampleListener} from "@/audio/audio";
 import {newClientOutput} from "../../process-output";
 
 const r = document.getElementById('app')
@@ -41,11 +41,19 @@ const tp = newTransport()
 
 const p = new p5(newExperimentSketch(sketchModel, tp, nb))
 
+const sampleListener: SampleListener = {
+    timeDomainData(buf: Float32Array) {
+        const out = newClientOutput('sampleListener: ')
+        out.log(`Time domain data!`)
+    }
+}
+
 // TODO: Move this to a module somewhere
-function startAudio() {
+function startAudio(): AudioContext {
     const out = newClientOutput('startAudio: ')
     out.log(`Starting audio...`)
-    loadAudio(new AudioContext(), '/assets/audio/waves.wav').then((r) => {
+    const audioContext = new AudioContext();
+    loadAudio(audioContext, '/assets/audio/waves.wav', sampleListener).then((r) => {
         out.log(r)
         if (r.errors.length > 0) {
             r.errors.forEach(e => out.error(e))
@@ -54,14 +62,9 @@ function startAudio() {
             out.log(`Creating new sample player for sample:`)
             out.log(s)
             newSamplePlayer(tp, s)
-            s.addListener({
-                timeDomainData(buf: Float32Array) {
-                    out.log(`Time domain data!!!`)
-                }
-            })
         }
     }).catch(e => console.error(e))
-
+    return audioContext
 }
 
 if (r) {

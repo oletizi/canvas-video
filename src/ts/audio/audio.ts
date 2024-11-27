@@ -40,7 +40,7 @@ class WebAudioSample implements Sample {
         this.analyzerBuffer = new Float32Array(this.analyzer.frequencyBinCount)
         setInterval((me: WebAudioSample) => {
             if (me.isPlaying) {
-                me.listeners.forEach((l) =>{
+                me.listeners.forEach((l) => {
                     me.analyzer.getFloatTimeDomainData(me.analyzerBuffer)
                     l.timeDomainData(me.analyzerBuffer)
                 })
@@ -111,7 +111,12 @@ export function newSamplePlayer(t: Transport, s: Sample) {
     })
 }
 
-export async function loadAudio(c: AudioContext, url: string): Promise<SampleResult> {
+const nullSampleListener: SampleListener = {
+    timeDomainData(buf: Float32Array) {
+    }
+}
+
+export async function loadAudio(c: AudioContext, url: string, listener: SampleListener = nullSampleListener): Promise<SampleResult> {
     const out = newClientOutput(`loadAudio: `)
     const rv: SampleResult = {
         data: {} as Sample,
@@ -125,6 +130,7 @@ export async function loadAudio(c: AudioContext, url: string): Promise<SampleRes
         } else {
             const audioBuffer = await c.decodeAudioData(await response.arrayBuffer())
             rv.data = new WebAudioSample(c, audioBuffer)
+            rv.data.addListener(listener)
         }
     } catch (e) {
         rv.errors.push(e)
