@@ -1,6 +1,6 @@
 import {createRoot} from "react-dom/client"
 import React from 'react'
-import {Container} from '@chakra-ui/react'
+import {Container, Flex, Separator} from '@chakra-ui/react'
 import {Provider} from "@/components/chakra/provider"
 import p5 from "p5";
 import {newExperimentSketch, newSketchModel} from "@/sketch/sketch-common";
@@ -43,11 +43,16 @@ if (r) {
     const root = createRoot(r)
     root.render(
         <Provider>
-            <div id="app-canvas"></div>
-            <Container>
-                <Transport model={tp}/>
-                <NoiseBandControlPanel model={nb}/>
-            </Container>
+            <Flex direction="column" gap={30}>
+                <div id="app-canvas"></div>
+                <Container>
+                    <Flex gap={30}>
+                        <Transport model={tp}/>
+                        <Separator orientation="vertical" size="lg" height="10"/>
+                        <NoiseBandControlPanel model={nb}/>
+                    </Flex>
+                </Container>
+            </Flex>
         </Provider>
     )
 } else {
