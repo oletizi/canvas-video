@@ -1,7 +1,10 @@
 import {Result} from "@/lib-core";
 import {Transport} from "@/components/transportView";
 import {newClientOutput} from "../../process-output";
+
 export interface Sample {
+
+    addListener(l: SampleListener)
 
     play()
 
@@ -14,10 +17,17 @@ export interface SampleResult extends Result {
     data: Sample
 }
 
+export interface SampleListener {
+    timeDomainData(buf: Float32Array)
+}
+
 class WebAudioSample implements Sample {
+    private readonly listeners: SampleListener[] = []
     private readonly out = newClientOutput(WebAudioSample.name + ': ')
     private readonly c: AudioContext
-    private readonly buf: AudioBuffer
+    private readonly audioBuffer: AudioBuffer
+    private readonly analyzer: AnalyserNode
+    private readonly analyzerBuffer: Float32Array
     private isPlaying = false
     private source;
     private startTime = 0
@@ -25,13 +35,28 @@ class WebAudioSample implements Sample {
 
     constructor(c: AudioContext, buffer: AudioBuffer) {
         this.c = c
-        this.buf = buffer
+        this.audioBuffer = buffer
+        this.analyzer = c.createAnalyser()
+        this.analyzerBuffer = new Float32Array(this.analyzer.frequencyBinCount)
+        setInterval((me: WebAudioSample) => {
+            if (me.isPlaying) {
+                me.listeners.forEach((l) =>{
+                    me.analyzer.getFloatTimeDomainData(me.analyzerBuffer)
+                    l.timeDomainData(me.analyzerBuffer)
+                })
+            }
+        }, 100, this)
+    }
+
+    addListener(l: SampleListener) {
+        this.listeners.push(l)
     }
 
     init() {
         this.source = this.c.createBufferSource()
-        this.source.buffer = this.buf
+        this.source.buffer = this.audioBuffer
         this.source.connect(this.c.destination)
+        this.source.connect(this.analyzer)
     }
 
     reset() {
