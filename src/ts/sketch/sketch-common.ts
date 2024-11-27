@@ -1,7 +1,8 @@
 import {scale} from "@/lib-core"
 import p5 from "p5"
 import {NoiseBandModel} from "@/components/noise-band-control-panel";
-import {TransportModel} from "@/components/transport";
+import {Transport} from "@/components/transportView";
+import {loadAudio} from "@/audio/audio";
 
 export interface SketchModel {
     getHeight(): number
@@ -21,13 +22,17 @@ export function newSketchModel(opts: {width: number, height: number, parentId: s
         }, getWidth(): number {
             return opts.width
         }
-
     }
 }
 
-export function newExperimentSketch(sketchModel: SketchModel, transport: TransportModel, noiseBandModel: NoiseBandModel) {
+export function newExperimentSketch(sketchModel: SketchModel, transport: Transport, noiseBandModel: NoiseBandModel) {
+
     return (p: p5) => {
         p.preload = () => {
+            // p.load
+            // sound = p.loadSound('//assets/doorbell.mp3');
+            // waves = p.loadSound('/assets/waves.wav')
+            // loadAudio(ac, '/assets/waves.wav').then(s => console.log(`Loaded!`)).catch(e => console.error(e))
         }
 
         p.setup = () => {

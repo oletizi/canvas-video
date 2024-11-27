@@ -3,7 +3,7 @@ import {Button} from "@/components/chakra/button";
 import {MdOutlinePlayArrow, MdOutlineSkipPrevious, MdOutlineStop} from "react-icons/md";
 import React from "react";
 
-export function Transport({model}: { model: TransportModel }) {
+export function TransportView({model}: { model: Transport }) {
     return (<Group attached>
         <Button onClick={() => model.reset()}><MdOutlineSkipPrevious/></Button>
         <Button onClick={() => model.start()}><MdOutlinePlayArrow/></Button>
@@ -11,7 +11,23 @@ export function Transport({model}: { model: TransportModel }) {
     </Group>)
 }
 
-export interface TransportModel {
+
+export interface TransportListener {
+    started()
+
+    stopped()
+
+    reset()
+
+    ticked()
+
+    position(p: number)
+}
+
+export interface Transport {
+
+    addListener(l: TransportListener)
+
     start()
 
     stop()
@@ -25,13 +41,14 @@ export interface TransportModel {
     getPosition(): number
 }
 
-export function newTransportModel(): TransportModel {
+export function newTransport(): Transport {
     return new BasicTransport()
 }
 
-class BasicTransport implements TransportModel {
+class BasicTransport implements Transport {
     private _isRunning: boolean = false
     private _position: number = 0
+    private _listeners: TransportListener[] = []
 
     constructor() {
     }
@@ -46,19 +63,27 @@ class BasicTransport implements TransportModel {
 
     reset() {
         this._position = 0
+        this._listeners.forEach(l => l.reset())
     }
 
     start() {
         this._isRunning = true
+        this._listeners.forEach(l => l.started())
     }
 
     stop() {
         this._isRunning = false
+        this._listeners.forEach(l => l.stopped())
     }
 
     tick() {
         if (this.isRunning()) {
             this._position++
+            this._listeners.forEach(l=>l.ticked())
         }
+    }
+
+    addListener(l: TransportListener) {
+        this._listeners.push(l)
     }
 }

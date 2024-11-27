@@ -2,7 +2,7 @@ import p5 from 'p5'
 import {parseLyrics} from "./lyrics"
 import {MotionText} from "./glib"
 import {timecode2Millis} from "./timecode"
-import {Audiator} from '../audio/audio'
+import {Audiator} from '../audio/audiator'
 
 const SOURCE_FRAME_RATE = 29.9
 const FRAME_RATE = 60
