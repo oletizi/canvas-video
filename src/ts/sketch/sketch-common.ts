@@ -3,7 +3,7 @@ import p5 from "p5"
 import {NoiseBandModel} from "@/components/noise-band-control-panel";
 import {Transport} from "@/components/transport";
 import {loadAudio} from "@/audio/audio";
-import {SampleAnalyzer} from "@/sketch/sample-analyzer";
+import {SampleAnalyzer, VuMeter} from "@/sketch/sample-analyzer";
 
 export interface SketchModel {
     getHeight(): number
@@ -16,7 +16,8 @@ export interface SketchModel {
 }
 
 export function newExperimentSketch(sketchModel: SketchModel, transport: Transport, noiseBandModel: NoiseBandModel, analyzer: () => SampleAnalyzer) {
-
+    let vu = 0
+    let target = 0
     return (p: p5) => {
         p.preload = () => {
         }
@@ -36,18 +37,26 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
             const innerWidth = sketchModel.getWidth() - 2 * padding
 
             const yOffset = padding
-            const dim = 50
-            p.rect(padding + (transport.getPosition()% innerWidth), yOffset, dim, dim)
+            let dim = 50
             const sa = analyzer()
+
             if (sa) {
+
                 let gap = padding
                 const yOffset = gap
                 let xOffset = gap
                 const fft = sa.getFft()
-                const level = scale(sa.getLevel(), 0, 1, 1, sketchModel.getHeight() - yOffset)
+                if (transport.getPosition() % 8 == 0) {
+                    target = sa.getLevel()
+                }
+                vu = (target - vu)  / 2
+                const level = scale(vu, 0, 1, 1, sketchModel.getHeight() - yOffset)
+
+                // set square size proportional to audio level
+                dim *= 10 * vu
 
                 // draw level indicator
-                const indicatorWidth = 20
+                const indicatorWidth = gap
                 p.rect(xOffset, sketchModel.getHeight() - yOffset - level, indicatorWidth, level)
 
                 // draw FFT graph
@@ -57,12 +66,16 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
                 p.stroke(255)
                 p.strokeWeight(w)
                 sa.getFft().forEach((f, i) => {
-                    const ff = 255 + f
+                    const ff = 160 + f
                     const x = xOffset + (i * w)
                     const y2 = y1 - ff
                     p.line(x, y1, x, y2)
                 })
             }
+
+            p.rect(padding + (transport.getPosition() % innerWidth), yOffset, dim, dim)
+
+            // Draw noise band display
             if (gap > 0) {
                 const images = noiseBandModel.getImages();
                 p.tint(255, scale(noiseBandModel.getOpacity(), 0, 1, 0, 255))
