@@ -4,7 +4,7 @@ import {NoiseBandModel} from "@/components/noise-band-control-panel";
 import {Transport} from "@/components/transport";
 import {SampleAnalyzer} from "@/audio/sample-analyzer";
 import {VuMeter} from "@/audio/vu-meter";
-import {newStar} from "@/sketch/stars";
+import {newStar, newStarField} from "@/sketch/stars";
 
 export interface SketchModel {
     getHeight(): number
@@ -22,17 +22,16 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
     let target = 0
     let padding = 30
     const yOffset = padding
-    const stars = []
     let fill = 255
     vuMeter = new VuMeter(0.1, 0.3, 24)
+    const xmin = padding
+    const xmax = sketchModel.getWidth() - 2 * padding
+    const ymin = padding
+    const ymax = sketchModel.getHeight() - 2 * padding
+    const stars = newStarField(255, xmin, xmax, ymin, ymax, 1, 50, () => vuMeter)
     return (p: p5) => {
         p.preload = () => {
-            for (let i = 0; i < 256; i++) {
-                let x = rand(padding, sketchModel.getWidth() - 2 * padding);
-                let y = rand(padding, sketchModel.getHeight() - 2 * padding);
-                let factor = rand(1, 100);
-                stars.push(newStar(x, y, factor, vuMeter))
-            }
+
         }
         p.setup = () => {
             p.createCanvas(window.innerWidth, sketchModel.getHeight()).parent(sketchModel.getParentId())
