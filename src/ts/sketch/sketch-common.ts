@@ -15,25 +15,6 @@ export interface SketchModel {
     getBackground(): number
 }
 
-export function newSketchModel(opts: {
-    width: number,
-    height: number,
-    parentId: string,
-    background: number
-}): SketchModel {
-    return {
-        getBackground(): number {
-            return opts.background
-        }, getHeight(): number {
-            return opts.height
-        }, getParentId(): string {
-            return opts.parentId
-        }, getWidth(): number {
-            return opts.width
-        }
-    }
-}
-
 export function newExperimentSketch(sketchModel: SketchModel, transport: Transport, noiseBandModel: NoiseBandModel, analyzer: () => SampleAnalyzer) {
 
     return (p: p5) => {
@@ -51,15 +32,16 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
         }
 
         p.draw = () => {
+            let padding = 30
             noiseBandModel.update(p)
             const gap = noiseBandModel.getBandGap();
             p.background(sketchModel.getBackground())
             p.fill(255);
-            p.rect(30 + transport.getPosition(), 20, 55, 55)
+            const innerWidth = sketchModel.getWidth() - 2 * padding
+            p.rect(padding + (transport.getPosition()% innerWidth), 20, 55, 55)
             const sa = analyzer()
             if (sa) {
-                let margin = 30
-                let gap = margin
+                let gap = padding
                 const yOffset = gap
                 let xOffset = gap
                 const fft = sa.getFft()
@@ -71,7 +53,7 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
 
                 // draw FFT graph
                 xOffset += gap + indicatorWidth
-                const w = (sketchModel.getWidth() - xOffset - margin) / fft.length
+                const w = (sketchModel.getWidth() - xOffset - padding) / fft.length
                 const y1 = sketchModel.getHeight() - yOffset
                 p.stroke(255)
                 p.strokeWeight(w)

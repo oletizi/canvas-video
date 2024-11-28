@@ -3,7 +3,7 @@ import React from 'react'
 import {Container, Flex, Separator} from '@chakra-ui/react'
 import {Provider} from "@/components/chakra/provider"
 import p5 from "p5";
-import {newExperimentSketch, newSketchModel} from "@/sketch/sketch-common";
+import {newExperimentSketch, newSketchModel, SketchModel} from "@/sketch/sketch-common";
 import {
     newNoiseBandModel,
     newRandomBandOptions,
@@ -36,7 +36,12 @@ bg.a = 0
 core.setBackground(bg)
 
 const optset: NoiseBandOptions[] = [opts, core];
-const sketchModel = newSketchModel({width: window.innerWidth, height: 500, parentId: 'app-canvas', background: 100})
+const sketchModel: SketchModel = {
+    getWidth: () => window.innerWidth,
+    getHeight: () => 500,
+    getParentId: () => 'app-canvas',
+    getBackground: () => 100
+}
 const nb = newNoiseBandModel(sketchModel, optset, bandGap, opacity);
 const tp = newTransport()
 
