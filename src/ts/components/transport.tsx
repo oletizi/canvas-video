@@ -4,11 +4,12 @@ import {MdOutlinePlayArrow, MdOutlineSkipPrevious, MdOutlineStop} from "react-ic
 import React from "react";
 
 export function TransportView({model}: { model: Transport }) {
-    return (<Group attached>
-        <Button onClick={() => model.reset()}><MdOutlineSkipPrevious/></Button>
-        <Button onClick={() => model.start()}><MdOutlinePlayArrow/></Button>
-        <Button onClick={() => model.stop()}><MdOutlineStop/></Button>
-    </Group>)
+    return (
+        <Group attached>
+            <Button onClick={() => model.reset()}><MdOutlineSkipPrevious/></Button>
+            <Button onClick={() => model.start()}><MdOutlinePlayArrow/></Button>
+            <Button onClick={() => model.stop()}><MdOutlineStop/></Button>
+        </Group>)
 }
 
 
@@ -79,7 +80,7 @@ class BasicTransport implements Transport {
     tick() {
         if (this.isRunning()) {
             this._position++
-            this._listeners.forEach(l=>l.ticked())
+            this._listeners.forEach(l => l.ticked())
         }
     }
 

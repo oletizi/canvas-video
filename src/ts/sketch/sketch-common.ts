@@ -84,8 +84,11 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
                     p.line(x, y1, x, y2)
                 })
             }
+            // draw stars
             stars.forEach((s) => s.draw(p))
-            p.rect(padding + (transport.getPosition() % innerWidth), yOffset, dim, dim)
+
+            // draw moon
+            p.rect((padding + ((transport.getPosition() / 32) % innerWidth)) - dim/2, yOffset - dim/2, dim, dim)
 
             // Draw noise band display
             if (gap > 0) {

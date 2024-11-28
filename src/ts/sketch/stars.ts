@@ -19,7 +19,7 @@ export function newStar(x: number, y: number, factor: number, getVuMeter: () => 
     return {
         draw(p: p5) {
             const dim = getVuMeter() ? getVuMeter().getValue() * factor : factor
-            p.rect(x, y, dim, dim)
+            p.rect(x - dim / 2, y - dim / 2, dim, dim)
         }
     }
 
