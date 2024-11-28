@@ -20,7 +20,7 @@ export interface SampleResult extends Result {
 export interface SampleListener {
     timeDomainData(buf: Float32Array)
 
-    frequencyDomainData(buf: Float32Array)
+    frequencyDomainData(buf: Uint8Array)
 }
 
 class WebAudioSample implements Sample {

@@ -58,15 +58,26 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
             p.rect(30 + transport.getPosition(), 20, 55, 55)
             const sa = analyzer()
             if (sa) {
-                const level = scale(sa.getLevel(), 0, 1, 1, sketchModel.getHeight() - 10)
-                p.rect(30, sketchModel.getHeight() - 10 - level, 20, level)
-                const w = 1
-                const y1 = sketchModel.getHeight() - 10
+                let margin = 30
+                let gap = margin
+                const yOffset = gap
+                let xOffset = gap
+                const fft = sa.getFft()
+                const level = scale(sa.getLevel(), 0, 1, 1, sketchModel.getHeight() - yOffset)
+
+                // draw level indicator
+                const indicatorWidth = 20
+                p.rect(xOffset, sketchModel.getHeight() - yOffset - level, indicatorWidth, level)
+
+                // draw FFT graph
+                xOffset += gap + indicatorWidth
+                const w = (sketchModel.getWidth() - xOffset - margin) / fft.length
+                const y1 = sketchModel.getHeight() - yOffset
                 p.stroke(255)
                 p.strokeWeight(w)
                 sa.getFft().forEach((f, i) => {
                     const ff = f + 160
-                    const x = 100 + (i * w)
+                    const x = xOffset + (i * w)
                     const y2 = y1 - ff
                     p.line(x, y1, x, y2)
                 })

@@ -40,15 +40,6 @@ const sketchModel = newSketchModel({width: window.innerWidth, height: 500, paren
 const nb = newNoiseBandModel(sketchModel, optset, bandGap, opacity);
 const tp = newTransport()
 
-// const sampleListener: SampleListener = {
-//     frequencyDomainData(buf: Float32Array) {
-//     },
-//     timeDomainData(buf: Float32Array) {
-//         const out = newClientOutput('sampleListener: ')
-//         out.log(`Time domain data!`)
-//     }
-// }
-
 let levelMeter
 const p = new p5(newExperimentSketch(sketchModel, tp, nb, () => levelMeter))
 
