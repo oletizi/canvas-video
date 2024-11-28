@@ -1,4 +1,4 @@
-import {scale} from "@/lib-core"
+import {rand, scale} from "@/lib-core"
 import p5 from "p5"
 import {NoiseBandModel} from "@/components/noise-band-control-panel";
 import {Transport} from "@/components/transport";
@@ -16,44 +16,60 @@ export interface SketchModel {
 }
 
 export function newExperimentSketch(sketchModel: SketchModel, transport: Transport, noiseBandModel: NoiseBandModel, analyzer: () => SampleAnalyzer) {
+    let vuMeter: VuMeter
     let vu = 0
     let target = 0
+    let padding = 30
+    const yOffset = padding
+    const stars = []
     return (p: p5) => {
         p.preload = () => {
+            for (let i=0; i< 256; i++) {
+                stars.push({
+                    dim: 1,
+                    factor: rand(1, 100),
+                    x: rand(padding, sketchModel.getWidth() - 2 * padding),
+                    y: rand(padding, sketchModel.getHeight() - 2 * padding)
+                })
+            }
         }
 
         p.setup = () => {
+            vuMeter = new VuMeter(0.1, 0.3, 24)
             p.createCanvas(window.innerWidth, sketchModel.getHeight()).parent(sketchModel.getParentId())
             noiseBandModel.update(p)
             p.background(sketchModel.getBackground());
         }
 
         p.draw = () => {
-            let padding = 30
             noiseBandModel.update(p)
             const gap = noiseBandModel.getBandGap()
             p.background(sketchModel.getBackground())
             p.fill(255)
             const innerWidth = sketchModel.getWidth() - 2 * padding
 
-            const yOffset = padding
             let dim = 50
             const sa = analyzer()
 
             if (sa) {
 
-                let gap = padding
+                const gap = padding
                 const yOffset = gap
                 let xOffset = gap
                 const fft = sa.getFft()
                 if (transport.getPosition() % 8 == 0) {
                     target = sa.getLevel()
+                    vuMeter.setTarget(target)
                 }
-                vu = (target - vu)  / 2
-                const level = scale(vu, 0, 1, 1, sketchModel.getHeight() - yOffset)
+                // vu = (target - vu) / 2
+                vuMeter.update()
+                vu = vuMeter.getValue()
+                const level = 10 * Math.pow(scale(vu, 0, 1, 1, sketchModel.getHeight() - yOffset), .5)
 
                 // set square size proportional to audio level
                 dim *= 10 * vu
+
+                stars.forEach(s => s.dim = vu * s.factor)
 
                 // draw level indicator
                 const indicatorWidth = gap
@@ -72,7 +88,7 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
                     p.line(x, y1, x, y2)
                 })
             }
-
+            stars.forEach((s) => p.rect(s.x, s.y, s.dim, s.dim))
             p.rect(padding + (transport.getPosition() % innerWidth), yOffset, dim, dim)
 
             // Draw noise band display
