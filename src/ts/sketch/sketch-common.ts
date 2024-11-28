@@ -3,7 +3,7 @@ import p5 from "p5"
 import {NoiseBandModel} from "@/components/noise-band-control-panel";
 import {Transport} from "@/components/transport";
 import {loadAudio} from "@/audio/audio";
-import {LevelMeter} from "@/sketch/level-meter";
+import {SampleAnalyzer} from "@/sketch/sample-analyzer";
 
 export interface SketchModel {
     getHeight(): number
@@ -34,7 +34,7 @@ export function newSketchModel(opts: {
     }
 }
 
-export function newExperimentSketch(sketchModel: SketchModel, transport: Transport, noiseBandModel: NoiseBandModel, levelMeter: () => LevelMeter) {
+export function newExperimentSketch(sketchModel: SketchModel, transport: Transport, noiseBandModel: NoiseBandModel, levelMeter: () => SampleAnalyzer) {
 
     return (p: p5) => {
         p.preload = () => {

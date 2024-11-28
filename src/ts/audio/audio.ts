@@ -19,6 +19,8 @@ export interface SampleResult extends Result {
 
 export interface SampleListener {
     timeDomainData(buf: Float32Array)
+
+    frequencyDomainData(buf: Float32Array)
 }
 
 class WebAudioSample implements Sample {
@@ -27,7 +29,8 @@ class WebAudioSample implements Sample {
     private readonly c: AudioContext
     private readonly audioBuffer: AudioBuffer
     private readonly analyzer: AnalyserNode
-    private readonly analyzerBuffer: Float32Array
+    private readonly timeDamainBuffer: Float32Array
+    private readonly frequencyDomainBuffer: Float32Array
     private isPlaying = false
     private source;
     private startTime = 0
@@ -37,12 +40,15 @@ class WebAudioSample implements Sample {
         this.c = c
         this.audioBuffer = buffer
         this.analyzer = c.createAnalyser()
-        this.analyzerBuffer = new Float32Array(this.analyzer.frequencyBinCount)
+        this.timeDamainBuffer = new Float32Array(this.analyzer.frequencyBinCount)
+        this.frequencyDomainBuffer = new Float32Array(this.analyzer.frequencyBinCount)
         setInterval((me: WebAudioSample) => {
             if (me.isPlaying) {
                 me.listeners.forEach((l) => {
-                    me.analyzer.getFloatTimeDomainData(me.analyzerBuffer)
-                    l.timeDomainData(me.analyzerBuffer)
+                    me.analyzer.getFloatTimeDomainData(me.timeDamainBuffer)
+                    me.analyzer.getFloatFrequencyData(me.frequencyDomainBuffer)
+                    l.timeDomainData(me.timeDamainBuffer)
+                    l.frequencyDomainData(me.frequencyDomainBuffer)
                 })
             }
         }, 100, this)
@@ -111,12 +117,7 @@ export function newSamplePlayer(t: Transport, s: Sample) {
     })
 }
 
-const nullSampleListener: SampleListener = {
-    timeDomainData(buf: Float32Array) {
-    }
-}
-
-export async function loadAudio(c: AudioContext, url: string, listener: SampleListener = nullSampleListener): Promise<SampleResult> {
+export async function loadAudio(c: AudioContext, url: string): Promise<SampleResult> {
     const out = newClientOutput(`loadAudio: `)
     const rv: SampleResult = {
         data: {} as Sample,
@@ -130,7 +131,6 @@ export async function loadAudio(c: AudioContext, url: string, listener: SampleLi
         } else {
             const audioBuffer = await c.decodeAudioData(await response.arrayBuffer())
             rv.data = new WebAudioSample(c, audioBuffer)
-            rv.data.addListener(listener)
         }
     } catch (e) {
         rv.errors.push(e)

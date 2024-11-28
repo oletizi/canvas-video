@@ -14,7 +14,7 @@ import {newTransport, TransportView} from "@/components/transport";
 import {Button} from "@/components/chakra/button";
 import {loadAudio, newSamplePlayer, SampleListener} from "@/audio/audio";
 import {newClientOutput} from "../../process-output";
-import {LevelMeter, newLevelMeter} from "@/sketch/level-meter";
+import {SampleAnalyzer, newSampleAnalyzer} from "@/sketch/sample-analyzer";
 
 const r = document.getElementById('app')
 
@@ -40,12 +40,14 @@ const sketchModel = newSketchModel({width: window.innerWidth, height: 500, paren
 const nb = newNoiseBandModel(sketchModel, optset, bandGap, opacity);
 const tp = newTransport()
 
-const sampleListener: SampleListener = {
-    timeDomainData(buf: Float32Array) {
-        const out = newClientOutput('sampleListener: ')
-        out.log(`Time domain data!`)
-    }
-}
+// const sampleListener: SampleListener = {
+//     frequencyDomainData(buf: Float32Array) {
+//     },
+//     timeDomainData(buf: Float32Array) {
+//         const out = newClientOutput('sampleListener: ')
+//         out.log(`Time domain data!`)
+//     }
+// }
 
 let levelMeter
 const p = new p5(newExperimentSketch(sketchModel, tp, nb, () => levelMeter))
@@ -56,7 +58,7 @@ function startAudio(): AudioContext {
     const out = newClientOutput('startAudio: ')
     out.log(`Starting audio...`)
     const audioContext = new AudioContext();
-    loadAudio(audioContext, '/assets/audio/waves.wav', sampleListener).then((r) => {
+    loadAudio(audioContext, '/assets/audio/waves.wav').then((r) => {
         out.log(r)
         if (r.errors.length > 0) {
             r.errors.forEach(e => out.error(e))
@@ -65,7 +67,7 @@ function startAudio(): AudioContext {
             out.log(`Creating new sample player for sample:`)
             out.log(s)
             newSamplePlayer(tp, s)
-            levelMeter = newLevelMeter(s)
+            levelMeter = newSampleAnalyzer(s)
         }
     }).catch(e => console.error(e))
     return audioContext
