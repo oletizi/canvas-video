@@ -24,11 +24,11 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
     const yOffset = padding
     let fill = 255
     vuMeter = new VuMeter(0.1, 0.3, 24)
-    const xmin = padding
-    const xmax = sketchModel.getWidth() - 2 * padding
-    const ymin = padding
-    const ymax = sketchModel.getHeight() - 2 * padding
-    const stars = newStarField(255, xmin, xmax, ymin, ymax, 1, 50, () => vuMeter)
+    const xmin = 0
+    const xmax = sketchModel.getWidth()
+    const ymin = 0
+    const ymax = sketchModel.getHeight() - padding
+    const stars = newStarField(1024, xmin, xmax, ymin, ymax, 1, 50, () => vuMeter)
     return (p: p5) => {
         p.preload = () => {
 
