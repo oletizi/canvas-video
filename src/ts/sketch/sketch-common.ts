@@ -34,7 +34,7 @@ export function newSketchModel(opts: {
     }
 }
 
-export function newExperimentSketch(sketchModel: SketchModel, transport: Transport, noiseBandModel: NoiseBandModel, levelMeter: () => SampleAnalyzer) {
+export function newExperimentSketch(sketchModel: SketchModel, transport: Transport, noiseBandModel: NoiseBandModel, analyzer: () => SampleAnalyzer) {
 
     return (p: p5) => {
         p.preload = () => {
@@ -56,11 +56,20 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
             p.background(sketchModel.getBackground())
             p.fill(255);
             p.rect(30 + transport.getPosition(), 20, 55, 55)
-            const lm = levelMeter()
-            if (lm) {
-                const level = scale(lm.getLevel(), 0, 1, 1, sketchModel.getHeight() - 10)
+            const sa = analyzer()
+            if (sa) {
+                const level = scale(sa.getLevel(), 0, 1, 1, sketchModel.getHeight() - 10)
                 p.rect(30, sketchModel.getHeight() - 10 - level, 20, level)
-
+                const w = 1
+                const y1 = sketchModel.getHeight() - 10
+                p.stroke(255)
+                p.strokeWeight(w)
+                sa.getFft().forEach((f, i) => {
+                    const ff = f + 160
+                    const x = 100 + (i * w)
+                    const y2 = y1 - ff
+                    p.line(x, y1, x, y2)
+                })
             }
             if (gap > 0) {
                 const images = noiseBandModel.getImages();

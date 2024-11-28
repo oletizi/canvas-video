@@ -7,7 +7,7 @@ export interface SampleAnalyzer {
 
 export function newSampleAnalyzer(s: Sample): SampleAnalyzer {
     let level = 0
-    let fft : Float32Array
+    let fft : Float32Array = new Float32Array(0)
 
     s.addListener({
         frequencyDomainData(buf: Float32Array) {
