@@ -1,45 +1,11 @@
-import {Sample} from "@/audio/audio";
-
-export interface SampleAnalyzer {
-    getLevel(): number
-
-    getFft(): Uint8Array
-}
-
-export function newSampleAnalyzer(s: Sample): SampleAnalyzer {
-    let level = 0
-    let fft = new Uint8Array(0)
-
-    s.addListener({
-        frequencyDomainData(buf: Uint8Array) {
-            fft = buf
-        },
-        timeDomainData(buf: Float32Array) {
-            // let a = 0
-            // for (let f of buf) {
-            //     a += f * f
-            // }
-            // level = Math.sqrt(a / buf.length)
-            level = Math.sqrt(buf.reduce((a, f) => a + f * f) / buf.length)
-        }
-    })
-    return {
-        getFft(): Uint8Array {
-            return fft;
-        },
-        getLevel(): number {
-            return level;
-        }
-    }
-}
-
 export class VuMeter {
-    private attackTime: number;
-    private decayTime: number;
-    private fps: number;
+    private readonly attackTime: number;
+    private readonly decayTime: number;
+    private readonly fps: number;
     private currentValue: number;
     private targetValue: number;
-    private frameDuration: number;
+    private readonly frameDuration: number;
+
     constructor(attackTime = 0.1, decayTime = 0.3, fps = 60) {
         this.attackTime = attackTime; // Time to respond to increase (in seconds)
         this.decayTime = decayTime;  // Time to decay (in seconds)
@@ -50,9 +16,10 @@ export class VuMeter {
         this.frameDuration = 1 / this.fps; // Duration of each frame
     }
 
-    getValue() : number {
+    getValue(): number {
         return this.currentValue
     }
+
     // Update the current VU level based on the target level
     update() {
         const attackCoefficient = this.frameDuration / this.attackTime;

@@ -2,8 +2,9 @@ import {rand, scale} from "@/lib-core"
 import p5 from "p5"
 import {NoiseBandModel} from "@/components/noise-band-control-panel";
 import {Transport} from "@/components/transport";
-import {loadAudio} from "@/audio/audio";
-import {SampleAnalyzer, VuMeter} from "@/sketch/sample-analyzer";
+import {SampleAnalyzer} from "@/audio/sample-analyzer";
+import {VuMeter} from "@/audio/vu-meter";
+import {newStar} from "@/sketch/stars";
 
 export interface SketchModel {
     getHeight(): number
@@ -22,30 +23,28 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
     let padding = 30
     const yOffset = padding
     const stars = []
+    let fill = 255
+    vuMeter = new VuMeter(0.1, 0.3, 24)
     return (p: p5) => {
         p.preload = () => {
-            for (let i=0; i< 256; i++) {
-                stars.push({
-                    dim: 1,
-                    factor: rand(1, 100),
-                    x: rand(padding, sketchModel.getWidth() - 2 * padding),
-                    y: rand(padding, sketchModel.getHeight() - 2 * padding)
-                })
+            for (let i = 0; i < 256; i++) {
+                let x = rand(padding, sketchModel.getWidth() - 2 * padding);
+                let y = rand(padding, sketchModel.getHeight() - 2 * padding);
+                let factor = rand(1, 100);
+                stars.push(newStar(x, y, factor, vuMeter))
             }
         }
-
         p.setup = () => {
-            vuMeter = new VuMeter(0.1, 0.3, 24)
             p.createCanvas(window.innerWidth, sketchModel.getHeight()).parent(sketchModel.getParentId())
             noiseBandModel.update(p)
             p.background(sketchModel.getBackground());
         }
 
         p.draw = () => {
+            p.fill(fill)
             noiseBandModel.update(p)
             const gap = noiseBandModel.getBandGap()
             p.background(sketchModel.getBackground())
-            p.fill(255)
             const innerWidth = sketchModel.getWidth() - 2 * padding
 
             let dim = 50
@@ -69,8 +68,6 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
                 // set square size proportional to audio level
                 dim *= 10 * vu
 
-                stars.forEach(s => s.dim = vu * s.factor)
-
                 // draw level indicator
                 const indicatorWidth = gap
                 p.rect(xOffset, sketchModel.getHeight() - yOffset - level, indicatorWidth, level)
@@ -88,7 +85,7 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
                     p.line(x, y1, x, y2)
                 })
             }
-            stars.forEach((s) => p.rect(s.x, s.y, s.dim, s.dim))
+            stars.forEach((s) => s.draw(p))
             p.rect(padding + (transport.getPosition() % innerWidth), yOffset, dim, dim)
 
             // Draw noise band display

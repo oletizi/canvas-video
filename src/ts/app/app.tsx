@@ -3,7 +3,7 @@ import React from 'react'
 import {Container, Flex, Separator} from '@chakra-ui/react'
 import {Provider} from "@/components/chakra/provider"
 import p5 from "p5";
-import {newExperimentSketch, newSketchModel, SketchModel} from "@/sketch/sketch-common";
+import {newExperimentSketch, SketchModel} from "@/sketch/sketch-common";
 import {
     newNoiseBandModel,
     newRandomBandOptions,
@@ -12,9 +12,9 @@ import {
 } from "@/components/noise-band-control-panel";
 import {newTransport, TransportView} from "@/components/transport";
 import {Button} from "@/components/chakra/button";
-import {loadAudio, newSamplePlayer, SampleListener} from "@/audio/audio";
+import {loadAudio, newSamplePlayer} from "@/audio/audio";
 import {newClientOutput} from "../../process-output";
-import {SampleAnalyzer, newSampleAnalyzer} from "@/sketch/sample-analyzer";
+import {newSampleAnalyzer} from "@/audio/sample-analyzer";
 
 const r = document.getElementById('app')
 
