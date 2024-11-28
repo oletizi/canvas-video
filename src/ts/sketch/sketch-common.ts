@@ -19,10 +19,6 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
 
     return (p: p5) => {
         p.preload = () => {
-            // p.load
-            // sound = p.loadSound('//assets/doorbell.mp3');
-            // waves = p.loadSound('/assets/waves.wav')
-            // loadAudio(ac, '/assets/waves.wav').then(s => console.log(`Loaded!`)).catch(e => console.error(e))
         }
 
         p.setup = () => {
@@ -34,11 +30,14 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
         p.draw = () => {
             let padding = 30
             noiseBandModel.update(p)
-            const gap = noiseBandModel.getBandGap();
+            const gap = noiseBandModel.getBandGap()
             p.background(sketchModel.getBackground())
-            p.fill(255);
+            p.fill(255)
             const innerWidth = sketchModel.getWidth() - 2 * padding
-            p.rect(padding + (transport.getPosition()% innerWidth), 20, 55, 55)
+
+            const yOffset = padding
+            const dim = 50
+            p.rect(padding + (transport.getPosition()% innerWidth), yOffset, dim, dim)
             const sa = analyzer()
             if (sa) {
                 let gap = padding
@@ -58,7 +57,7 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
                 p.stroke(255)
                 p.strokeWeight(w)
                 sa.getFft().forEach((f, i) => {
-                    const ff = f + 160
+                    const ff = 255 + f
                     const x = xOffset + (i * w)
                     const y2 = y1 - ff
                     p.line(x, y1, x, y2)
