@@ -10,10 +10,11 @@ import {
     NoiseBandControlPanel,
     NoiseBandOptions
 } from "@/components/noise-band-control-panel";
-import {newTransport, TransportView} from "@/components/transportView";
+import {newTransport, TransportView} from "@/components/transport";
 import {Button} from "@/components/chakra/button";
 import {loadAudio, newSamplePlayer, SampleListener} from "@/audio/audio";
 import {newClientOutput} from "../../process-output";
+import {LevelMeter, newLevelMeter} from "@/sketch/level-meter";
 
 const r = document.getElementById('app')
 
@@ -39,14 +40,16 @@ const sketchModel = newSketchModel({width: window.innerWidth, height: 500, paren
 const nb = newNoiseBandModel(sketchModel, optset, bandGap, opacity);
 const tp = newTransport()
 
-const p = new p5(newExperimentSketch(sketchModel, tp, nb))
-
 const sampleListener: SampleListener = {
     timeDomainData(buf: Float32Array) {
         const out = newClientOutput('sampleListener: ')
         out.log(`Time domain data!`)
     }
 }
+
+let levelMeter
+const p = new p5(newExperimentSketch(sketchModel, tp, nb, () => levelMeter))
+
 
 // TODO: Move this to a module somewhere
 function startAudio(): AudioContext {
@@ -62,6 +65,7 @@ function startAudio(): AudioContext {
             out.log(`Creating new sample player for sample:`)
             out.log(s)
             newSamplePlayer(tp, s)
+            levelMeter = newLevelMeter(s)
         }
     }).catch(e => console.error(e))
     return audioContext
