@@ -25,7 +25,7 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
     const yOffset = padding
     let fill = 255
     vuMeter = new VuMeter(0.1, 0.3, 24)
-    const vuMeterWaves = new VuMeter(5, 5, 24)
+    const vuMeterWaves = new VuMeter(5, 10, 24)
     const xmin = 0
     const xmax = sketchModel.getWidth()
     const ymin = 0
@@ -80,7 +80,7 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
                 const level = 10 * Math.pow(scale(vu, 0, 1, 1, sketchModel.getHeight() - yOffset), .5)
 
                 // set square size proportional to audio level
-                dim *= 10 * vu
+                dim *= 10 * vuMeterWaves.getValue()
 
                 // draw level indicator
                 const indicatorWidth = gap

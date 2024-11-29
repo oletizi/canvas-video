@@ -1,4 +1,3 @@
-// Gaussian (Normal) Distribution Function
 import {scale} from "@/lib-core"
 import {Sprite} from "@/sketch/sketch-common";
 import p5 from "p5";
@@ -29,7 +28,7 @@ class Wave implements Sprite {
     draw(p: p5) {
         const l = this.vu.getValue()
 
-        const stdDev = scale(1 - l, 0, 1, 0, 2)
+        const stdDev = scale(1 - l, 0, 1, 0, 1.5)
         // const dmax = scale(l, 0, 1, 2, 10)
         const waveHeight = this.h - scale(l, 0, 1, 0, this.h)
         for (let x = 0; x < this.w; x++) {
