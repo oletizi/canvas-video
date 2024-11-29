@@ -1,10 +1,11 @@
-import {rand, scale} from "@/lib-core"
+import {scale} from "@/lib-core"
 import p5 from "p5"
 import {NoiseBandModel} from "@/components/noise-band-control-panel";
 import {Transport} from "@/components/transport";
 import {SampleAnalyzer} from "@/audio/sample-analyzer";
 import {VuMeter} from "@/audio/vu-meter";
-import {newStar, newStarField} from "@/sketch/stars";
+import {newStarField} from "@/sketch/stars";
+import {newWave, Wave} from "@/sketch/waves";
 
 export interface SketchModel {
     getHeight(): number
@@ -29,6 +30,7 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
     const ymin = 0
     const ymax = sketchModel.getHeight() - padding
     const stars = newStarField(1024, xmin, xmax, ymin, ymax, 1, 50, () => vuMeter)
+    const wave = newWave(sketchModel.getWidth(), sketchModel.getHeight() - padding, vuMeter)
     return (p: p5) => {
         p.preload = () => {
 
@@ -48,6 +50,17 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
 
             let dim = 50
             const sa = analyzer()
+
+            // draw stars
+            stars.forEach((s) => s.draw(p))
+
+            // draw moon
+            p.rect((padding + ((transport.getPosition() / 32) % innerWidth)) - dim/2, yOffset - dim/2, dim, dim)
+
+
+            // draw waves
+            p.stroke(127)
+            wave.draw(p)
 
             if (sa) {
 
@@ -84,11 +97,9 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
                     p.line(x, y1, x, y2)
                 })
             }
-            // draw stars
-            stars.forEach((s) => s.draw(p))
 
-            // draw moon
-            p.rect((padding + ((transport.getPosition() / 32) % innerWidth)) - dim/2, yOffset - dim/2, dim, dim)
+
+
 
             // Draw noise band display
             if (gap > 0) {
@@ -102,4 +113,8 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
             transport.tick()
         }
     }
+}
+
+export interface Sprite {
+    draw(p: p5)
 }

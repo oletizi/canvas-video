@@ -1,10 +1,7 @@
 import p5 from "p5";
 import {VuMeter} from "@/audio/vu-meter";
 import {rand} from "@/lib-core";
-
-interface Sprite {
-    draw(p: p5)
-}
+import {Sprite} from "@/sketch/sketch-common";
 
 
 export function newStarField(count: number, xmin: number, xmax: number, ymin: number, ymax: number, minFactor: number, maxFactor: number, getVuMeter: () => VuMeter): Sprite[] {
