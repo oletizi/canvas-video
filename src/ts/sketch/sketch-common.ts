@@ -5,7 +5,7 @@ import {Transport} from "@/components/transport";
 import {SampleAnalyzer} from "@/audio/sample-analyzer";
 import {VuMeter} from "@/audio/vu-meter";
 import {newStarField} from "@/sketch/stars";
-import {newWave, Wave} from "@/sketch/waves";
+import {newWave} from "@/sketch/waves";
 
 export interface SketchModel {
     getHeight(): number
@@ -25,12 +25,13 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
     const yOffset = padding
     let fill = 255
     vuMeter = new VuMeter(0.1, 0.3, 24)
+    const vuMeterWaves = new VuMeter(5, 5, 24)
     const xmin = 0
     const xmax = sketchModel.getWidth()
     const ymin = 0
     const ymax = sketchModel.getHeight() - padding
     const stars = newStarField(1024, xmin, xmax, ymin, ymax, 1, 50, () => vuMeter)
-    const wave = newWave(sketchModel.getWidth(), sketchModel.getHeight() - padding, vuMeter)
+    const wave = newWave(sketchModel.getWidth(), sketchModel.getHeight() - padding, vuMeterWaves)
     return (p: p5) => {
         p.preload = () => {
 
@@ -54,8 +55,6 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
             // draw stars
             stars.forEach((s) => s.draw(p))
 
-            // draw moon
-            p.rect((padding + ((transport.getPosition() / 32) % innerWidth)) - dim/2, yOffset - dim/2, dim, dim)
 
 
             // draw waves
@@ -71,9 +70,12 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
                 if (transport.getPosition() % 8 == 0) {
                     target = sa.getLevel()
                     vuMeter.setTarget(target)
+                    vuMeterWaves.setTarget(target)
                 }
                 // vu = (target - vu) / 2
                 vuMeter.update()
+                vuMeterWaves.update()
+
                 vu = vuMeter.getValue()
                 const level = 10 * Math.pow(scale(vu, 0, 1, 1, sketchModel.getHeight() - yOffset), .5)
 
@@ -98,8 +100,8 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
                 })
             }
 
-
-
+            // draw moon
+            p.rect((padding + ((transport.getPosition() / 32) % innerWidth)) - dim/2, yOffset - dim/2, dim, dim)
 
             // Draw noise band display
             if (gap > 0) {
