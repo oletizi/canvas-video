@@ -31,7 +31,22 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
     const ymin = 0
     const ymax = sketchModel.getHeight() - padding
     const stars = newStarField(1024, xmin, xmax, ymin, ymax, 1, 50, () => vuMeter)
-    const wave = newWave(sketchModel.getWidth(), sketchModel.getHeight() - padding, vuMeterWaves)
+    const wave = newWave({
+        waveHeight: (sketchModel.getHeight() - padding) /2,
+        width: sketchModel.getWidth(),
+        height: sketchModel.getHeight() - padding,
+        phase: 0,
+        speed: 1,
+        vuMeter: vuMeterWaves
+    })
+    const wave2 = newWave({
+        waveHeight: (sketchModel.getHeight() - padding) / 4,
+        width: sketchModel.getWidth(),
+        height: sketchModel.getHeight() - padding,
+        phase: 0.5,
+        speed: .5,
+        vuMeter: vuMeterWaves
+    })
     return (p: p5) => {
         p.preload = () => {
 
@@ -55,9 +70,9 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
             // draw stars
             stars.forEach((s) => s.draw(p))
 
-
-
             // draw waves
+            p.stroke(110)
+            wave2.draw(p)
             p.stroke(127)
             wave.draw(p)
 
@@ -70,12 +85,8 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
                 if (transport.getPosition() % 8 == 0) {
                     target = sa.getLevel()
                     vuMeters.setTarget(target)
-                    // vuMeter.setTarget(target)
-                    // vuMeterWaves.setTarget(target)
                 }
-                // vu = (target - vu) / 2
-                // vuMeter.update()
-                // vuMeterWaves.update()
+
                 vuMeters.update()
                 vu = vuMeter.getValue()
                 const level = 10 * Math.pow(scale(vu, 0, 1, 1, sketchModel.getHeight() - yOffset), .5)
@@ -102,7 +113,7 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
             }
 
             // draw moon
-            p.rect((padding + ((transport.getPosition() / 32) % innerWidth)) - dim/2, yOffset - dim/2, dim, dim)
+            p.rect((padding + ((transport.getPosition() / 32) % innerWidth)) - dim / 2, yOffset - dim / 2, dim, dim)
 
             // Draw noise band display
             if (gap > 0) {
