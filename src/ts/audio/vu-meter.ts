@@ -1,4 +1,32 @@
-export class VuMeter {
+export interface VuListener {
+    update()
+    setTarget(value: number)
+}
+
+export interface VuFactory extends VuListener {
+    newVuMeter(attackTime: number, decayTime: number, fps: number): VuMeter
+}
+
+export interface VuMeter extends VuListener {
+    getValue(): number
+}
+
+export function newVuFactory(): VuFactory {
+    const listeners: VuListener[] = []
+    return {
+        newVuMeter(attackTime: number, decayTime: number, fps: number) {
+            const rv = new VuMeterBallistics(attackTime, decayTime, fps)
+            listeners.push(rv)
+            return rv
+        }, setTarget(value: number) {
+            listeners.forEach(l => l.setTarget(value))
+        }, update() {
+            listeners.forEach(l => l.update())
+        }
+    }
+}
+
+class VuMeterBallistics implements VuMeter {
     private readonly attackTime: number;
     private readonly decayTime: number;
     private readonly fps: number;
@@ -6,7 +34,7 @@ export class VuMeter {
     private targetValue: number;
     private readonly frameDuration: number;
 
-    constructor(attackTime = 0.1, decayTime = 0.3, fps = 60) {
+    constructor(attackTime = 0.1, decayTime = 0.3, fps = 24) {
         this.attackTime = attackTime; // Time to respond to increase (in seconds)
         this.decayTime = decayTime;  // Time to decay (in seconds)
         this.fps = fps;              // Frames per second for updates

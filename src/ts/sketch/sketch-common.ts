@@ -3,7 +3,7 @@ import p5 from "p5"
 import {NoiseBandModel} from "@/components/noise-band-control-panel";
 import {Transport} from "@/components/transport";
 import {SampleAnalyzer} from "@/audio/sample-analyzer";
-import {VuMeter} from "@/audio/vu-meter";
+import {newVuFactory, VuMeter} from "@/audio/vu-meter";
 import {newStarField} from "@/sketch/stars";
 import {newWave} from "@/sketch/waves";
 
@@ -18,14 +18,14 @@ export interface SketchModel {
 }
 
 export function newExperimentSketch(sketchModel: SketchModel, transport: Transport, noiseBandModel: NoiseBandModel, analyzer: () => SampleAnalyzer) {
-    let vuMeter: VuMeter
     let vu = 0
     let target = 0
     let padding = 30
     const yOffset = padding
     let fill = 255
-    vuMeter = new VuMeter(0.1, 0.3, 24)
-    const vuMeterWaves = new VuMeter(5, 10, 24)
+    const vuMeters = newVuFactory()
+    const vuMeter = vuMeters.newVuMeter(0.1, 0.3, 24)
+    const vuMeterWaves = vuMeters.newVuMeter(5, 10, 24)
     const xmin = 0
     const xmax = sketchModel.getWidth()
     const ymin = 0
@@ -69,13 +69,14 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
                 const fft = sa.getFft()
                 if (transport.getPosition() % 8 == 0) {
                     target = sa.getLevel()
-                    vuMeter.setTarget(target)
-                    vuMeterWaves.setTarget(target)
+                    vuMeters.setTarget(target)
+                    // vuMeter.setTarget(target)
+                    // vuMeterWaves.setTarget(target)
                 }
                 // vu = (target - vu) / 2
-                vuMeter.update()
-                vuMeterWaves.update()
-
+                // vuMeter.update()
+                // vuMeterWaves.update()
+                vuMeters.update()
                 vu = vuMeter.getValue()
                 const level = 10 * Math.pow(scale(vu, 0, 1, 1, sketchModel.getHeight() - yOffset), .5)
 
