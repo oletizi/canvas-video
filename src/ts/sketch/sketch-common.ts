@@ -25,27 +25,47 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
     let fill = 255
     const vuMeters = newVuFactory()
     const vuMeter = vuMeters.newVuMeter(0.1, 0.3, 24)
-    const vuMeterWaves = vuMeters.newVuMeter(5, 10, 24)
+    const vuMeterWaves = vuMeters.newVuMeter(0.1, 10, 24)
     const xmin = 0
     const xmax = sketchModel.getWidth()
     const ymin = 0
     const ymax = sketchModel.getHeight() - padding
     const stars = newStarField(1024, xmin, xmax, ymin, ymax, 1, 50, () => vuMeter)
     const wave = newWave({
-        waveHeight: (sketchModel.getHeight() - padding) /2,
+        waveHeight: (sketchModel.getHeight() - padding),
         width: sketchModel.getWidth(),
         height: sketchModel.getHeight() - padding,
         phase: 0,
         speed: 1,
-        vuMeter: vuMeterWaves
+        vuMeter: vuMeterWaves,
+        q: 1.3
     })
     const wave2 = newWave({
-        waveHeight: (sketchModel.getHeight() - padding) / 4,
+        waveHeight: (sketchModel.getHeight() - padding) * 0.9,
         width: sketchModel.getWidth(),
         height: sketchModel.getHeight() - padding,
         phase: 0.5,
         speed: .5,
-        vuMeter: vuMeterWaves
+        vuMeter: vuMeterWaves,
+        q: 1.3
+    })
+    const wave3 = newWave({
+        waveHeight: (sketchModel.getHeight() - padding) * 0.8,
+        width: sketchModel.getWidth(),
+        height: sketchModel.getHeight() - padding,
+        phase: 0.25,
+        speed: .25,
+        vuMeter: vuMeterWaves,
+        q: 1.3
+    })
+    const wave4 = newWave({
+        waveHeight: (sketchModel.getHeight() - padding) * 0.7,
+        width: sketchModel.getWidth(),
+        height: sketchModel.getHeight() - padding,
+        phase: 0.125,
+        speed: .125,
+        vuMeter: vuMeterWaves,
+        q: 1.4
     })
     return (p: p5) => {
         p.preload = () => {
@@ -72,8 +92,12 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
 
             // draw waves
             p.stroke(110)
+            wave4.draw(p)
+            p.stroke(120)
+            wave3.draw(p)
+            p.stroke(130)
             wave2.draw(p)
-            p.stroke(127)
+            p.stroke(140)
             wave.draw(p)
 
             if (sa) {

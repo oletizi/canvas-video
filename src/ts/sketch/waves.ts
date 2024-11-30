@@ -10,6 +10,7 @@ export interface WaveOptions {
     phase: number
     speed: number
     vuMeter: VuMeter
+    q: number
 }
 
 export function newWave(opts: WaveOptions): Sprite {
@@ -36,8 +37,9 @@ class Wave implements Sprite {
         const l = vu.getValue()
         const h = this.opts.height
         const w = this.opts.width
+        const q = this.opts.q
         const speed = this.opts.speed
-        const stdDev = scale(1 - l, 0, 1, 0, 1.5)
+        const stdDev = scale(1 - l, 0, 1, 0, q)
         // const dmax = scale(l, 0, 1, 2, 10)
         const waveHeight = this.opts.waveHeight - scale(l, 0, 1, 0, this.opts.waveHeight)
         for (let x = 0; x < w; x++) {
