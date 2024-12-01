@@ -6,6 +6,7 @@ import {SampleAnalyzer} from "@/audio/sample-analyzer";
 import {newVuFactory, VuMeter} from "@/audio/vu-meter";
 import {newStarField} from "@/sketch/stars";
 import {newWave} from "@/sketch/waves";
+import {newSurfer} from "@/sketch/surfer";
 
 export interface SketchModel {
     getHeight(): number
@@ -15,9 +16,12 @@ export interface SketchModel {
     getParentId(): string
 
     getBackground(): number
+
+    shouldDraw(): boolean
 }
 
 export function newExperimentSketch(sketchModel: SketchModel, transport: Transport, noiseBandModel: NoiseBandModel, analyzer: () => SampleAnalyzer) {
+    const showMeters = false
     let vu = 0
     let target = 0
     let padding = 30
@@ -32,7 +36,7 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
     const ymax = sketchModel.getHeight() - padding
     const stars = newStarField(1024, xmin, xmax, ymin, ymax, 1, 50, () => vuMeter)
     const wave = newWave({
-        waveHeight: (sketchModel.getHeight() - padding),
+        waveHeight: (sketchModel.getHeight()),
         width: sketchModel.getWidth(),
         height: sketchModel.getHeight() - padding,
         phase: 0,
@@ -41,7 +45,7 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
         q: 1.3
     })
     const wave2 = newWave({
-        waveHeight: (sketchModel.getHeight() - padding) * 0.9,
+        waveHeight: (sketchModel.getHeight()) * 0.9,
         width: sketchModel.getWidth(),
         height: sketchModel.getHeight() - padding,
         phase: 0.5,
@@ -50,7 +54,7 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
         q: 1.3
     })
     const wave3 = newWave({
-        waveHeight: (sketchModel.getHeight() - padding) * 0.8,
+        waveHeight: (sketchModel.getHeight()) * 0.8,
         width: sketchModel.getWidth(),
         height: sketchModel.getHeight() - padding,
         phase: 0.25,
@@ -59,14 +63,32 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
         q: 1.3
     })
     const wave4 = newWave({
-        waveHeight: (sketchModel.getHeight() - padding) * 0.7,
+        waveHeight: (sketchModel.getHeight()) * 0.7,
         width: sketchModel.getWidth(),
-        height: sketchModel.getHeight() - padding,
+        height: sketchModel.getHeight() -padding ,
         phase: 0.125,
         speed: .125,
         vuMeter: vuMeterWaves,
         q: 1.4
     })
+
+    const surfer = newSurfer({
+        width: 10,
+        height: 4,
+        phase: .75,
+        speed: .25,
+    })
+    wave.addObserver(surfer)
+
+    const surfer2 = newSurfer({
+        width: 10,
+        height: 4,
+        phase: .8,
+        speed: .125,
+    })
+    wave2.addObserver(surfer2)
+
+
     return (p: p5) => {
         p.preload = () => {
 
@@ -78,11 +100,14 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
         }
 
         p.draw = () => {
+            if (! sketchModel.shouldDraw()) return
             p.fill(fill)
+            p.fill(255)
             noiseBandModel.update(p)
             const gap = noiseBandModel.getBandGap()
             p.background(sketchModel.getBackground())
             const innerWidth = sketchModel.getWidth() - 2 * padding
+            p.rect(0, sketchModel.getHeight() - padding , window.innerWidth, padding)
 
             let dim = 50
             const sa = analyzer()
@@ -97,11 +122,12 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
             wave3.draw(p)
             p.stroke(130)
             wave2.draw(p)
+            surfer2.draw(p)
             p.stroke(140)
             wave.draw(p)
+            surfer.draw(p)
 
             if (sa) {
-
                 const gap = padding
                 const yOffset = gap
                 let xOffset = gap
@@ -113,27 +139,30 @@ export function newExperimentSketch(sketchModel: SketchModel, transport: Transpo
 
                 vuMeters.update()
                 vu = vuMeter.getValue()
-                const level = 10 * Math.pow(scale(vu, 0, 1, 1, sketchModel.getHeight() - yOffset), .5)
+                const level = 10 * Math.pow(scale(vu, 0, 1, 1, sketchModel.getHeight() - yOffset), .6)
 
                 // set square size proportional to audio level
                 dim *= 10 * vuMeterWaves.getValue()
 
                 // draw level indicator
-                const indicatorWidth = gap
-                p.rect(xOffset, sketchModel.getHeight() - yOffset - level, indicatorWidth, level)
+                if (showMeters) {
 
-                // draw FFT graph
-                xOffset += gap + indicatorWidth
-                const w = (sketchModel.getWidth() - xOffset - padding) / fft.length
-                const y1 = sketchModel.getHeight() - yOffset
-                p.stroke(255)
-                p.strokeWeight(w)
-                sa.getFft().forEach((f, i) => {
-                    const ff = 160 + f
-                    const x = xOffset + (i * w)
-                    const y2 = y1 - ff
-                    p.line(x, y1, x, y2)
-                })
+                    const indicatorWidth = gap
+                    p.rect(xOffset, sketchModel.getHeight() - yOffset - level, indicatorWidth, level)
+
+                    // draw FFT graph
+                    xOffset += gap + indicatorWidth
+                    const w = (sketchModel.getWidth() - xOffset - padding) / fft.length
+                    const y1 = sketchModel.getHeight() - yOffset
+                    p.stroke(255, 64)
+                    p.strokeWeight(w)
+                    sa.getFft().forEach((f, i) => {
+                        const ff = 160 + f
+                        const x = xOffset + (i * w)
+                        const y2 = y1 - ff
+                        p.line(x, y1, x, y2)
+                    })
+                }
             }
 
             // draw moon
