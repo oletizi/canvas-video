@@ -11,7 +11,10 @@ app.use(express.static(path.join(process.cwd(), 'build', 'site', 'static'), {ext
 app.get('/assets/video/waves.mp4', async (req, res) => {
     res.sendFile(path.join(process.cwd(), 'assets', 'video', 'waves.mp4'))
 })
-
+app.get('/song-client.js', async (req, res) =>{
+    console.log(`Song client!`)
+    res.sendFile(path.join(process.cwd(), 'build', 'site', 'song-client.js'))
+})
 app.listen(port, () => {
     console.log(`Converter app listening on port ${port}`)
 })

@@ -3,7 +3,7 @@ import React from 'react'
 import {Center, Container, Flex, Group, Separator} from '@chakra-ui/react'
 import {Provider} from "@/components/chakra/provider"
 import p5 from "p5";
-import {newExperimentSketch, SketchModel} from "@/sketch/sketch-common";
+import {newExperimentSketch, newP5Sketch, SketchModel} from "@/sketch/sketch-common";
 import {
     newNoiseBandModel,
     newRandomBandOptions,
@@ -47,7 +47,8 @@ const nb = newNoiseBandModel(sketchModel, optset, bandGap, opacity);
 const tp = newTransport()
 
 let levelMeter
-const p = new p5(newExperimentSketch(sketchModel, tp, nb, () => levelMeter))
+let sketch = newExperimentSketch(sketchModel, tp, nb, () => levelMeter);
+const p = new p5(newP5Sketch(sketch))
 
 
 // TODO: Move this to a module somewhere

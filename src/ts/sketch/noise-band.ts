@@ -1,12 +1,13 @@
 import p5 from "p5";
 import {rand} from "@/lib-core";
 import {NoiseBandOptions} from "@/components/noise-band-control-panel";
+import {Graphics, Image} from "@/sketch/sketch-common";
 
-export function noiseBand(p: p5, optset: NoiseBandOptions[]) {
-    let rv: p5.Image
+export function noiseBand(g: Graphics, optset: NoiseBandOptions[]) {
+    let rv: Image
     for (let i = 0; i < optset.length; i++) {
         const opts = optset[i]
-        const img = p.createImage(opts.getWidth(), opts.getHeight())
+        const img = g.createImage(opts.getWidth(), opts.getHeight())
         const range = opts.getBandRange()
         for (let x = 0; x < img.width; x++) {
             for (let y = 0; y < img.height; y++) {
@@ -31,6 +32,7 @@ export function noiseBand(p: p5, optset: NoiseBandOptions[]) {
         if (!rv) {
             rv = img
         } else {
+            const i: p5.Image = {}
             rv.copy(img, 0, 0, img.width, img.height, 0, 0, rv.width, rv.height)
         }
     }

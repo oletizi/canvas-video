@@ -1,28 +1,9 @@
-import {Center, Flex} from "@chakra-ui/react";
+import {Center} from "@chakra-ui/react";
 import {NumberInputField, NumberInputRoot} from "@/components/chakra/number-input";
 import React from "react";
 import p5 from "p5";
 import {noiseBand} from "@/sketch/noise-band";
-import {SketchModel} from "@/sketch/sketch-common";
-
-interface Range {
-    min: number
-    max: number
-}
-
-interface ColorRange {
-    r: Range
-    g: Range
-    b: Range
-    a: Range
-}
-
-interface Color {
-    r: number
-    g: number
-    b: number
-    a: number
-}
+import {Color, ColorRange, Graphics, Range, SketchModel} from "@/sketch/sketch-common";
 
 export interface NoiseBandOptions {
     // Height
@@ -200,7 +181,7 @@ export interface NoiseBandModel {
     setOpacity(o: number)
 
     // State
-    update(p: p5)
+    update(g: Graphics)
 
     isDirty(): boolean
 

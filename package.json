@@ -10,9 +10,10 @@
     "build:sass": "npx sass src/scss/styles.scss build/site/styles.css && npx sass src/scss/app.scss build/site/static/css/app.css",
     "build:static": "mkdir -p build/site/static && (cd ./src/static && rsync -a .  ../../build/site/static/.) && rsync -a assets build/site/static/.",
     "build:client": "npm run build:static && npm run build:sass && npx esbuild src/ts/app/client.ts --bundle --outfile=build/site/client.js",
+    "build:songs" : "npm run build:static && npm run build:sass && npx esbuild src/ts/songs/song-client.tsx --bundle --outfile=build/site/song-client.js",
     "build:app": "npm run build:static && npm run build:sass && npx esbuild src/ts/app/app.tsx --bundle --outfile=build/site/static/js/app.js",
     "build:all": "npm run build:client && npm run build:app",
-    "build": "npm run build:app",
+    "build": "npm run build:app && npm run build:songs",
     "start": "npm run build && tsx src/ts/app/server.ts",
     "main:audio": "tsx src/ts/audio/main.ts",
     "test": "TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\"}' c8 mocha 'test/**/*.test.{js,ts,tsx}'"
