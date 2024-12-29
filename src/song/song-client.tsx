@@ -1,5 +1,6 @@
-import {newSong, Song, SongView} from "@/songs/song";
+import {newSong, Song} from "@/song/song";
 import {createRoot, Root} from "react-dom/client";
+import {SongView} from "@/components/song-view";
 
 console.log(`Song client!`)
 const song = newSong()

@@ -113,6 +113,8 @@ class P5Graphics implements Graphics {
         this.p.fill(fill)
     }
 
+
+    // noinspection JSAnnotator
     image(img: Image, x: number, y: number): void {
         this.p.image(img.getImplementation(), x, y)
     }
@@ -185,7 +187,6 @@ export function newP5Sketch(e: Sketch) {
 export function newExperimentSketch(sketchModel: SketchModel, transport: Transport, noiseBandModel: NoiseBandModel, analyzer: () => SampleAnalyzer): Sketch {
     const showMeters = false
     let foreground = 140;
-    let layers = new Array()
     let vu = 0
     let target = 0
     let padding = 30

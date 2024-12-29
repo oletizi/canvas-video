@@ -5,14 +5,35 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "allowSyntheticDefaultImports": true,
-    "baseUrl": "./src/ts",
+    "baseUrl": "./src/",
     "paths": {
-      "@/*": ["*"]
+      "@/*": [
+        "*",
+        "ts/*"
+      ]
     },
-    "jsx": "react"
+    "jsx": "preserve",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "incremental": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
   },
   "include": [
+    "node_modules/@types/p5/global.d.ts",
     "src/**/*",
-    "node_modules/@types/p5/global.d.ts"
+    "./build/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
   ]
 }
