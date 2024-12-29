@@ -4,13 +4,13 @@ import {SongView} from "@/components/song-view";
 import {useEffect, useRef, useState} from "react";
 import {useParams} from "next/navigation";
 import {fabric} from "fabric";
-import {newDefaultAnimation, SongAnimation} from "@/video/song-animation";
-
+import {AnimationType, newDefaultAnimation, SongAnimation} from "@/video/song-animation";
+import AnimationTypeSelector from "@/components/animation-type";
 
 export default function Page() {
-
     const canvasRef = useRef<any>(null);
     const {path} = useParams()
+    const [animationType, setAnimationType] = useState(AnimationType.DEFAULT)
     const width = window.innerWidth
     const height = 2 * window.innerHeight / 3
     const framerate = 60
@@ -38,7 +38,7 @@ export default function Page() {
                 clearInterval(interval)
             }
         }
-    }, [])
+    }, [animationType])
 
     return (<div>
         <canvas ref={canvasRef} width={width} height={height} style={{border: "1px solid black"}}/>
@@ -46,6 +46,7 @@ export default function Page() {
             <div className="flex items-center content-center gap-5">
                 <SongView startAudio={() => song.startAudio(`/api/audio/${path}.wav`)}
                           transport={song.getTransport()}/>
+                <AnimationTypeSelector onChange={(v) => setAnimationType(v)}/>
             </div>
         </div>
     </div>)

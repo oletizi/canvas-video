@@ -4,7 +4,10 @@ import {Song} from "@/song/song";
 import {VuMeter} from "@/audio/vu-meter";
 
 export enum AnimationType {
-    DEFAULT
+    DEFAULT,
+    Foo,
+    Bar,
+    Baz
 }
 
 export interface SongAnimation {
