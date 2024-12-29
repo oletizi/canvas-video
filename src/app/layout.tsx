@@ -1,23 +1,17 @@
+"use client"
 import {AppRouterCacheProvider} from "@mui/material-nextjs/v13-appRouter";
 import theme from '../theme'
 import {ThemeProvider} from "next-themes";
 
-export default function RootLayout({
-                                       children,
-                                   }: {
-    children: React.ReactNode
-}) {
+export default function RootLayout({children}: { children: React.ReactNode }) {
     return (
-        <html>
-        <body>
-
+        <html lang="en">
+        <body className=" bg-white text-neutral-800">
         <AppRouterCacheProvider>
             <ThemeProvider theme={theme}>
-                <div className="container">
-                    {children}
-                </div>
+                {children}
             </ThemeProvider>
         </AppRouterCacheProvider>
         </body>
-</html>)
+        </html>)
 }

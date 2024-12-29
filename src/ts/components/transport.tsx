@@ -12,7 +12,6 @@ export function TransportView({model}: { model: Transport }) {
         </Group>)
 }
 
-
 export interface TransportListener {
     started()
 

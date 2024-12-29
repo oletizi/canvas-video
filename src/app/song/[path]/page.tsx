@@ -1,14 +1,23 @@
 "use client"
 import {newSong} from "@/song/song";
 import {SongView} from "@/components/song-view";
-import {useEffect, useRef} from "react";
+import {useRef, useState} from "react";
+import {useParams} from "next/navigation";
 
-export default async function Page({params}: { params: Promise<{ path: string }> }) {
+export default function Page() {
     const canvasRef = useRef<any>(null);
+    const {path} = useParams()
     const song = newSong()
-    const p = (await params).path
-    return (<>
-        <canvas ref={canvasRef} width={800} height={600} style={{border: "1px solid black"}}/>
-        <SongView startAudio={() => song.startAudio(`/api/audio/${p}.wav`)} transport={song.getTransport()}/>
-    </>)
+    const width = window.innerWidth
+
+    let content = (<div>Loading...</div>)
+    if (path) {
+        content = (
+            <div>
+                <canvas ref={canvasRef} width={width} height={600} style={{border: "1px solid black"}}/>
+                <SongView startAudio={() => song.startAudio(`/api/audio/${path}.wav`)}
+                          transport={song.getTransport()}/>
+            </div>)
+    }
+    return content
 }
