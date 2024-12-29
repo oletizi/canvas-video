@@ -4,10 +4,11 @@ import {SongView} from "@/components/song-view";
 import {useEffect, useRef, useState} from "react";
 import {useParams} from "next/navigation";
 import {fabric} from "fabric";
-import {newDefaultAnimation, SongAnimation} from "@/video/songAnimation";
+import {newDefaultAnimation, SongAnimation} from "@/video/song-animation";
 
 
 export default function Page() {
+
     const canvasRef = useRef<any>(null);
     const {path} = useParams()
     const width = window.innerWidth
@@ -20,13 +21,15 @@ export default function Page() {
         let interval = null
         const transport = song.getTransport()
         if (canvasRef.current) {
-            canvas = new fabric.Canvas(canvasRef.current)
+            canvas = new fabric.Canvas(canvasRef.current, {selection: false})
 
-
-            animation = newDefaultAnimation()
+            animation = newDefaultAnimation(transport)
             animation?.setup(canvas)
+            console.log(`Starting animation loop...`)
             interval = setInterval(() => {
                 animation?.draw(canvas)
+                transport.tick()
+                canvas.renderAll()
             }, frameInterval)
         }
         return () => {
