@@ -6,7 +6,9 @@ import {newTransport, Transport} from "@/components/transport"
 export interface Song {
     startAudio(url: string): AudioContext
 
-    getTransport(): Transport;
+    getTransport(): Transport
+
+    getSampleAnalyzer(): SampleAnalyzer
 }
 
 export function newSong() :Song {
@@ -49,6 +51,10 @@ class SongBase implements Song {
 
     getTransport(): Transport {
         return this.tp
+    }
+
+    getSampleAnalyzer(): SampleAnalyzer {
+        return this.levelMeter
     }
 
 }

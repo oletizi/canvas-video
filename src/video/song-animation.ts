@@ -1,6 +1,8 @@
 import {fabric} from "fabric";
 import {Transport} from "@/components/transport";
 import {Circle} from "fabric/fabric-impl";
+import {SampleAnalyzer} from "@/audio/sample-analyzer";
+import {Song} from "@/song/song";
 
 export interface SongAnimation {
     setup(c: fabric.Canvas)
@@ -8,19 +10,19 @@ export interface SongAnimation {
     draw(c: fabric.Canvas)
 }
 
-export function newDefaultAnimation(transport: Transport) {
-    return new DefaultAnimation(transport)
+export function newDefaultAnimation(song: Song) {
+    return new DefaultAnimation(song)
 }
 
 class DefaultAnimation implements SongAnimation {
-    private readonly transport: Transport;
     private circle: Circle;
     private r = 100
     private max = 150
     private min = 50
     private direction= 1
-    constructor(transport: Transport) {
-        this.transport = transport
+    private song: Song;
+    constructor(song: Song) {
+        this.song = song
     }
 
     setup(c: fabric.Canvas) {
@@ -29,16 +31,19 @@ class DefaultAnimation implements SongAnimation {
     }
 
     draw(c: fabric.Canvas) {
-        this.r += this.direction
-        if (this.r <= this.min || this.r >= this.max) {
-            this.direction *= -1
-        }
+        const transport = this.song.getTransport()
+        const analyzer = this.song.getSampleAnalyzer()
 
         this.circle.setRadius(this.r)
         this.circle.center()
 
-        if (this.transport?.isRunning()) {
-            // Draw stuff ...
+        if (transport?.isRunning()) {
+            this.r = analyzer.getLevel() * 100
+        } else {
+            this.r += this.direction
+            if (this.r <= this.min || this.r >= this.max) {
+                this.direction *= -1
+            }
         }
     }
 }

@@ -23,9 +23,8 @@ export default function Page() {
         if (canvasRef.current) {
             canvas = new fabric.Canvas(canvasRef.current, {selection: false})
 
-            animation = newDefaultAnimation(transport)
+            animation = newDefaultAnimation(song)
             animation?.setup(canvas)
-            console.log(`Starting animation loop...`)
             interval = setInterval(() => {
                 animation?.draw(canvas)
                 transport.tick()
