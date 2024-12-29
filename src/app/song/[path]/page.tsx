@@ -4,7 +4,7 @@ import {SongView} from "@/components/song-view";
 import {useEffect, useRef, useState} from "react";
 import {useParams} from "next/navigation";
 import {fabric} from "fabric";
-import {AnimationType, newDefaultAnimation, SongAnimation} from "@/video/song-animation";
+import {AnimationType, newAnimation, newDefaultAnimation, SongAnimation} from "@/video/song-animation";
 import AnimationTypeSelector from "@/components/animation-type";
 
 export default function Page() {
@@ -25,7 +25,7 @@ export default function Page() {
         if (canvasRef.current) {
             canvas = new fabric.Canvas(canvasRef.current, {selection: false})
 
-            animation = newDefaultAnimation(song, framerate)
+            animation = newAnimation(animationType, song, framerate)
             animation?.setup(canvas)
             interval = setInterval(() => {
                 animation?.draw(canvas)
