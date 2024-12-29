@@ -1,15 +1,15 @@
-import {Group} from "@chakra-ui/react";
-import {Button} from "@/components/chakra/button";
 import {MdOutlinePlayArrow, MdOutlineSkipPrevious, MdOutlineStop} from "react-icons/md";
 import React from "react";
+import {Button, ButtonGroup} from "@mui/material";
 
 export function TransportView({model}: { model: Transport }) {
     return (
-        <Group attached>
-            <Button onClick={() => model.reset()}><MdOutlineSkipPrevious/></Button>
-            <Button onClick={() => model.start()}><MdOutlinePlayArrow/></Button>
-            <Button onClick={() => model.stop()}><MdOutlineStop/></Button>
-        </Group>)
+        <ButtonGroup size="large">
+            <Button onClick={() => model.reset()}><MdOutlineSkipPrevious size="1.25rem"/></Button>
+            <Button onClick={() => model.start()}><MdOutlinePlayArrow size="1.25rem"/></Button>
+            <Button onClick={() => model.stop()}><MdOutlineStop size="1.25rem"/></Button>
+        </ButtonGroup>
+    )
 }
 
 export interface TransportListener {

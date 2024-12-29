@@ -12,6 +12,7 @@ export default function Page() {
     const canvasRef = useRef<any>(null);
     const {path} = useParams()
     const width = window.innerWidth
+    const height = 2 * window.innerHeight / 3
     const framerate = 60
     const frameInterval = 1000 / framerate
     const song = newSong()
@@ -40,9 +41,13 @@ export default function Page() {
     }, [])
 
     return (<div>
-        <canvas ref={canvasRef} width={width} height={600} style={{border: "1px solid black"}}/>
-        <SongView startAudio={() => song.startAudio(`/api/audio/${path}.wav`)}
-                  transport={song.getTransport()}/>
+        <canvas ref={canvasRef} width={width} height={height} style={{border: "1px solid black"}}/>
+        <div className="container mx-auto pt-5">
+            <div className="flex items-center content-center gap-5">
+                <SongView startAudio={() => song.startAudio(`/api/audio/${path}.wav`)}
+                          transport={song.getTransport()}/>
+            </div>
+        </div>
     </div>)
 
 }
