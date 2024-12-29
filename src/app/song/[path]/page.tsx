@@ -12,7 +12,7 @@ export default function Page() {
     const canvasRef = useRef<any>(null);
     const {path} = useParams()
     const width = window.innerWidth
-    const framerate = 24
+    const framerate = 60
     const frameInterval = 1000 / framerate
     const song = newSong()
     let animation: null | SongAnimation = null
@@ -23,7 +23,7 @@ export default function Page() {
         if (canvasRef.current) {
             canvas = new fabric.Canvas(canvasRef.current, {selection: false})
 
-            animation = newDefaultAnimation(song)
+            animation = newDefaultAnimation(song, framerate)
             animation?.setup(canvas)
             interval = setInterval(() => {
                 animation?.draw(canvas)
