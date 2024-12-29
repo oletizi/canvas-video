@@ -13,7 +13,7 @@ export enum AnimationType {
 export interface SongAnimation {
     setup(c: fabric.Canvas)
 
-    draw(c: fabric.Canvas)
+    draw(c: fabric.Canvas | null)
 }
 
 export function newDefaultAnimation(song: Song, fps: number) {
@@ -52,9 +52,6 @@ class DefaultAnimation implements SongAnimation {
 
     draw(c: fabric.Canvas) {
         const transport = this.song.getTransport()
-        const analyzer = this.song.getSampleAnalyzer()
-
-
         if (transport?.isRunning()) {
             // this.r = analyzer.getLevel() * 100
             this.r = DefaultAnimation.DEFAULT_RADIUS + DefaultAnimation.DEFAULT_RADIUS * this.vu.getValue()

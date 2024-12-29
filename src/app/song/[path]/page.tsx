@@ -17,8 +17,9 @@ export default function Page() {
     const frameInterval = 1000 / framerate
     const song = newSong()
     let animation: null | SongAnimation = null
+    let canvas = null
     useEffect(() => {
-        let canvas = null
+        console.log(`Setting up canvas...`)
         let interval = null
         const transport = song.getTransport()
         if (canvasRef.current) {
@@ -29,11 +30,14 @@ export default function Page() {
             interval = setInterval(() => {
                 animation?.draw(canvas)
                 transport.tick()
-                canvas.renderAll()
+                canvas?.renderAll()
             }, frameInterval)
+        } else {
+            console.log(`Canvas ref is null. Not setting up canvas.`)
         }
         return () => {
-            canvas?.dispose().then(canvasRef.current = null)
+
+            canvas?.dispose()
             if (interval) {
                 clearInterval(interval)
             }
