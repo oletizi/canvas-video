@@ -29,7 +29,7 @@ class WebAudioSample implements Sample {
     private readonly c: AudioContext
     private readonly audioBuffer: AudioBuffer
     private readonly analyzer: AnalyserNode
-    private readonly timeDamainBuffer: Float32Array
+    private readonly timeDomainBuffer: Float32Array
     private readonly frequencyDomainBuffer: Float32Array
     private isPlaying = false
     private source;
@@ -40,14 +40,14 @@ class WebAudioSample implements Sample {
         this.c = c
         this.audioBuffer = buffer
         this.analyzer = c.createAnalyser()
-        this.timeDamainBuffer = new Float32Array(this.analyzer.frequencyBinCount)
+        this.timeDomainBuffer = new Float32Array(this.analyzer.frequencyBinCount)
         this.frequencyDomainBuffer = new Float32Array(this.analyzer.frequencyBinCount)
         setInterval((me: WebAudioSample) => {
             if (me.isPlaying) {
                 me.listeners.forEach((l) => {
-                    me.analyzer.getFloatTimeDomainData(me.timeDamainBuffer)
+                    me.analyzer.getFloatTimeDomainData(me.timeDomainBuffer)
                     me.analyzer.getFloatFrequencyData(me.frequencyDomainBuffer)
-                    l.timeDomainData(me.timeDamainBuffer)
+                    l.timeDomainData(me.timeDomainBuffer)
                     l.frequencyDomainData(me.frequencyDomainBuffer)
                 })
             }
