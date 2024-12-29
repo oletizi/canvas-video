@@ -4,25 +4,38 @@ import {SongView} from "@/components/song-view";
 import {useEffect, useRef, useState} from "react";
 import {useParams} from "next/navigation";
 import {fabric} from "fabric";
+import {newDefaultAnimation, SongAnimation} from "@/video/songAnimation";
+
 
 export default function Page() {
     const canvasRef = useRef<any>(null);
     const {path} = useParams()
-    const [fabricComponents, setFabricComponents] = useState<{ canvas: null | fabric.Canvas }>({canvas: null})
     const width = window.innerWidth
+    const framerate = 24
+    const frameInterval = 1000 / framerate
+    const song = newSong()
+    let animation: null | SongAnimation = null
     useEffect(() => {
         let canvas = null
+        let interval = null
+        const transport = song.getTransport()
         if (canvasRef.current) {
             canvas = new fabric.Canvas(canvasRef.current)
-            const circle = new fabric.Circle({radius: 100, left: width/ 4, top: + 150})
-            canvas.add(circle)
-            setFabricComponents({canvas: canvas})
+
+
+            animation = newDefaultAnimation()
+            animation?.setup(canvas)
+            interval = setInterval(() => {
+                animation?.draw(canvas)
+            }, frameInterval)
         }
         return () => {
             canvas?.dispose().then(canvasRef.current = null)
+            if (interval) {
+                clearInterval(interval)
+            }
         }
     }, [])
-    const song = newSong()
 
     return (<div>
         <canvas ref={canvasRef} width={width} height={600} style={{border: "1px solid black"}}/>
