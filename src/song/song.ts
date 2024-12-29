@@ -9,7 +9,7 @@ export interface Song {
     getTransport(): Transport;
 }
 
-export function newSong() {
+export function newSong() :Song {
     return new SongBase()
 }
 

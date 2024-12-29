@@ -3,10 +3,9 @@ import React, {useState} from "react";
 import {Provider} from "@/components/chakra/provider";
 import {Center, Container, Flex, Group, Separator} from "@chakra-ui/react";
 import {Button} from "@/components/chakra/button";
-import {TransportView} from "@/components/transport";
-import {Song} from "@/song/song";
+import {Transport, TransportView} from "@/components/transport";
 
-export function SongView({song, url}: { song: Song, url: string }) {
+export function SongView({startAudio, transport}: { startAudio: () => void, transport: Transport}) {
     const [shouldDraw, setShouldDraw] = useState<boolean>(false)
     const gap = 10
 
@@ -20,11 +19,11 @@ export function SongView({song, url}: { song: Song, url: string }) {
                             <div>Start:</div>
                             <Group attached>
                                 <Button onClick={() => setShouldDraw(!shouldDraw)}>Video</Button>
-                                <Button onClick={() => song.startAudio(url)}>Audio</Button>
+                                <Button onClick={() => startAudio()}>Audio</Button>
                             </Group>
                         </Center>
                         <Separator orientation="vertical" size="lg" height="10"/>
-                        <TransportView model={song.getTransport()}/>
+                        <TransportView model={transport}/>
                     </Flex>
                 </Container>
             </Flex>

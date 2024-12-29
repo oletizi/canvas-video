@@ -10,11 +10,14 @@ export default function RootLayout({
     return (
         <html>
         <body>
+
         <AppRouterCacheProvider>
             <ThemeProvider theme={theme}>
-                {children}
+                <div className="container">
+                    {children}
+                </div>
             </ThemeProvider>
         </AppRouterCacheProvider>
         </body>
-        </html>)
+</html>)
 }
