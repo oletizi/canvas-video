@@ -3,6 +3,10 @@ import {Circle} from "fabric/fabric-impl";
 import {Song} from "@/song/song";
 import {VuMeter} from "@/audio/vu-meter";
 
+export enum AnimationType {
+    DEFAULT
+}
+
 export interface SongAnimation {
     setup(c: fabric.Canvas)
 
@@ -10,7 +14,15 @@ export interface SongAnimation {
 }
 
 export function newDefaultAnimation(song: Song, fps: number) {
-    return new DefaultAnimation(song, fps)
+    return newAnimation(AnimationType.DEFAULT, song, fps)
+}
+
+export function newAnimation(type:AnimationType, song: Song, fps: number) {
+    switch (type) {
+        case AnimationType.DEFAULT:
+        default:
+            return new DefaultAnimation(song, fps)
+    }
 }
 
 class DefaultAnimation implements SongAnimation {
