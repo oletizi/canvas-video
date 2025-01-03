@@ -54,7 +54,7 @@ class Waves implements SongAnimation {
         this.wave = newWaveAnimation({
             height: c.height / 1,
             phase: 0,
-            q: 1,
+            q: 1.2,
             speed: 1,
             vuMeter: this.vu,
             waveHeight: c.height / 2,

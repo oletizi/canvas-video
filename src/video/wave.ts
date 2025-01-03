@@ -34,13 +34,14 @@ class CurveSegment {
     }
 }
 
-class Curve {
+class Curve implements SongAnimation {
     segments: CurveSegment[] = []
     origin: Point
     target: Point
 
     handle1: Point
     handle2: Point
+    private path: fabric.Path;
 
     constructor(origin: Point, target: Point, handle1: Point, handle2: Point) {
         this.origin = origin
@@ -49,40 +50,28 @@ class Curve {
         this.handle2 = handle2
     }
 
-    append(segment) {
+    append(segment: CurveSegment) {
         this.segments.push(segment)
         return this
     }
 
 
-    setup(c) {
+    setup(c: fabric.Canvas) {
+        let s = this.calculate();
+
+        this.path = new fabric.Path(s, {stroke: 'black'})
+        c.add(this.path)
+    }
+
+    draw(c: fabric.Canvas) {
+        this.path.set('path', new fabric.Path(this.calculate()).path)
+    }
+
+    private calculate(): string {
         let s = `M ${this.origin?.x} ${this.origin?.y} C ${this.handle1?.x} ${this.handle1?.y},`
-
         s += `  ${this.handle2?.x} ${this.handle2.y}, ${this.target?.x} ${this.target?.y}`
-
         s += ` ${this.segments.join(' ')}`
-
-        console.log(`Curve: ${s}`)
-        const curve = new fabric.Path(s, {stroke: 'black'})
-        c.add(curve)
-
-        s = `M ${this.origin?.x} ${this.origin?.y} L ${this.handle1?.x} ${this.handle1?.y}`
-        console.log(`Handle 1: ${s}`)
-        const h1 = new fabric.Path(s, {stroke: 'red'})
-        c.add(h1)
-
-        s = `M ${this.target?.x} ${this.target?.y} L ${this.handle2?.x} ${this.handle2.y}`
-        console.log(`Handle 2: ${s}`)
-        const h2 = new fabric.Path(s, {stroke: 'red'})
-        c.add(h2)
-
-        for (const segment of this.segments) {
-            let points = [segment.handle?.x, segment.handle?.y, segment.target?.x, segment.target?.y];
-            console.log(`handle points for ${segment}:`)
-            console.log(points)
-            const l = new fabric.Line(points, {stroke: 'red'})
-            c.add(l)
-        }
+        return s;
     }
 }
 
