@@ -13,20 +13,83 @@ export interface WaveOptions {
     q: number
 }
 
-export interface Wave extends SongAnimation {
+
+interface Point {
+    x: number
+    y: number
 }
 
-export function newWave(opts: WaveOptions): Wave {
-    return new Wave(opts)
+class CurveSegment {
+    target
+    handle
+
+    constructor(target, handle) {
+        this.target = target
+        this.handle = handle
+    }
+
+    toString() {
+        return ` S ${this.handle?.x} ${this.handle?.y}, ${this.target?.x} ${this.target?.y}`
+    }
 }
 
-function normalDistribution(x, mean, stdDev) {
-    const exponent = -((x - mean) ** 2) / (2 * stdDev ** 2);
-    const denominator = stdDev * Math.sqrt(2 * Math.PI);
-    return Math.exp(exponent) / denominator
+class Curve {
+    segments: CurveSegment[] = []
+    origin: Point
+    target: Point
+
+    handle1: Point
+    handle2: Point
+
+    constructor(origin: Point, target: Point, handle1: Point, handle2: Point) {
+        this.origin = origin
+        this.target = target
+        this.handle1 = handle1
+        this.handle2 = handle2
+    }
+
+    append(segment) {
+        this.segments.push(segment)
+        return this
+    }
+
+
+    setup(c) {
+        let s = `M ${this.origin?.x} ${this.origin?.y} C ${this.handle1?.x} ${this.handle1?.y},`
+
+        s += `  ${this.handle2?.x} ${this.handle2.y}, ${this.target?.x} ${this.target?.y}`
+
+        s += ` ${this.segments.join(' ')}`
+
+        console.log(`Curve: ${s}`)
+        const curve = new fabric.Path(s, {stroke: 'black'})
+        c.add(curve)
+
+        s = `M ${this.origin?.x} ${this.origin?.y} L ${this.handle1?.x} ${this.handle1?.y}`
+        console.log(`Handle 1: ${s}`)
+        const h1 = new fabric.Path(s, {stroke: 'red'})
+        c.add(h1)
+
+        s = `M ${this.target?.x} ${this.target?.y} L ${this.handle2?.x} ${this.handle2.y}`
+        console.log(`Handle 2: ${s}`)
+        const h2 = new fabric.Path(s, {stroke: 'red'})
+        c.add(h2)
+
+        for (const segment of this.segments) {
+            let points = [segment.handle?.x, segment.handle?.y, segment.target?.x, segment.target?.y];
+            console.log(`handle points for ${segment}:`)
+            console.log(points)
+            const l = new fabric.Line(points, {stroke: 'red'})
+            c.add(l)
+        }
+    }
 }
 
-class Wave implements SongAnimation {
+export function newWaveAnimation(opts: WaveOptions): SongAnimation {
+    return new WaveAnimation(opts)
+}
+
+class WaveAnimation implements SongAnimation {
     private readonly opts: WaveOptions
     private phase = 0
     private path
@@ -36,61 +99,26 @@ class Wave implements SongAnimation {
     }
 
     setup(c: fabric.Canvas) {
+        const h = c.height
         const w = c.width
-        const h = 2 * c.height / 3
-        const ox = 0
-        const oy = h
-        const origin = `M${ox} ${oy}`
-        const dx1 = 0
-        const dy1 = -h
-        const dx2 = w / 2
-        const dy2 = -h
-        const dxA = w /2
-        const dyA = oy
-        const dx3 = dx2
-        const dy3 = dy2
-        const dxB = w
-        const dyB = oy
+        const top = 0
+        const middle = h / 2
+        const bottom = h
+        const center = w / 2
+        const crest = h - this.opts.waveHeight
+        const unit = w/4
+        let q = 1
+        const crestCoefficient = 1 + 1 - q
+        const baseCoefficient = q
+        const origin = {x: 0, y: h} as Point
+        const target = {x: w, y: h} as Point
 
-
-        this.path = new fabric.Path(`${origin} C${dx1},${dy1} ${dx2},${dy2} ${dxA},${dyA} S${dx3},${dy3} ${dxB}, ${dyB} L${ox} ${oy}`, {top: 0, left: 0})
-        console.log(`path: ${this.path.path}`)
-        c.add(this.path)
+        const curve = new Curve(origin, target, {x: unit * baseCoefficient, y: middle}, {x: center - unit * crestCoefficient, y: crest})
+        curve.setup(c)
     }
 
     draw(c: fabric.Canvas) {
-        if (false) {
 
-            const vu = this.opts.vuMeter
-            const l = vu.getValue()
-            const h = this.opts.height
-            const w = this.opts.width
-            const q = this.opts.q
-            const speed = this.opts.speed
-            const stdDev = scale(1 - l, 0, 1, 0, q)
-            // const dmax = scale(l, 0, 1, 2, 10)
-            const waveHeight = this.opts.waveHeight - scale(l, 0, 1, 0, this.opts.waveHeight)
-            let p = "M0 0"
-            for (let x = 0; x < w; x++) {
-                const xOffset = x + this.phase >= w ? x + this.phase - w : x + this.phase
-                const scaledX = (x / w) * 10 - 5
-                // const y = normalDistribution(scaledX, 0, dmax - scale(l, 0, 1, dmin, dmax))
-                const y = normalDistribution(scaledX, 0, stdDev)
-                // const scaledY = this.h - (y * this.h * 10); // Scale and flip y
-                const scaledY = scale(y, 0, 1, 0, waveHeight)
-                let y2 = h - scaledY
-                p += ` L${x} ${y2}`
-                // const line = this.lines[xOffset]
-                // if (line) {
-                //     line.set({y2: y2})
-                // }
-                // this.data[xOffset] = y2
-                // c.line(xOffset, h, xOffset, y2)
-            }
-            this.path.set({path: new fabric.Path(p).path})
-            this.phase = this.phase == w ? 0 : this.phase + speed
-            // this.observers.forEach(o => o.update(this.data))
-        }
     }
 
 

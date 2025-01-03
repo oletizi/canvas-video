@@ -1,7 +1,7 @@
 import {fabric} from "fabric";
 import {Song} from "@/song/song";
 import {VuMeter} from "@/audio/vu-meter";
-import {newWave, Wave} from "@/video/wave";
+import {newWaveAnimation, Wave} from "@/video/wave";
 import {scale} from "@/lib/lib-core"
 
 export enum AnimationType {
@@ -52,7 +52,7 @@ class Waves implements SongAnimation {
     }
 
     setup(c: fabric.Canvas) {
-        this.wave = newWave({
+        this.wave = newWaveAnimation({
             height: c.height / 1,
             phase: 0,
             q: 1,
