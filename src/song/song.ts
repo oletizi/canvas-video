@@ -1,5 +1,5 @@
-import {newClientOutput, ProcessOutput} from "@/process-output"
-import {loadAudio, newSamplePlayer} from "@/audio/audio"
+import {newClientOutput, ProcessOutput} from "@/lib/process-output"
+import {loadAudio, newSamplePlayer, SampleResult} from "@/audio/audio"
 import {newSampleAnalyzer, SampleAnalyzer} from "@/audio/sample-analyzer"
 import {newTransport, Transport, TransportListener} from "@/components/transport"
 import {newVuFactory, VuFactory, VuMeter} from "@/audio/vu-meter";
@@ -40,7 +40,7 @@ class SongBase implements Song, TransportListener {
             this.audioContext.close().then(out.log(`Audio context closed.`))
         }
         this.audioContext = new AudioContext();
-        loadAudio(this.audioContext, url).then((r) => {
+        loadAudio(this.audioContext, url).then((r :SampleResult) => {
             out.log(r)
             if (r.errors.length > 0) {
                 r.errors.forEach(e => out.error(e))

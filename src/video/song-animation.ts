@@ -1,12 +1,17 @@
 import {fabric} from "fabric";
 import {Song} from "@/song/song";
 import {VuMeter} from "@/audio/vu-meter";
+import {newWave, Wave} from "@/video/wave";
+import {scale} from "@/lib/lib-core"
 
 export enum AnimationType {
     DEFAULT,
+    PulsingEye,
     Wanderer,
+    Waves,
 }
 
+// TODO: Rename this to something more general—like, <Something>Component
 export interface SongAnimation {
     setup(c: fabric.Canvas)
 
@@ -18,13 +23,53 @@ export function newDefaultAnimation(song: Song, fps: number) {
 }
 
 export function newAnimation(type: AnimationType, song: Song, fps: number) {
+    console.log(`New animation! type:`)
+    console.log(type)
     switch (type) {
         case AnimationType.Wanderer:
             return new Wanderer(song, fps)
+        case AnimationType.PulsingEye:
+            return new PulsingEye(song, fps)
+        case AnimationType.Waves:
         case AnimationType.DEFAULT:
         default:
-            return new DefaultAnimation(song, fps)
+            return new Waves(song, fps)
     }
+}
+
+class Waves implements SongAnimation {
+    private song: Song;
+    private fps: number;
+    private readonly vu: VuMeter;
+    // line = new fabric.Line([10, 0, 10, 100], {stroke: "black"})
+    private readonly path = new fabric.Path('M10 10 L10 100 L20 100', {stroke: "black"})
+    private wave: Wave
+
+    constructor(song: Song, fps: number) {
+        this.song = song;
+        this.fps = fps;
+        this.vu = song.newVuMeter(0.1, 0.3, fps)
+    }
+
+    setup(c: fabric.Canvas) {
+        this.wave = newWave({
+            height: c.height / 1,
+            phase: 0,
+            q: 1,
+            speed: 1,
+            vuMeter: this.vu,
+            waveHeight: c.height / 2,
+            width: c.width / 1
+        })
+        this.wave.setup(c)
+        c.add(this.path)
+    }
+
+    draw(c: fabric.Canvas | null) {
+        // this.path.y2 = scale(this.vu.getValue(), 0, 1, 0, c?.height/1)
+        this.wave.draw(c)
+    }
+
 }
 
 class Wanderer implements SongAnimation {
@@ -47,7 +92,7 @@ class Wanderer implements SongAnimation {
     setup(c: fabric.Canvas) {
         this.y = c.width / 2
         this.circle = new fabric.Circle({radius: Wanderer.DEFAULT_RADIUS})
-        this.x = Wanderer.DEFAULT_RADIUS+ 1
+        this.x = Wanderer.DEFAULT_RADIUS + 1
         c.add(this.circle)
     }
 
@@ -68,10 +113,10 @@ class Wanderer implements SongAnimation {
 
 }
 
-class DefaultAnimation implements SongAnimation {
+class PulsingEye implements SongAnimation {
     private static DEFAULT_RADIUS = 100
     private circle: fabric.Circle;
-    private r = DefaultAnimation.DEFAULT_RADIUS
+    private r = PulsingEye.DEFAULT_RADIUS
     private max = this.r + this.r * .5
     private min = this.r - this.r * .5
     private direction = 1
@@ -94,7 +139,7 @@ class DefaultAnimation implements SongAnimation {
         const transport = this.song.getTransport()
         if (transport?.isRunning()) {
             // this.r = analyzer.getLevel() * 100
-            this.r = DefaultAnimation.DEFAULT_RADIUS + DefaultAnimation.DEFAULT_RADIUS * this.vu.getValue()
+            this.r = PulsingEye.DEFAULT_RADIUS + PulsingEye.DEFAULT_RADIUS * this.vu.getValue()
 
         } else {
             this.r += this.direction
@@ -107,3 +152,4 @@ class DefaultAnimation implements SongAnimation {
         this.circle.center()
     }
 }
+

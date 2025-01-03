@@ -23,7 +23,7 @@ export default function Page() {
         let interval = null
         const transport = song.getTransport()
         if (canvasRef.current) {
-            canvas = new fabric.Canvas(canvasRef.current, {selection: false})
+            canvas = new fabric.Canvas(canvasRef.current, {selection: true})
 
             animation = newAnimation(animationType, song, framerate)
             animation?.setup(canvas)

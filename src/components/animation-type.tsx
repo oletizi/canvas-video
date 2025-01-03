@@ -2,8 +2,8 @@ import {MenuItem, Select} from "@mui/material";
 import {AnimationType} from "@/video/song-animation";
 import {useState} from "react";
 
-export default function AnimationTypeSelector({onChange}) {
-    const [selected, setSelected] = useState<String>('DEFAULT')
+export default function AnimationTypeSelector({onChange}: { onChange: (string) => void}) {
+    const [selected, setSelected] = useState<string>('DEFAULT')
     return (<Select value={selected} onChange={(e) => {
         onChange(AnimationType[e.target.value])
         setSelected(e.target.value + "")

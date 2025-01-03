@@ -1,6 +1,6 @@
-import {Result} from "@/lib-core";
+import {Result} from "@/lib/lib-core";
 import {Transport} from "@/components/transport";
-import {newClientOutput} from "../../process-output";
+import {newClientOutput} from "@/lib/process-output";
 
 export interface Sample {
 
