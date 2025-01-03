@@ -1,8 +1,7 @@
 import {fabric} from "fabric";
 import {Song} from "@/song/song";
 import {VuMeter} from "@/audio/vu-meter";
-import {newWaveAnimation, Wave} from "@/video/wave";
-import {scale} from "@/lib/lib-core"
+import {newWaveAnimation} from "@/video/wave";
 
 export enum AnimationType {
     DEFAULT,
@@ -42,8 +41,8 @@ class Waves implements SongAnimation {
     private fps: number;
     private readonly vu: VuMeter;
     // line = new fabric.Line([10, 0, 10, 100], {stroke: "black"})
-    private readonly path = new fabric.Path('M10 10 L10 100 L20 100', {stroke: "black"})
-    private wave: Wave
+    // private readonly path = new fabric.Path('M10 10 L10 100 L20 100', {stroke: "black"})
+    private wave: SongAnimation
 
     constructor(song: Song, fps: number) {
         this.song = song;
@@ -62,7 +61,7 @@ class Waves implements SongAnimation {
             width: c.width / 1
         })
         this.wave.setup(c)
-        c.add(this.path)
+        // c.add(this.path)
     }
 
     draw(c: fabric.Canvas | null) {

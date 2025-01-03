@@ -1,7 +1,8 @@
 import {VuMeter} from "@/audio/vu-meter";
 import {fabric} from "fabric";
-import {scale} from "@/lib/lib-core";
 import {SongAnimation} from "@/video/song-animation";
+import {WaveOptions} from "@/sketch/waves";
+
 
 export interface WaveOptions {
     width: number
@@ -86,14 +87,12 @@ class Curve {
 }
 
 export function newWaveAnimation(opts: WaveOptions): SongAnimation {
-    return new WaveAnimation(opts)
+    return new Wave(opts)
 }
 
-class WaveAnimation implements SongAnimation {
-    private readonly opts: WaveOptions
-    private phase = 0
-    private path
-
+class Wave implements SongAnimation {
+    private readonly opts: WaveOptions;
+    private curve: Curve;
     constructor(opts: WaveOptions) {
         this.opts = opts
     }
@@ -106,20 +105,23 @@ class WaveAnimation implements SongAnimation {
         const bottom = h
         const center = w / 2
         const crest = h - this.opts.waveHeight
-        const unit = w/4
-        let q = 1
+        const unit = w / 4
+        let q = this.opts.q
+        console.log(`h: ${h}`)
+        console.log(`w: ${w}`)
+        console.log(`middle: ${middle}`)
+        console.log(`center: ${center}`)
         const crestCoefficient = 1 + 1 - q
         const baseCoefficient = q
         const origin = {x: 0, y: h} as Point
-        const target = {x: w, y: h} as Point
+        const target = {x: center, y: crest} as Point
 
-        const curve = new Curve(origin, target, {x: unit * baseCoefficient, y: middle}, {x: center - unit * crestCoefficient, y: crest})
-        curve.setup(c)
+        this.curve = new Curve(origin, target, {x: unit * baseCoefficient, y: origin.y}, {x: center - unit * crestCoefficient, y: crest})
+        this.curve.append(new CurveSegment({x: w, y: origin.y}, {x: w - unit * baseCoefficient, y: origin.y}))
+        this.curve.setup(c)
     }
 
-    draw(c: fabric.Canvas) {
+    draw(c: fabric.Canvas | null) {
 
     }
-
-
 }
