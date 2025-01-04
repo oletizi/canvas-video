@@ -67,9 +67,11 @@ class Waves implements SongAnimation {
     }
 
     draw(c: fabric.Canvas | null) {
-        this.waveOpts1.q = scale(this.vu.getValue(), 0, 1, 1, 1.5)
-        this.waveOpts1.waveHeight = scale(this.vu.getValue(), 0, 1, c?.height / 4, c?.height / 2)
-        this.wave.draw(c)
+        if (this.song.getTransport().isRunning()) {
+            this.waveOpts1.q = scale(this.vu.getValue(), 0, 1, 1.2, 1.7)
+            this.waveOpts1.waveHeight = scale(this.vu.getValue(), 0, 1, c?.height / 3, c?.height / 1)
+            this.wave.draw(c)
+        }
     }
 
 }
