@@ -69,21 +69,22 @@ export function newWave(opts: WaveOptions): SongAnimation {
 
 class Wave implements SongAnimation {
     private readonly opts: WaveOptions;
-    private path: fabric.Path
+    private leadingPath: fabric.Path
+    private trailingPath: fabric.Path;
 
     constructor(opts: WaveOptions) {
         this.opts = opts
     }
 
     setup(c: fabric.Canvas) {
-        this.path = new fabric.Path(this.calculate(c).toString())
-        c.add(this.path)
+        this.leadingPath = new fabric.Path(this.calculate(c).toString())
+        c.add(this.leadingPath)
     }
 
-    private calculate(c: null | fabric.Canvas): Curve {
+    private calculate(c: null | fabric.Canvas, xOffset: number): Curve {
         const h = c.height
         const w = c.width
-        const xOffset = scale(this.opts.phase, 0, 1, 0, c?.width / 1)
+        // const xOffset = scale(this.opts.phase, 0, 1, 0, c?.width / 1)
         const center = w / 2 + xOffset
         const crest = h - this.opts.waveHeight
         const unit = w / 4
@@ -100,9 +101,13 @@ class Wave implements SongAnimation {
 
     draw(c: fabric.Canvas | null) {
         if (c) {
-            c?.remove(this.path)
-            this.path = new fabric.Path(this.calculate(c).toString())
-            c.add(this.path)
+            c?.remove(this.leadingPath)
+            c?.remove(this.trailingPath)
+            const xOffset = scale(this.opts.phase, 0, 1, 0, c?.width / 1)
+            this.leadingPath = new fabric.Path(this.calculate(c, xOffset).toString())
+            this.trailingPath = new fabric.Path(this.calculate(c, xOffset - c.width).toString())
+            c.add(this.leadingPath)
+            c.add(this.trailingPath)
         }
     }
 }
