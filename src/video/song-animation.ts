@@ -37,10 +37,15 @@ export function newAnimation(type: AnimationType, song: Song, fps: number) {
     }
 }
 
+function getRandomInt(max) {
+    return Math.floor(Math.random() * max);
+}
+
 class Waves implements SongAnimation {
     private song: Song;
     private fps: number;
     private readonly vu: VuMeter
+    private stars = []
     private wave1: SongAnimation
     private wave2: SongAnimation
     private waveOpts1: WaveOptions
@@ -52,9 +57,20 @@ class Waves implements SongAnimation {
         this.vu = song.newVuMeter(0.1, 0.3, fps)
     }
 
+
     setup(c: fabric.Canvas) {
         const background = new fabric.Rect({fill: '#333333', height: c.height, width: c.width})
         c.add(background)
+
+
+        for (let i = 0; i < 1028; i++) {
+            const dim = getRandomInt(5)
+            const x = getRandomInt(c.width)
+            const y = getRandomInt(c.height)
+            const star = new fabric.Rect({fill: '#ffffff', height: dim, width: dim, top: y, left: x})
+            this.stars.push({x: x, y: y, size: dim, star: star})
+            c.add(star)
+        }
 
         this.waveOpts1 = {
             fill: '#aaaaaa',
@@ -84,6 +100,16 @@ class Waves implements SongAnimation {
     }
 
     draw(c: fabric.Canvas) {
+        for (let i = 0; i < this.stars.length; i += 8) {
+            const s = this.stars[i]
+            const star = s.star
+            const dim = s.size * (1 + this.vu.getValue() * 6)
+            star.set('width', dim)
+            star.set('height', dim)
+            star.set('left', s.x - dim / 2)
+            star.set('top', s.y - dim / 2)
+        }
+
         this.waveOpts1.q = this.waveOpts2.q = scale(this.vu.getValue(), 0, 1, 1.2, 1.7)
 
         this.waveOpts1.waveHeight = scale(this.vu.getValue(), 0, 1, c?.height / 3, c?.height / 1)

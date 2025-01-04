@@ -45,7 +45,7 @@ export default function Page() {
     }, [animationType])
 
     return (<div>
-        <canvas ref={canvasRef} width={width} height={height} style={{border: "1px solid black"}}/>
+        <canvas ref={canvasRef} width={width} height={height}/>
         <div className="container mx-auto pt-5">
             <div className="flex items-center content-center gap-5">
                 <SongView startAudio={() => song.startAudio(`/api/audio/${path}.wav`)}
