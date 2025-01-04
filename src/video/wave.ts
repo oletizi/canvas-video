@@ -34,14 +34,13 @@ class CurveSegment {
     }
 }
 
-class Curve implements SongAnimation {
+class Curve {
     segments: CurveSegment[] = []
     origin: Point
     target: Point
 
     handle1: Point
     handle2: Point
-    private path: fabric.Path;
 
     constructor(origin: Point, target: Point, handle1: Point, handle2: Point) {
         this.origin = origin
@@ -56,18 +55,7 @@ class Curve implements SongAnimation {
     }
 
 
-    setup(c: fabric.Canvas) {
-        let s = this.calculate();
-
-        this.path = new fabric.Path(s, {stroke: 'black'})
-        c.add(this.path)
-    }
-
-    draw(c: fabric.Canvas) {
-        this.path.set('path', new fabric.Path(this.calculate()).path)
-    }
-
-    private calculate(): string {
+     toString(): string {
         let s = `M ${this.origin?.x} ${this.origin?.y} C ${this.handle1?.x} ${this.handle1?.y},`
         s += `  ${this.handle2?.x} ${this.handle2.y}, ${this.target?.x} ${this.target?.y}`
         s += ` ${this.segments.join(' ')}`
@@ -81,17 +69,19 @@ export function newWaveAnimation(opts: WaveOptions): SongAnimation {
 
 class Wave implements SongAnimation {
     private readonly opts: WaveOptions;
-    private curve: Curve;
+    private count = 0
+    private direction = 1
+    private path: fabric.Path
     constructor(opts: WaveOptions) {
         this.opts = opts
     }
 
     setup(c: fabric.Canvas) {
-        this.curve = this.calculate(c)
-        this.curve.setup(c)
+        this.path = new fabric.Path(this.calculate(c).toString())
+        c.add(this.path)
     }
 
-    private calculate(c: fabric.Canvas) {
+    private calculate(c: null | fabric.Canvas) {
         const h = c.height
         const w = c.width
         const center = w / 2
@@ -109,6 +99,9 @@ class Wave implements SongAnimation {
     }
 
     draw(c: fabric.Canvas | null) {
-
+        // this.count += this.direction
+        // if (this.count >= 1000 || this.count <= 0) {
+        //     this.direction *= -1
+        // }
     }
 }
