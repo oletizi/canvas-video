@@ -40,35 +40,63 @@ export function newAnimation(type: AnimationType, song: Song, fps: number) {
 class Waves implements SongAnimation {
     private song: Song;
     private fps: number;
-    private readonly vu: VuMeter;
-    private wave: SongAnimation
-    private waveOpts1: WaveOptions;
+    private readonly vu: VuMeter
+    private wave1: SongAnimation
+    private wave2: SongAnimation
+    private waveOpts1: WaveOptions
+    private waveOpts2: WaveOptions
 
     constructor(song: Song, fps: number) {
-        this.song = song;
-        this.fps = fps;
+        this.song = song
+        this.fps = fps
         this.vu = song.newVuMeter(0.1, 0.3, fps)
     }
 
     setup(c: fabric.Canvas) {
+        const background = new fabric.Rect({fill: '#333333', height: c.height, width: c.width})
+        c.add(background)
+
         this.waveOpts1 = {
             fill: '#aaaaaa',
             phase: 0,
             q: 1.2,
             speed: .001,
             vuMeter: this.vu,
-            waveHeight: c.height / 2,
+            waveHeight: c.height / 3,
             width: c.width / 1,
             height: c.height / 1,
         }
-        this.wave = newWave(this.waveOpts1)
-        this.wave.setup(c)
+        this.waveOpts2 = {
+            fill: "#999999",
+            height: c.height / 1,
+            phase: 0.25,
+            q: 1.2,
+            speed: .0005,
+            vuMeter: this.vu,
+            waveHeight: c.height / 4,
+            width: c.width / 1
+        }
+        this.wave1 = newWave(this.waveOpts1)
+        this.wave1.setup(c)
+
+        this.wave2 = newWave(this.waveOpts2)
+        this.wave2.setup(c)
     }
 
-    draw(c: fabric.Canvas | null) {
-        this.waveOpts1.q = scale(this.vu.getValue(), 0, 1, 1.2, 1.7)
+    draw(c: fabric.Canvas) {
+        this.waveOpts1.q = this.waveOpts2.q = scale(this.vu.getValue(), 0, 1, 1.2, 1.7)
+
         this.waveOpts1.waveHeight = scale(this.vu.getValue(), 0, 1, c?.height / 3, c?.height / 1)
-        this.wave.draw(c)
+        this.waveOpts2.waveHeight = scale(this.vu.getValue(), 0, 1, c?.height / 4, c?.height / 1)
+        this.wave2.draw(c)
+        this.wave1.draw(c)
+
+        if (this.waveOpts2.phase >= 1) {
+            this.waveOpts2.phase = 0
+        } else {
+            this.waveOpts2.phase += this.waveOpts2.speed
+        }
+
         if (this.waveOpts1.phase >= 1) {
             this.waveOpts1.phase = 0
         } else {
