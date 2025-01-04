@@ -1,8 +1,8 @@
-import {VuMeter} from "@/audio/vu-meter";
 import {fabric} from "fabric";
+import {scale} from "@/lib/lib-core"
+import {VuMeter} from "@/audio/vu-meter";
 import {SongAnimation} from "@/video/song-animation";
 import {WaveOptions} from "@/sketch/waves";
-
 
 export interface WaveOptions {
     width: number
@@ -55,7 +55,7 @@ class Curve {
     }
 
 
-     toString(): string {
+    toString(): string {
         let s = `M ${this.origin?.x} ${this.origin?.y} C ${this.handle1?.x} ${this.handle1?.y},`
         s += `  ${this.handle2?.x} ${this.handle2.y}, ${this.target?.x} ${this.target?.y}`
         s += ` ${this.segments.join(' ')}`
@@ -69,9 +69,8 @@ export function newWaveAnimation(opts: WaveOptions): SongAnimation {
 
 class Wave implements SongAnimation {
     private readonly opts: WaveOptions;
-    private count = 0
-    private direction = 1
     private path: fabric.Path
+
     constructor(opts: WaveOptions) {
         this.opts = opts
     }
@@ -81,7 +80,7 @@ class Wave implements SongAnimation {
         c.add(this.path)
     }
 
-    private calculate(c: null | fabric.Canvas) {
+    private calculate(c: null | fabric.Canvas): Curve {
         const h = c.height
         const w = c.width
         const center = w / 2
@@ -99,9 +98,6 @@ class Wave implements SongAnimation {
     }
 
     draw(c: fabric.Canvas | null) {
-        // this.count += this.direction
-        // if (this.count >= 1000 || this.count <= 0) {
-        //     this.direction *= -1
-        // }
+        this.path.set('path', new fabric.Path(this.calculate(c).toString()).path)
     }
 }
