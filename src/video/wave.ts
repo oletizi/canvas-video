@@ -63,7 +63,7 @@ class Curve {
     }
 }
 
-export function newWaveAnimation(opts: WaveOptions): SongAnimation {
+export function newWave(opts: WaveOptions): SongAnimation {
     return new Wave(opts)
 }
 
