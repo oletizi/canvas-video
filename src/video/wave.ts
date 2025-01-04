@@ -98,6 +98,10 @@ class Wave implements SongAnimation {
     }
 
     draw(c: fabric.Canvas | null) {
-        this.path.set('path', new fabric.Path(this.calculate(c).toString()).path)
+        if (c) {
+            c?.remove(this.path)
+            this.path = new fabric.Path(this.calculate(c).toString())
+            c.add(this.path)
+        }
     }
 }

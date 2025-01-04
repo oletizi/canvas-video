@@ -41,8 +41,6 @@ class Waves implements SongAnimation {
     private song: Song;
     private fps: number;
     private readonly vu: VuMeter;
-    // line = new fabric.Line([10, 0, 10, 100], {stroke: "black"})
-    // private readonly path = new fabric.Path('M10 10 L10 100 L20 100', {stroke: "black"})
     private wave: SongAnimation
     private waveOpts1: WaveOptions;
 
