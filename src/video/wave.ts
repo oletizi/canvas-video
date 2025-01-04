@@ -5,6 +5,7 @@ import {SongAnimation} from "@/video/song-animation";
 import {WaveOptions} from "@/sketch/waves";
 
 export interface WaveOptions {
+    fill: string
     width: number
     height: number
     waveHeight: number
@@ -77,7 +78,7 @@ class Wave implements SongAnimation {
     }
 
     setup(c: fabric.Canvas) {
-        this.leadingPath = new fabric.Path(this.calculate(c).toString())
+        this.leadingPath = new fabric.Path(this.calculate(c, 0).toString(), {fill: this.opts.fill})
         c.add(this.leadingPath)
     }
 
@@ -104,8 +105,9 @@ class Wave implements SongAnimation {
             c?.remove(this.leadingPath)
             c?.remove(this.trailingPath)
             const xOffset = scale(this.opts.phase, 0, 1, 0, c?.width / 1)
-            this.leadingPath = new fabric.Path(this.calculate(c, xOffset).toString())
-            this.trailingPath = new fabric.Path(this.calculate(c, xOffset - c.width).toString())
+            const pathOptions = {fill: this.opts.fill}
+            this.leadingPath = new fabric.Path(this.calculate(c, xOffset).toString(), pathOptions)
+            this.trailingPath = new fabric.Path(this.calculate(c, xOffset - c.width).toString(), pathOptions)
             c.add(this.leadingPath)
             c.add(this.trailingPath)
         }

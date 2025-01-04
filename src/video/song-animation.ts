@@ -52,13 +52,14 @@ class Waves implements SongAnimation {
 
     setup(c: fabric.Canvas) {
         this.waveOpts1 = {
-            height: c.height / 1,
+            fill: '#aaaaaa',
             phase: 0,
             q: 1.2,
-            speed: 1,
+            speed: .001,
             vuMeter: this.vu,
             waveHeight: c.height / 2,
-            width: c.width / 1
+            width: c.width / 1,
+            height: c.height / 1,
         }
         this.wave = newWave(this.waveOpts1)
         this.wave.setup(c)
@@ -71,7 +72,7 @@ class Waves implements SongAnimation {
         if (this.waveOpts1.phase >= 1) {
             this.waveOpts1.phase = 0
         } else {
-            this.waveOpts1.phase += scale(1, 0, c?.width / 1, 0, 1)
+            this.waveOpts1.phase += this.waveOpts1.speed
         }
     }
 
