@@ -87,27 +87,25 @@ class Wave implements SongAnimation {
     }
 
     setup(c: fabric.Canvas) {
+        this.curve = this.calculate(c)
+        this.curve.setup(c)
+    }
+
+    private calculate(c: fabric.Canvas) {
         const h = c.height
         const w = c.width
-        const top = 0
-        const middle = h / 2
-        const bottom = h
         const center = w / 2
         const crest = h - this.opts.waveHeight
         const unit = w / 4
         let q = this.opts.q
-        console.log(`h: ${h}`)
-        console.log(`w: ${w}`)
-        console.log(`middle: ${middle}`)
-        console.log(`center: ${center}`)
         const crestCoefficient = 1 + 1 - q
         const baseCoefficient = q
         const origin = {x: 0, y: h} as Point
         const target = {x: center, y: crest} as Point
 
-        this.curve = new Curve(origin, target, {x: unit * baseCoefficient, y: origin.y}, {x: center - unit * crestCoefficient, y: crest})
-        this.curve.append(new CurveSegment({x: w, y: origin.y}, {x: w - unit * baseCoefficient, y: origin.y}))
-        this.curve.setup(c)
+        const curve = new Curve(origin, target, {x: unit * baseCoefficient, y: origin.y}, {x: center - unit * crestCoefficient, y: crest})
+        curve.append(new CurveSegment({x: w, y: origin.y}, {x: w - unit * baseCoefficient, y: origin.y}))
+        return curve
     }
 
     draw(c: fabric.Canvas | null) {
