@@ -72,12 +72,11 @@ class Waves implements SongAnimation {
             this.stars.push({x: x, y: y, size: dim, star: star})
             s.push(star)
             c.add(star)
-            // this.firmament.add(star)
         }
+
         this.firmament = new fabric.Group(s)
         c.add(this.firmament)
         this.firmament.center()
-
 
         this.waveOpts1 = {
             fill: '#aaaaaa',
