@@ -46,11 +46,12 @@ class Waves implements SongAnimation {
     private fps: number;
     private readonly vu: VuMeter
     private stars = []
+    private firmament: fabric.Group
     private wave1: SongAnimation
     private wave2: SongAnimation
     private waveOpts1: WaveOptions
     private waveOpts2: WaveOptions
-    private texture: fabric.Line[] = []
+    private count = 0
 
     constructor(song: Song, fps: number) {
         this.song = song
@@ -62,16 +63,21 @@ class Waves implements SongAnimation {
     setup(c: fabric.Canvas) {
         const background = new fabric.Rect({fill: '#333333', height: c.height, width: c.width})
         c.add(background)
-
-
-        for (let i = 0; i < 1028; i++) {
+        const s = []
+        for (let i = 0; i < 2048; i++) {
             const dim = getRandomInt(5)
-            const x = getRandomInt(c.width)
-            const y = getRandomInt(c.height)
+            const x = getRandomInt(c.width * 2)
+            const y = getRandomInt(c.width * 2)
             const star = new fabric.Rect({fill: '#ffffff', height: dim, width: dim, top: y, left: x})
             this.stars.push({x: x, y: y, size: dim, star: star})
+            s.push(star)
             c.add(star)
+            // this.firmament.add(star)
         }
+        this.firmament = new fabric.Group(s)
+        c.add(this.firmament)
+        this.firmament.center()
+
 
         this.waveOpts1 = {
             fill: '#aaaaaa',
@@ -104,8 +110,8 @@ class Waves implements SongAnimation {
         const strokeWidth = 2
         const strokeColor = '#777777'
         const opacity = .2
-        for (let i=0; i< c.height; i+=spacing) {
-            const line = new fabric.Line([0, i, c.width/1, i], {stroke: strokeColor, strokeWidth: strokeWidth, opacity: opacity})
+        for (let i = 0; i < c.height; i += spacing) {
+            const line = new fabric.Line([0, i, c.width / 1, i], {stroke: strokeColor, strokeWidth: strokeWidth, opacity: opacity})
             c.add(line)
         }
         // c.forEachObject(function(object){
@@ -114,6 +120,7 @@ class Waves implements SongAnimation {
     }
 
     draw(c: fabric.Canvas) {
+        this.count++
         for (let i = 0; i < this.stars.length; i += 8) {
             const s = this.stars[i]
             const star = s.star
@@ -130,6 +137,9 @@ class Waves implements SongAnimation {
         this.waveOpts2.waveHeight = scale(this.vu.getValue(), 0, 1, c?.height / 4, c?.height / 1)
         this.wave2.draw(c)
         this.wave1.draw(c)
+        if (this.count % 10 == 0) {
+            this.firmament.rotate(this.count / 360)
+        }
 
         if (this.waveOpts2.phase >= 1) {
             this.waveOpts2.phase = 0
@@ -141,6 +151,10 @@ class Waves implements SongAnimation {
             this.waveOpts1.phase = 0
         } else {
             this.waveOpts1.phase += this.waveOpts1.speed
+        }
+
+        if (this.count >= 36000) {
+            this.count = 0
         }
     }
 
