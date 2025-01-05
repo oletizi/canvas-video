@@ -78,8 +78,21 @@ class Wave implements SongAnimation {
     }
 
     setup(c: fabric.Canvas) {
-        this.leadingPath = new fabric.Path(this.calculate(c, 0).toString(), {fill: this.opts.fill})
+        const xOffset = this.getXOffset(c)
+        const pathOptions = {
+            fill: this.opts.fill
+        }
+        const h = this.opts.waveHeight
+        this.opts.waveHeight = c.height / 1
+        this.leadingPath = new fabric.Path(this.calculate(c, 0).toString(), pathOptions)
+        this.trailingPath = new fabric.Path(this.calculate(c, 0).toString(), pathOptions)
+        this.leadingPath.set('left', 0)
+        this.trailingPath.set('left', xOffset - c.width)
+
         c.add(this.leadingPath)
+        c.add(this.trailingPath)
+
+        this.opts.waveHeight = h
     }
 
     private calculate(c: null | fabric.Canvas, xOffset: number): Curve {
@@ -100,16 +113,23 @@ class Wave implements SongAnimation {
         return curve
     }
 
+    getXOffset(c) {
+        return scale(this.opts.phase, 0, 1, 0, c?.width / 1)
+    }
+
     draw(c: fabric.Canvas | null) {
         if (c) {
-            c?.remove(this.leadingPath)
-            c?.remove(this.trailingPath)
-            const xOffset = scale(this.opts.phase, 0, 1, 0, c?.width / 1)
+            const xOffset = this.getXOffset(c)
             const pathOptions = {fill: this.opts.fill}
-            this.leadingPath = new fabric.Path(this.calculate(c, xOffset).toString(), pathOptions)
-            this.trailingPath = new fabric.Path(this.calculate(c, xOffset - c.width).toString(), pathOptions)
-            c.add(this.leadingPath)
-            c.add(this.trailingPath)
+
+
+            this.leadingPath.set('path', new fabric.Path(this.calculate(c, 0).toString(), pathOptions).path)
+            this.leadingPath.set('left', xOffset)
+            this.leadingPath.setCoords()
+
+            this.trailingPath.set('path', new fabric.Path(this.calculate(c, 0).toString(), pathOptions).path)
+            this.trailingPath.set('left', xOffset - c.width)
+            this.trailingPath.setCoords()
         }
     }
 }

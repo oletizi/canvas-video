@@ -7,117 +7,28 @@
     <script src="https://cdn.jsdelivr.net/npm/fabric@latest/dist/index.min.js"></script>
 </head>
 <body>
-<h1>Fabric Curve Testing</h1>
+<h1>SVG & Fabric Testing</h1>
 <div class="flex">
-    <div style="height: 500px; width: 500px; border: 1px solid black">
-        <svg viewBox="0 0 100 100">
-            <circle cx="75" cy="50" r="1" stroke="red"/>
-            <path d="M 0 50 L 25 50" stroke="red"/>
-            <path d="M 25 25 L 50 25" stroke="red"/>
-            <path d="M 75 50 L 100 50" stroke="green"/>
-            <path d="M 0 50 C 25 50, 25 25, 50 25 S 75 50, 100 50"/>
-        </svg>
-    </div>
     <canvas id="me" style="border: 1px solid black"></canvas>
 </div>
 
 <script>
     const lmnt = document.getElementById('me')
-    const w = 500
+    const w = window.innerWidth
     const h = 500
     lmnt.setAttribute('width', w + "")
     lmnt.setAttribute('height', h + "")
     const canvas = new fabric.Canvas(lmnt);
-
-    class CurveSegment {
-        target
-        handle
-
-        constructor(target, handle) {
-            this.target = target
-            this.handle = handle
-        }
-
-        toString() {
-            return ` S ${this.handle?.x} ${this.handle?.y}, ${this.target?.x} ${this.target?.y}`
-        }
+    let circle = new fabric.Circle({radius: 50, stroke: 'black'});
+    canvas.add(circle)
+    const spacing = 5
+    const strokeWidth = 2
+    const strokeColor = '#aaaaaa'
+    const opacity = .2
+    for (let i=0; i< h; i+=spacing) {
+        const line = new fabric.Line([0, i, w, i], {stroke: strokeColor, strokeWidth: strokeWidth, opacity: opacity})
+        canvas.add(line)
     }
-
-    class Curve {
-        segments = []
-        origin
-        target
-
-        handle1
-        handle2
-
-        constructor(origin, target, handle1, handle2) {
-            this.origin = origin
-            this.target = target
-            this.handle1 = handle1
-            this.handle2 = handle2
-        }
-
-        append(segment) {
-            this.segments.push(segment)
-            return this
-        }
-
-        draw(c) {
-            let s = `M ${this.origin?.x} ${this.origin?.y} C ${this.handle1?.x} ${this.handle1?.y},`
-
-            s += `  ${this.handle2?.x} ${this.handle2.y}, ${this.target?.x} ${this.target?.y}`
-
-            s += ` ${this.segments.join(' ')}`
-
-            console.log(`Curve: ${s}`)
-            const curve = new fabric.Path(s, {stroke: 'black'})
-            c.add(curve)
-
-            s = `M ${this.origin?.x} ${this.origin?.y} L ${this.handle1?.x} ${this.handle1?.y}`
-            console.log(`Handle 1: ${s}`)
-            const h1 = new fabric.Path(s, {stroke: 'red'})
-            c.add(h1)
-
-            s = `M ${this.target?.x} ${this.target?.y} L ${this.handle2?.x} ${this.handle2.y}`
-            console.log(`Handle 2: ${s}`)
-            const h2 = new fabric.Path(s, {stroke: 'red'})
-            c.add(h2)
-
-            for (const segment of this.segments) {
-                let points = [segment.handle?.x, segment.handle?.y, segment.target?.x, segment.target?.y];
-                console.log(`handle points for ${segment}:`)
-                console.log(points)
-                const l = new fabric.Line(points, {stroke: 'red'})
-                c.add(l)
-            }
-        }
-    }
-
-    let middle = h / 2
-    let center = w / 2
-    let unit = w / 4
-    let crest = h / 6
-    let q = 1
-    // let baseCoefficient = 1 + 1 - q
-    // let crestCoefficient = q
-    let baseCoefficient = q
-    let crestCoefficient = 1 + 1 - q
-
-
-    let originA = {x: 0, y: middle};
-    let handleA1 = {x: unit * baseCoefficient, y: middle};
-
-    let targetA = {x: center, y: crest};
-    let handleA2 = {x: center - unit * crestCoefficient, y: crest};
-    const curveA = new Curve(originA, targetA, handleA1, handleA2)
-
-    let handleB = {x: w - unit * baseCoefficient, y: middle}
-    let targetB = {x: w, y: middle}
-    curveA.append(new CurveSegment(targetB, handleB))
-
-    curveA.draw(canvas)
-
 </script>
 </body>
 </html>

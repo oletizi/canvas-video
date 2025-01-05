@@ -50,6 +50,7 @@ class Waves implements SongAnimation {
     private wave2: SongAnimation
     private waveOpts1: WaveOptions
     private waveOpts2: WaveOptions
+    private texture: fabric.Line[] = []
 
     constructor(song: Song, fps: number) {
         this.song = song
@@ -92,11 +93,24 @@ class Waves implements SongAnimation {
             waveHeight: c.height / 4,
             width: c.width / 1
         }
+        this.wave2 = newWave(this.waveOpts2)
+        this.wave2.setup(c)
+
         this.wave1 = newWave(this.waveOpts1)
         this.wave1.setup(c)
 
-        this.wave2 = newWave(this.waveOpts2)
-        this.wave2.setup(c)
+
+        const spacing = 5
+        const strokeWidth = 2
+        const strokeColor = '#777777'
+        const opacity = .2
+        for (let i=0; i< c.height; i+=spacing) {
+            const line = new fabric.Line([0, i, c.width/1, i], {stroke: strokeColor, strokeWidth: strokeWidth, opacity: opacity})
+            c.add(line)
+        }
+        // c.forEachObject(function(object){
+        //     object.selectable = false;
+        // })
     }
 
     draw(c: fabric.Canvas) {
