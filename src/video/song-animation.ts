@@ -59,7 +59,6 @@ class Waves implements SongAnimation {
         this.vu = song.newVuMeter(0.1, 0.3, fps)
     }
 
-
     setup(c: fabric.Canvas) {
         const background = new fabric.Rect({fill: '#333333', height: c.height, width: c.width})
         c.add(background)
@@ -83,7 +82,8 @@ class Waves implements SongAnimation {
             phase: 0,
             q: 1.2,
             speed: .001,
-            vuMeter: this.vu,
+            vuMeter: this.song.newVuMeter(.001, .5, 60),
+            // vuMeter: this.vu,
             waveHeight: c.height / 3,
             width: c.width / 1,
             height: c.height / 1,
