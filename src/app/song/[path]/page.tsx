@@ -4,7 +4,7 @@ import {SongView} from "@/components/song-view";
 import {useEffect, useRef, useState} from "react";
 import {useParams} from "next/navigation";
 import {fabric} from "fabric";
-import {AnimationType, newAnimation, newDefaultAnimation, SongAnimation} from "@/video/song-animation";
+import {AnimationType, newAnimation, SongAnimation} from "@/video/song-animation";
 import AnimationTypeSelector from "@/components/animation-type";
 
 export default function Page() {
@@ -17,7 +17,7 @@ export default function Page() {
     const frameInterval = 1000 / framerate
     const song = newSong()
     let animation: null | SongAnimation = null
-    let canvas = null
+    let canvas: any = null
     useEffect(() => {
         console.log(`Setting up canvas...`)
         let interval = null

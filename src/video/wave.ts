@@ -1,19 +1,18 @@
 import {fabric} from "fabric";
 import {scale} from "@/lib/lib-core"
-import {VuMeter} from "@/audio/vu-meter";
 import {SongAnimation} from "@/video/song-animation";
 import {WaveOptions} from "@/sketch/waves";
 
-export interface WaveOptions {
-    fill: string
-    width: number
-    height: number
-    waveHeight: number
-    phase: number
-    speed: number
-    vuMeter: VuMeter
-    q: number
-}
+// export interface WaveOptions {
+//     fill: string
+//     width: number
+//     height: number
+//     waveHeight: number
+//     phase: number
+//     speed: number
+//     vuMeter: VuMeter
+//     q: number
+// }
 
 
 interface Point {

@@ -3,19 +3,21 @@ import {scale} from '@/lib/lib-core'
 import {Song} from "@/song/song";
 import {VuMeter} from "@/audio/vu-meter";
 import {newWave, WaveOptions} from "@/video/wave";
+import {Face} from "@/video/face";
 
 export enum AnimationType {
     DEFAULT,
     PulsingEye,
     Wanderer,
     Waves,
+    Face,
 }
 
 // TODO: Rename this to something more general—like, <Something>Component
 export interface SongAnimation {
-    setup(c: fabric.Canvas)
+    setup(c: fabric.Canvas): void
 
-    draw(c: fabric.Canvas | null)
+    draw(c: fabric.Canvas | null): void
 }
 
 export function newDefaultAnimation(song: Song, fps: number) {
@@ -31,13 +33,15 @@ export function newAnimation(type: AnimationType, song: Song, fps: number) {
         case AnimationType.PulsingEye:
             return new PulsingEye(song, fps)
         case AnimationType.Waves:
+            return new Waves(song, fps)
+        case AnimationType.Face:
         case AnimationType.DEFAULT:
         default:
-            return new Waves(song, fps)
+            return new Face()
     }
 }
 
-function getRandomInt(max) {
+function getRandomInt(max: number) {
     return Math.floor(Math.random() * max);
 }
 
@@ -110,7 +114,11 @@ class Waves implements SongAnimation {
         const strokeColor = '#777777'
         const opacity = .2
         for (let i = 0; i < c.height; i += spacing) {
-            const line = new fabric.Line([0, i, c.width / 1, i], {stroke: strokeColor, strokeWidth: strokeWidth, opacity: opacity})
+            const line = new fabric.Line([0, i, c.width / 1, i], {
+                stroke: strokeColor,
+                strokeWidth: strokeWidth,
+                opacity: opacity
+            })
             c.add(line)
         }
         // c.forEachObject(function(object){
