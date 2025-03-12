@@ -1,4 +1,5 @@
 "use client"
+import React from "react"
 import {newSong} from "@/song/song";
 import {SongView} from "@/components/song-view";
 import {useEffect, useRef, useState} from "react";
@@ -8,11 +9,11 @@ import {AnimationType, newAnimation, SongAnimation} from "@/video/song-animation
 import AnimationTypeSelector from "@/components/animation-type";
 
 export default function Page() {
+    const width = window.innerWidth
+    const height = width * .45//window?.innerHeight ? 2 * window.innerHeight / 3 : 500
     const canvasRef = useRef<any>(null);
     const {path} = useParams()
     const [animationType, setAnimationType] = useState(AnimationType.DEFAULT)
-    const width = window.innerWidth
-    const height = 2 * window.innerHeight / 3
     const framerate = 60
     const frameInterval = 1000 / framerate
     const song = newSong()

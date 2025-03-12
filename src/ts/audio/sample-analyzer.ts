@@ -6,6 +6,16 @@ export interface SampleAnalyzer {
     getFft(): Uint8Array
 }
 
+export function nullSampleAnalyzer() : SampleAnalyzer{
+    return {
+        getFft(): Uint8Array {
+            return new Uint8Array([])
+        }, getLevel(): number {
+            return 0;
+        }
+    }
+}
+
 export function newSampleAnalyzer(s: Sample): SampleAnalyzer {
     let level = 0
     let fft = new Uint8Array(0)

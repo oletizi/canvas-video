@@ -1,6 +1,5 @@
 /.idea/
+/assets/
 /build/
-/node_modules/
 /coverage/
-/assets/video
-/assets/audio/
+/node_modules/
