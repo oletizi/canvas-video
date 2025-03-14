@@ -1,3 +1,4 @@
+"use client"
 import {newClientOutput, ProcessOutput} from "@/lib/process-output"
 import {loadAudio, newSamplePlayer, SampleResult} from "@/audio/audio"
 import {newSampleAnalyzer, nullSampleAnalyzer, SampleAnalyzer} from "@/audio/sample-analyzer"
@@ -5,7 +6,7 @@ import {newTransport, Transport, TransportListener} from "@/components/transport
 import {newVuFactory, VuFactory, VuMeter} from "@/audio/vu-meter";
 
 export interface Song {
-    startAudio(url: string): AudioContext
+    startAudio(audioContext: AudioContext, url: string): void
 
     getTransport(): Transport
 
@@ -22,7 +23,6 @@ class SongBase implements Song, TransportListener {
     private readonly out: ProcessOutput
     private readonly transport: Transport;
     private sampleAnalyzer: SampleAnalyzer = nullSampleAnalyzer()
-    private audioContext: AudioContext = new AudioContext()
     private vuMeters: VuFactory;
 
     constructor(out: ProcessOutput = newClientOutput('SongBase'), transport: Transport = newTransport()) {
@@ -32,14 +32,11 @@ class SongBase implements Song, TransportListener {
         this.vuMeters = newVuFactory()
     }
 
-    startAudio(url: string): AudioContext {
+    startAudio(audioContext: AudioContext, url: string) {
         const out = this.out
         out.log(`Starting audio...`)
-        if (this.audioContext) {
-            out.log(`Closing audio context...`)
-            this.audioContext.close().then(out.log(`Audio context closed.`))
-        }
-        loadAudio(this.audioContext, url).then((r :SampleResult) => {
+
+        loadAudio(audioContext, url).then((r :SampleResult) => {
             out.log(r)
             if (r.errors.length > 0) {
                 r.errors.forEach(e => out.error(e))
@@ -51,7 +48,6 @@ class SongBase implements Song, TransportListener {
                 this.sampleAnalyzer = newSampleAnalyzer(s)
             }
         }).catch(e => console.error(e))
-        return this.audioContext
     }
 
     getTransport(): Transport {

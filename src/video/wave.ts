@@ -1,4 +1,4 @@
-import {fabric} from "fabric";
+import {Canvas, Path} from "fabric";
 import {scale} from "@/lib/lib-core"
 import {SongAnimation} from "@/video/song-animation";
 import {VuMeter} from "@/audio/vu-meter";
@@ -69,14 +69,14 @@ export function newWave(opts: WaveOptions): SongAnimation {
 
 class Wave implements SongAnimation {
     private readonly opts: WaveOptions;
-    private leadingPath: fabric.Path = new fabric.Path()
-    private trailingPath: fabric.Path = new fabric.Path();
+    private leadingPath: Path = new Path("")
+    private trailingPath: Path = new Path("");
 
     constructor(opts: WaveOptions) {
         this.opts = opts
     }
 
-    setup(c: fabric.Canvas) {
+    setup(c: Canvas) {
         if (c) {
             const xOffset = this.getXOffset(c)
             const pathOptions = {
@@ -84,9 +84,9 @@ class Wave implements SongAnimation {
             }
             const h = this.opts.waveHeight
             // @ts-ignore
-            this.opts.waveHeight = c.height / 1
-            this.leadingPath = new fabric.Path(this.calculate(c, 0).toString(), pathOptions)
-            this.trailingPath = new fabric.Path(this.calculate(c, 0).toString(), pathOptions)
+            this.opts.waveHeight = c.height
+            this.leadingPath = new Path(this.calculate(c, 0).toString(), pathOptions)
+            this.trailingPath = new Path(this.calculate(c, 0).toString(), pathOptions)
             this.leadingPath.set('left', 0)
             // @ts-ignore
             this.trailingPath.set('left', xOffset - c.width)
@@ -98,7 +98,7 @@ class Wave implements SongAnimation {
         }
     }
 
-    private calculate(c: fabric.Canvas, xOffset: number): Curve {
+    private calculate(c: Canvas, xOffset: number): Curve {
         const w: number = c.width ? c.width : 1000
         const h: number = c.height ? c.height : w * .45
         // const xOffset = scale(this.opts.phase, 0, 1, 0, c?.width / 1)
@@ -122,22 +122,22 @@ class Wave implements SongAnimation {
         return curve
     }
 
-    getXOffset(c: fabric.Canvas) {
+    getXOffset(c: Canvas) {
         const w = c.width ? c.width : 1000
         return scale(this.opts.phase, 0, 1, 0, w)
     }
 
-    draw(c: fabric.Canvas) {
+    draw(c: Canvas) {
         const w = c.width ? c.width : 1000
         const xOffset = this.getXOffset(c)
         const pathOptions = {fill: this.opts.fill}
 
 
-        this.leadingPath.set('path', new fabric.Path(this.calculate(c, 0).toString(), pathOptions).path)
+        this.leadingPath.set('path', new Path(this.calculate(c, 0).toString(), pathOptions).path)
         this.leadingPath.set('left', xOffset)
         this.leadingPath.setCoords()
 
-        this.trailingPath.set('path', new fabric.Path(this.calculate(c, 0).toString(), pathOptions).path)
+        this.trailingPath.set('path', new Path(this.calculate(c, 0).toString(), pathOptions).path)
         this.trailingPath.set('left', xOffset - w)
         this.trailingPath.setCoords()
     }

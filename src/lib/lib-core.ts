@@ -33,6 +33,6 @@ export function rand(min: number, max: number) {
 }
 
 export interface Result {
-    errors: Error[]
+    errors: any[]
     data: any
 }

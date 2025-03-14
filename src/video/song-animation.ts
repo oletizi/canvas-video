@@ -1,9 +1,11 @@
-import {fabric} from "fabric";
+// import {fabric} from "fabric";
+import * as fabric from "fabric";
 import {scale} from '@/lib/lib-core'
 import {Song} from "@/song/song";
 import {VuMeter} from "@/audio/vu-meter";
 import {newWave, WaveOptions} from "@/video/wave";
 import {Face} from "@/video/face";
+import {Canvas} from "fabric";
 
 export enum AnimationType {
     DEFAULT,
@@ -18,10 +20,6 @@ export interface SongAnimation {
     setup(c: fabric.Canvas): void
 
     draw(c: fabric.Canvas): void
-
-    getWidth(): number
-
-    getHeight(): number
 }
 
 export function newDefaultAnimation(song: Song, fps: number) {
@@ -49,28 +47,7 @@ function getRandomInt(max: number) {
     return Math.floor(Math.random() * max);
 }
 
-abstract class AbstractSongAnimation implements SongAnimation {
-    protected w: number = 1000
-    protected h: number = this.w * 0.45
-
-    setup(c: fabric.Canvas): void {
-        return
-    }
-
-    draw(c: fabric.Canvas): void {
-        return
-    }
-
-    getWidth(): number {
-        return this.w
-    }
-
-    getHeight(): number {
-        return this.h
-    }
-}
-
-class Waves extends AbstractSongAnimation {
+class Waves implements SongAnimation {
     private song: Song;
     private fps: number;
     private readonly vu: VuMeter
@@ -88,7 +65,6 @@ class Waves extends AbstractSongAnimation {
     private count = 0
 
     constructor(song: Song, fps: number) {
-        super()
         this.song = song
         this.fps = fps
         this.vu = song.newVuMeter(0.1, 0.3, fps)
@@ -96,8 +72,8 @@ class Waves extends AbstractSongAnimation {
 
     setup(c: fabric.Canvas) {
 
-        const w = this.w = c.width ? c.width : this.w
-        const h = this.h = c.height ? c.height : this.h
+        const w = c.width
+        const h = c.height
         const background = new fabric.Rect({fill: '#333333', height: h, width: w})
         c.add(background)
         const s = []
@@ -113,7 +89,7 @@ class Waves extends AbstractSongAnimation {
 
         this.firmament = new fabric.Group(s)
         c.add(this.firmament)
-        this.firmament.center()
+        // this.firmament.center()
 
         this.waveOpts1 = {
             fill: '#aaaaaa',
@@ -158,6 +134,7 @@ class Waves extends AbstractSongAnimation {
     }
 
     draw(c: fabric.Canvas) {
+        const h = c.height
         this.count++
         for (let i = 0; i < this.stars.length; i += 8) {
             const s = this.stars[i]
@@ -171,8 +148,8 @@ class Waves extends AbstractSongAnimation {
 
         this.waveOpts1.q = this.waveOpts2.q = scale(this.vu.getValue(), 0, 1, 1.2, 1.7)
 
-        this.waveOpts1.waveHeight = scale(this.vu.getValue(), 0, 1, this.getHeight() / 3, this.getHeight())
-        this.waveOpts2.waveHeight = scale(this.vu.getValue(), 0, 1, this.getHeight() / 4, this.getHeight())
+        this.waveOpts1.waveHeight = scale(this.vu.getValue(), 0, 1, h / 3, h)
+        this.waveOpts2.waveHeight = scale(this.vu.getValue(), 0, 1, h / 4, h)
         this.wave2.draw(c)
         this.wave1.draw(c)
         if (this.count % 10 == 0) {
@@ -198,7 +175,7 @@ class Waves extends AbstractSongAnimation {
 
 }
 
-class Wanderer extends AbstractSongAnimation {
+class Wanderer implements SongAnimation {
     private static DEFAULT_RADIUS = 100
 
     private readonly song: Song
@@ -209,27 +186,25 @@ class Wanderer extends AbstractSongAnimation {
     private y = 0
 
     constructor(song: Song, fps: number) {
-        super()
         this.song = song
         this.vu = song.newVuMeter(0.1, 0.5, fps)
     }
 
     setup(c: fabric.Canvas) {
-        const w = this.w = c.width ? c.width : this.w
+        const w = c.width//this.w = c.width ? c.width : this.w
         this.y = w / 2
         this.x = Wanderer.DEFAULT_RADIUS + 1
         c.add(this.circle)
     }
 
-    draw(c: fabric.Canvas | null) {
-        const w = this.w = c?.width ? c.width : this.w
-        const h = this.h = c?.height ? c.height : this.h
+    draw(c: Canvas) {
+        const w = c.width//this.w = c?.width ? c.width : this.w
+        const h = c.height//this.h = c?.height ? c.height : this.h
         const transport = this.song.getTransport()
         const r = this.circle.radius ? this.circle.radius : 10
         if (this.x - r <= 0 || this.x >= w - r) {
             this.direction *= -1
         }
-
 
         if (transport.isRunning()) {
             this.circle.setRadius(Wanderer.DEFAULT_RADIUS + Wanderer.DEFAULT_RADIUS * this.vu.getValue())
@@ -241,7 +216,7 @@ class Wanderer extends AbstractSongAnimation {
 
 }
 
-class PulsingEye extends AbstractSongAnimation {
+class PulsingEye implements SongAnimation {
     private static DEFAULT_RADIUS = 100
     private r = PulsingEye.DEFAULT_RADIUS
     private circle: fabric.Circle = new fabric.Circle({radius: this.r})
@@ -253,15 +228,14 @@ class PulsingEye extends AbstractSongAnimation {
     private vu: VuMeter;
 
     constructor(song: Song, fps: number) {
-        super()
         this.song = song
         this.fps = fps
         this.vu = song.newVuMeter(0.1, 0.3, fps)
     }
 
     setup(c: fabric.Canvas) {
-        const w = this.w = c?.width ? c.width : this.w
-        const h = this.h = c?.height ? c.height : this.h
+        const w = c.width//this.w = c?.width ? c.width : this.w
+        const h = c.height//this.h = c?.height ? c.height : this.h
         this.circle = new fabric.Circle({radius: this.r, selectable: false, left: w / 2, top: h / 2})
         c.add(this.circle)
     }
@@ -280,7 +254,7 @@ class PulsingEye extends AbstractSongAnimation {
         }
 
         this.circle.setRadius(this.r)
-        this.circle.center()
+        // this.circle.center()
     }
 }
 

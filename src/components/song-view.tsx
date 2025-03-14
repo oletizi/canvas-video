@@ -1,7 +1,7 @@
 "use client"
-import React, {useState} from "react";
+import React from "react";
 import {Transport, TransportView} from "@/components/transport";
-import {Button, ButtonGroup, Divider} from "@mui/material";
+import {Button, Divider} from "@mui/material";
 
 export function SongView({startAudio, transport}: { startAudio: () => void, transport: Transport }) {
     return (

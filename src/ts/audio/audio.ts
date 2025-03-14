@@ -4,13 +4,13 @@ import {newClientOutput} from "@/lib/process-output";
 
 export interface Sample {
 
-    addListener(l: SampleListener)
+    addListener(l: SampleListener): void
 
-    play()
+    play(): void
 
-    stop()
+    stop(): void
 
-    reset()
+    reset(): void
 }
 
 export interface SampleResult extends Result {
@@ -18,9 +18,9 @@ export interface SampleResult extends Result {
 }
 
 export interface SampleListener {
-    timeDomainData(buf: Float32Array)
+    timeDomainData(buf: Float32Array): void
 
-    frequencyDomainData(buf: Uint8Array)
+    frequencyDomainData(buf: Float32Array): void
 }
 
 class WebAudioSample implements Sample {
@@ -32,8 +32,7 @@ class WebAudioSample implements Sample {
     private readonly timeDomainBuffer: Float32Array
     private readonly frequencyDomainBuffer: Float32Array
     private isPlaying = false
-    private source;
-    private startTime = 0
+    private source: any;
     private pauseTime: number = 0;
 
     constructor(c: AudioContext, buffer: AudioBuffer) {
@@ -67,7 +66,7 @@ class WebAudioSample implements Sample {
 
     reset() {
         this.out.log(`Reset!`)
-        this.startTime = this.pauseTime = 0
+        this.pauseTime = 0
         this.init()
         if (this.isPlaying) {
             this.play()
@@ -90,7 +89,6 @@ class WebAudioSample implements Sample {
             this.init()
             const offset = this.pauseTime || 0;
             this.source.start(0, offset)
-            this.startTime = this.c.currentTime - offset
             this.isPlaying = true
             this.out.log(`Play! offset: ${offset}`)
             this.out.log(this)
@@ -102,7 +100,7 @@ class WebAudioSample implements Sample {
 export function newSamplePlayer(t: Transport, s: Sample) {
     const out = newClientOutput('Sample player: ')
     t.addListener({
-        position(p: number) {
+        position() {
         }, reset() {
             out.log(`Transport reset!`)
             s.reset()

@@ -1,5 +1,5 @@
 import {SongAnimation} from "@/video/song-animation";
-import {fabric} from "fabric"
+import {Canvas, Circle, Rect} from "fabric"
 import {Pixels} from "@/video/pixels";
 import {Song} from "@/song/song";
 import {VuMeter} from "@/audio/vu-meter";
@@ -7,7 +7,7 @@ import {scale} from "@/lib/lib-core";
 
 export class Face implements SongAnimation {
     private readonly pixels: Pixels;
-    private readonly ball: fabric.Circle;
+    private readonly ball: Circle;
     private readonly vu: VuMeter;
     private counter = 0
     private direction = 1
@@ -15,12 +15,12 @@ export class Face implements SongAnimation {
     constructor(song: Song, fps: number) {
         this.vu = song.newVuMeter(0.1, 0.3, fps)
         this.pixels = new Pixels(16, 16)
-        this.ball = new fabric.Circle({radius: 5, top: 10, left: 10, fill: 'red'})
+        this.ball = new Circle({radius: 5, top: 10, left: 10, fill: 'red'})
     }
 
-    setup(c: fabric.Canvas): void {
+    setup(c: Canvas): void {
         // background
-        c.add(new fabric.Rect({
+        c.add(new Rect({
             width: c.width,
             height: c.height,
             fill: 'black'
@@ -36,7 +36,7 @@ export class Face implements SongAnimation {
         c.add(this.ball)
     }
 
-    draw(c: fabric.Canvas | null): void {
+    draw(c: Canvas): void {
         const level = this.vu.getValue()
         const mouth = scale(level, 0, 1, 0, 128, .5) + 128
         this.pixels.set(6, 8, `rgb(${mouth}, ${mouth}, ${mouth})`)
