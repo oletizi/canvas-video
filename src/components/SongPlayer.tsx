@@ -6,13 +6,12 @@ import { SongView } from '@/components/song-view';
 import AnimationTypeSelector from '@/components/animation-type';
 import { Canvas } from 'fabric';
 
-interface SongPlayerProps {
-    songPath: string;
-}
+interface SongPlayerProps {}
 
-export default function SongPlayer({ songPath }: SongPlayerProps) {
+export default function SongPlayer({}: SongPlayerProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [animationType, setAnimationType] = useState(AnimationType.DEFAULT);
+    const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const framerate = 60;
     const frameInterval = 1000 / framerate;
     const song = newSong();
@@ -112,24 +111,67 @@ export default function SongPlayer({ songPath }: SongPlayerProps) {
         return new Blob([arrayBuffer], { type: 'audio/wav' });
     };
 
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        
+        setUploadedFile(file);
+        
+        try {
+            const audioContext = new AudioContext();
+            const arrayBuffer = await file.arrayBuffer();
+            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            
+            // Start playing the uploaded audio
+            song.startAudioFromBuffer(audioContext, audioBuffer);
+            
+            console.log('Uploaded audio file loaded and started');
+        } catch (error) {
+            console.error('Error loading uploaded audio file:', error);
+        }
+    };
+
+    const startUploadedAudio = () => {
+        if (!uploadedFile) return;
+        
+        handleFileUpload({ target: { files: [uploadedFile] } } as any);
+    };
+
     return (
         <div>
             <canvas ref={canvasRef} width={width} height={height} />
             <div className="container mx-auto pt-5">
-                <div className="flex items-center content-center gap-5">
-                    <SongView 
-                        startAudio={() => {
-                            song.startAudio(new AudioContext(), `/api/audio/${songPath}.wav`);
-                        }}
-                        transport={song.getTransport()}
-                    />
-                    <AnimationTypeSelector onChange={(v) => setAnimationType(v)} />
-                    <button 
-                        onClick={generateTestVideo}
-                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                    >
-                        Generate Test Video
-                    </button>
+                <div className="flex flex-col gap-4">
+                    <div className="flex items-center gap-4">
+                        <label className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded cursor-pointer">
+                            Upload Audio File
+                            <input 
+                                type="file" 
+                                accept="audio/*" 
+                                onChange={handleFileUpload}
+                                className="hidden"
+                            />
+                        </label>
+                        {uploadedFile && (
+                            <span className="text-sm text-gray-600">
+                                {uploadedFile.name}
+                            </span>
+                        )}
+                    </div>
+                    <div className="flex items-center content-center gap-5">
+                        <SongView 
+                            startAudio={startUploadedAudio}
+                            transport={song.getTransport()}
+                            disabled={!uploadedFile}
+                        />
+                        <AnimationTypeSelector onChange={(v) => setAnimationType(v)} />
+                        <button 
+                            onClick={generateTestVideo}
+                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                        >
+                            Generate Test Video
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

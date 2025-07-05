@@ -1,8 +1,7 @@
 "use client"
 import {newClientOutput} from "@/lib/process-output"
 import type {ProcessOutput} from "@/lib/process-output"
-import {loadAudio, newSamplePlayer, WebAudioSample} from "@/ts/audio/audio"
-import type {SampleResult} from "@/ts/audio/audio"
+import {newSamplePlayer, WebAudioSample} from "@/ts/audio/audio"
 import {newSampleAnalyzer, nullSampleAnalyzer} from "@/ts/audio/sample-analyzer"
 import type {SampleAnalyzer} from "@/ts/audio/sample-analyzer"
 import {newTransport} from "@/ts/components/transport"
@@ -11,8 +10,6 @@ import {newVuFactory} from "@/ts/audio/vu-meter"
 import type {VuFactory, VuMeter} from "@/ts/audio/vu-meter";
 
 export interface Song {
-    startAudio(audioContext: AudioContext, url: string): void
-
     startAudioFromBuffer(audioContext: AudioContext, buffer: AudioBuffer): void
 
     getTransport(): Transport
@@ -39,23 +36,6 @@ class SongBase implements Song, TransportListener {
         this.vuMeters = newVuFactory()
     }
 
-    startAudio(audioContext: AudioContext, url: string) {
-        const out = this.out
-        out.log(`Starting audio...`)
-
-        loadAudio(audioContext, url).then((r :SampleResult) => {
-            out.log(r)
-            if (r.errors.length > 0) {
-                r.errors.forEach(e => out.error(e))
-            } else {
-                const s = r.data
-                out.log(`Creating new sample player for sample:`)
-                out.log(s)
-                newSamplePlayer(this.transport, s)
-                this.sampleAnalyzer = newSampleAnalyzer(s)
-            }
-        }).catch(e => console.error(e))
-    }
 
     startAudioFromBuffer(audioContext: AudioContext, buffer: AudioBuffer) {
         const out = this.out

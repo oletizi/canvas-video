@@ -3,12 +3,17 @@ import React from "react";
 import {TransportView} from "@/ts/components/transport";
 import type {Transport} from "@/ts/components/transport";
 
-export function SongView({startAudio, transport}: { startAudio: () => void, transport: Transport }) {
+export function SongView({startAudio, transport, disabled = false}: { startAudio: () => void, transport: Transport, disabled?: boolean }) {
     return (
         <div className="flex items-center content-center gap-5">
             <button 
                 onClick={() => startAudio()} 
-                className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100"
+                disabled={disabled}
+                className={`px-4 py-2 border border-gray-300 rounded ${
+                    disabled 
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                        : 'hover:bg-gray-100'
+                }`}
             >
                 Start Audio
             </button>
