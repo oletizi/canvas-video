@@ -1,9 +1,9 @@
 "use client"
 import {newClientOutput, ProcessOutput} from "@/lib/process-output"
-import {loadAudio, newSamplePlayer, SampleResult} from "@/audio/audio"
-import {newSampleAnalyzer, nullSampleAnalyzer, SampleAnalyzer} from "@/audio/sample-analyzer"
-import {newTransport, Transport, TransportListener} from "@/components/transport"
-import {newVuFactory, VuFactory, VuMeter} from "@/audio/vu-meter";
+import {loadAudio, newSamplePlayer, SampleResult} from "@/ts/audio/audio"
+import {newSampleAnalyzer, nullSampleAnalyzer, SampleAnalyzer} from "@/ts/audio/sample-analyzer"
+import {newTransport, Transport, TransportListener} from "@/ts/components/transport"
+import {newVuFactory, VuFactory, VuMeter} from "@/ts/audio/vu-meter";
 
 export interface Song {
     startAudio(audioContext: AudioContext, url: string): void

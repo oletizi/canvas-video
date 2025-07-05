@@ -1,5 +1,7 @@
 {
-  "extends": "@tsconfig/recommended/tsconfig.json",
+  "extends": "astro/tsconfigs/strict",
+  "include": [".astro/types.d.ts", "**/*"],
+  "exclude": ["dist", "node_modules"],
   "compilerOptions": {
     "noEmit": true,
     "module": "ESNext",
@@ -21,19 +23,6 @@
     "allowJs": true,
     "incremental": true,
     "resolveJsonModule": true,
-    "isolatedModules": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ]
-  },
-  "include": [
-    "node_modules/@types/p5/global.d.ts",
-    "src/**/*",
-    "./build/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+    "isolatedModules": true
+  }
 }

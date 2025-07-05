@@ -1,7 +1,7 @@
 import {Canvas, Path} from "fabric";
 import {scale} from "@/lib/lib-core"
 import {SongAnimation} from "@/video/song-animation";
-import {VuMeter} from "@/audio/vu-meter";
+import {VuMeter} from "@/ts/audio/vu-meter";
 
 export interface WaveOptions {
     fill: string

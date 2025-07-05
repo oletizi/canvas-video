@@ -1,5 +1,5 @@
 import {Result} from "@/lib/lib-core";
-import {Transport} from "@/components/transport";
+import {Transport} from "@/ts/components/transport";
 import {newClientOutput} from "@/lib/process-output";
 
 export interface Sample {

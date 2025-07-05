@@ -9,12 +9,12 @@ import {
     newRandomBandOptions,
     NoiseBandControlPanel,
     NoiseBandOptions
-} from "@/components/noise-band-control-panel";
-import {newTransport, TransportView} from "@/components/transport";
+} from "@/ts/components/noise-band-control-panel";
+import {newTransport, TransportView} from "@/ts/components/transport";
 import {Button} from "@/components/chakra/button";
-import {loadAudio, newSamplePlayer} from "@/audio/audio";
+import {loadAudio, newSamplePlayer} from "@/ts/audio/audio";
 import {newClientOutput} from "../../process-output";
-import {newSampleAnalyzer} from "@/audio/sample-analyzer";
+import {newSampleAnalyzer} from "@/ts/audio/sample-analyzer";
 
 const r = document.getElementById('app')
 

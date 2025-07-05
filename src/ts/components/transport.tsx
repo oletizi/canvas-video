@@ -1,14 +1,28 @@
 import {MdOutlinePlayArrow, MdOutlineSkipPrevious, MdOutlineStop} from "react-icons/md";
 import React from "react";
-import {Button, ButtonGroup} from "@mui/material";
 
 export function TransportView({model}: { model: Transport }) {
     return (
-        <ButtonGroup size="large">
-            <Button onClick={() => model.reset()}><MdOutlineSkipPrevious size="1.25rem"/></Button>
-            <Button onClick={() => model.start()}><MdOutlinePlayArrow size="1.25rem"/></Button>
-            <Button onClick={() => model.stop()}><MdOutlineStop size="1.25rem"/></Button>
-        </ButtonGroup>
+        <div className="flex gap-1">
+            <button 
+                onClick={() => model.reset()}
+                className="p-2 border border-gray-300 rounded hover:bg-gray-100"
+            >
+                <MdOutlineSkipPrevious size="1.25rem"/>
+            </button>
+            <button 
+                onClick={() => model.start()}
+                className="p-2 border border-gray-300 rounded hover:bg-gray-100"
+            >
+                <MdOutlinePlayArrow size="1.25rem"/>
+            </button>
+            <button 
+                onClick={() => model.stop()}
+                className="p-2 border border-gray-300 rounded hover:bg-gray-100"
+            >
+                <MdOutlineStop size="1.25rem"/>
+            </button>
+        </div>
     )
 }
 

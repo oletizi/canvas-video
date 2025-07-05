@@ -1,12 +1,20 @@
-import {MenuItem, Select} from "@mui/material";
 import {AnimationType} from "@/video/song-animation";
 import {useState} from "react";
 
-export default function AnimationTypeSelector({onChange}: { onChange: (string) => void}) {
+export default function AnimationTypeSelector({onChange}: { onChange: (any) => void}) {
     const [selected, setSelected] = useState<string>('DEFAULT')
-    return (<Select value={selected} onChange={(e) => {
-        onChange(AnimationType[e.target.value])
-        setSelected(e.target.value + "")
-    }}>{Object.keys(AnimationType).filter((i) => isNaN(Number(i))).map(i => <MenuItem key={`animation-type-${i}`}
-                                                                                      value={i}>{i}</MenuItem>)}</Select>)
+    return (
+        <select 
+            value={selected} 
+            onChange={(e) => {
+                onChange(AnimationType[e.target.value])
+                setSelected(e.target.value)
+            }}
+            className="px-3 py-2 border border-gray-300 rounded"
+        >
+            {Object.keys(AnimationType).filter((i) => isNaN(Number(i))).map(i => 
+                <option key={`animation-type-${i}`} value={i}>{i}</option>
+            )}
+        </select>
+    )
 }
