@@ -20,12 +20,14 @@ export enum PulsingEyeTheme {
     BlackHole = "Black Hole",
     HAL = "HAL",
     Sauron = "Sauron",
+    Vaporwave = "Vaporwave",
 }
 
 export enum WandererTheme {
     BlackHole = "Black Hole",
     HAL = "HAL",
     Sauron = "Sauron",
+    Vaporwave = "Vaporwave",
 }
 
 // TODO: Rename this to something more general—like, <Something>Component
@@ -220,6 +222,9 @@ class Wanderer implements SongAnimation {
             case WandererTheme.Sauron:
                 this.setupSauron(c, w, h);
                 break;
+            case WandererTheme.Vaporwave:
+                this.setupVaporwave(c, w, h);
+                break;
         }
         
         this.y = h / 2;
@@ -263,6 +268,20 @@ class Wanderer implements SongAnimation {
             fill: '#ff8c00',
             stroke: '#ff4500',
             strokeWidth: 3,
+            selectable: false
+        });
+    }
+
+    private setupVaporwave(c: fabric.Canvas, w: number, h: number) {
+        // Vaporwave theme - dark purple background with neon pink wandering circle
+        this.background = new fabric.Rect({fill: '#1a0033', height: h, width: w});
+        c.add(this.background);
+        
+        this.circle = new fabric.Circle({
+            radius: Wanderer.DEFAULT_RADIUS,
+            fill: '#ff00ff',
+            stroke: '#00ffff',
+            strokeWidth: 4,
             selectable: false
         });
     }
@@ -322,6 +341,9 @@ class PulsingEye implements SongAnimation {
                 break;
             case PulsingEyeTheme.Sauron:
                 this.setupSauron(c, w, h);
+                break;
+            case PulsingEyeTheme.Vaporwave:
+                this.setupVaporwave(c, w, h);
                 break;
         }
     }
@@ -435,6 +457,52 @@ class PulsingEye implements SongAnimation {
         c.add(this.circle);
     }
 
+    private setupVaporwave(c: fabric.Canvas, w: number, h: number) {
+        // Vaporwave theme - dark purple background with neon pink eye and cyan rings
+        this.background = new fabric.Rect({fill: '#1a0033', height: h, width: w});
+        c.add(this.background);
+        
+        // Outer ring (neon cyan)
+        this.outerRing = new fabric.Circle({
+            radius: this.r + 25,
+            selectable: false,
+            left: w / 2,
+            top: h / 2,
+            originX: 'center',
+            originY: 'center',
+            fill: '#003333',
+            stroke: '#00ffff',
+            strokeWidth: 4
+        });
+        c.add(this.outerRing);
+        
+        // Inner ring (neon cyan)
+        this.innerRing = new fabric.Circle({
+            radius: this.r + 15,
+            selectable: false,
+            left: w / 2,
+            top: h / 2,
+            originX: 'center',
+            originY: 'center',
+            fill: '#002222',
+            stroke: '#00cccc',
+            strokeWidth: 3
+        });
+        c.add(this.innerRing);
+        
+        // Main eye (neon pink)
+        this.circle = new fabric.Circle({
+            radius: this.r,
+            selectable: false,
+            left: w / 2,
+            top: h / 2,
+            originX: 'center',
+            originY: 'center',
+            fill: '#ff00ff'
+        });
+        c.add(this.circle);
+    }
+
     draw(c: fabric.Canvas) {
         const w = c.width;
         const h = c.height;
@@ -459,6 +527,9 @@ class PulsingEye implements SongAnimation {
                 break;
             case PulsingEyeTheme.Sauron:
                 this.drawSauron(c, w, h);
+                break;
+            case PulsingEyeTheme.Vaporwave:
+                this.drawVaporwave(c, w, h);
                 break;
         }
     }
@@ -507,6 +578,36 @@ class PulsingEye implements SongAnimation {
 
     private drawSauron(c: fabric.Canvas, w: number, h: number) {
         // Update all rings with fiery effects
+        this.outerRing.set({
+            radius: this.r + 25,
+            left: w / 2,
+            top: h / 2,
+            originX: 'center',
+            originY: 'center'
+        });
+        this.outerRing.setCoords();
+        
+        this.innerRing.set({
+            radius: this.r + 15,
+            left: w / 2,
+            top: h / 2,
+            originX: 'center',
+            originY: 'center'
+        });
+        this.innerRing.setCoords();
+        
+        this.circle.set({
+            radius: this.r,
+            left: w / 2,
+            top: h / 2,
+            originX: 'center',
+            originY: 'center'
+        });
+        this.circle.setCoords();
+    }
+
+    private drawVaporwave(c: fabric.Canvas, w: number, h: number) {
+        // Update all rings with neon effects
         this.outerRing.set({
             radius: this.r + 25,
             left: w / 2,
