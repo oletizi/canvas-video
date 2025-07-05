@@ -331,6 +331,25 @@ export default function SongPlayer({}: SongPlayerProps) {
         } catch (error) {}
     };
 
+    const handleProgressBarClick = (event: React.MouseEvent<HTMLDivElement>) => {
+        if (audioDuration <= 0) return;
+        
+        const progressBar = event.currentTarget;
+        const rect = progressBar.getBoundingClientRect();
+        const clickX = event.clientX - rect.left;
+        const progressBarWidth = rect.width;
+        const clickPercentage = clickX / progressBarWidth;
+        
+        // Calculate the new position in milliseconds
+        const newPosition = Math.max(0, Math.min(audioDuration, clickPercentage * audioDuration));
+        
+        // Seek to the new position
+        const transport = songRef.current.getTransport();
+        transport.seek(newPosition);
+        
+        console.log(`Seeking to ${formatTime(newPosition)} (${(clickPercentage * 100).toFixed(1)}% of audio)`);
+    };
+
     return (
         <div>
             <canvas ref={canvasRef} width={dimensions.width} height={dimensions.height} />
@@ -408,13 +427,19 @@ export default function SongPlayer({}: SongPlayerProps) {
                                         {formatTime(transportPosition)} / {formatTime(audioDuration)}
                                     </span>
                                 </div>
-                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div 
+                                    className="w-full bg-gray-200 rounded-full h-2 cursor-pointer hover:bg-gray-300 transition-colors duration-150 relative"
+                                    onClick={handleProgressBarClick}
+                                    title="Click to seek to position"
+                                >
                                     <div 
                                         className="bg-blue-500 h-2 rounded-full transition-all duration-100"
                                         style={{ 
                                             width: `${audioDuration > 0 ? (transportPosition / audioDuration) * 100 : 0}%` 
                                         }}
                                     />
+                                    {/* Hover indicator */}
+                                    <div className="absolute inset-0 opacity-0 hover:opacity-20 bg-blue-300 rounded-full transition-opacity duration-150" />
                                 </div>
                             </div>
                         )}
