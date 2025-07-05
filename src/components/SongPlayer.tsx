@@ -10,7 +10,7 @@ interface SongPlayerProps {}
 
 export default function SongPlayer({}: SongPlayerProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [animationType, setAnimationType] = useState(AnimationType.DEFAULT);
+    const [animationType, setAnimationType] = useState(AnimationType.PulsingEye);
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [isRecording, setIsRecording] = useState(false);
     const [recordingDuration, setRecordingDuration] = useState(3000); // 3 seconds default
@@ -111,11 +111,16 @@ export default function SongPlayer({}: SongPlayerProps) {
                 console.log('Using generated sine wave test audio');
             }
             
-            // Get canvas stream
-            const canvasStream = canvasRef.current.captureStream(framerate);
-            
             // Start song first to set up audio analysis
             song.startAudioFromBuffer(audioContext, audioBuffer);
+            
+            // Ensure canvas is rendered before capturing
+            if (canvas) {
+                canvas.renderAll();
+            }
+            
+            // Get canvas stream after ensuring canvas is rendered
+            const canvasStream = canvasRef.current.captureStream(framerate);
             
             // Create a new buffer source for the MediaRecorder 
             bufferSource = audioContext.createBufferSource();
@@ -124,13 +129,13 @@ export default function SongPlayer({}: SongPlayerProps) {
             // Create media stream destination for recording
             const dest = audioContext.createMediaStreamDestination();
             bufferSource.connect(dest);
-            bufferSource.connect(audioContext.destination);
+            // Don't connect to audioContext.destination to avoid double audio playback
             
             // Start the transport and audio
             song.getTransport().start();
             
-            // Wait a bit for the audio context to be ready
-            await new Promise(resolve => setTimeout(resolve, 100));
+            // Wait for canvas to start rendering actively
+            await new Promise(resolve => setTimeout(resolve, 500));
             
             // Combine canvas and audio streams
             const videoTracks = canvasStream.getVideoTracks();
