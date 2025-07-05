@@ -48,6 +48,8 @@ export interface Transport {
 
     reset()
 
+    seek(position: number)
+
     tick()
 
     isRunning(): boolean
@@ -78,6 +80,11 @@ class BasicTransport implements Transport {
     reset() {
         this._position = 0
         this._listeners.forEach(l => l.reset())
+    }
+
+    seek(position: number) {
+        this._position = Math.max(0, position)
+        this._listeners.forEach(l => l.position(this._position))
     }
 
     start() {

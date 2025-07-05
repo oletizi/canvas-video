@@ -12,6 +12,8 @@ export interface Sample {
 
     reset(): void
     
+    seek(position: number): void
+    
     getAnalyzer(): AnalyserNode
     
     getAudioSource(): AudioBufferSourceNode
@@ -88,6 +90,20 @@ class WebAudioSample implements Sample {
         this.out.log(this)
     }
 
+    seek(position: number) {
+        this.out.log(`Seek to position: ${position}`)
+        // Convert position from milliseconds to seconds
+        const seekTime = position / 1000
+        this.pauseTime = seekTime
+        
+        // If currently playing, restart from new position
+        if (this.isPlaying) {
+            this.stop()
+            this.play()
+        }
+        this.out.log(this)
+    }
+
     stop() {
         if (this.isPlaying) {
             this.out.log(`Stop!`)
@@ -123,7 +139,9 @@ class WebAudioSample implements Sample {
 export function newSamplePlayer(t: Transport, s: Sample) {
     const out = newClientOutput('Sample player: ')
     t.addListener({
-        position() {
+        position(position: number) {
+            out.log(`Transport position: ${position}`)
+            s.seek(position)
         }, reset() {
             out.log(`Transport reset!`)
             s.reset()
