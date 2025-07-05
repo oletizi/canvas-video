@@ -237,6 +237,11 @@ class PulsingEye implements SongAnimation {
     setup(c: fabric.Canvas) {
         const w = c.width//this.w = c?.width ? c.width : this.w
         const h = c.height//this.h = c?.height ? c.height : this.h
+        
+        // Add white background for PulsingEye
+        const background = new fabric.Rect({fill: '#ffffff', height: h, width: w})
+        c.add(background)
+        
         this.circle = new fabric.Circle({radius: this.r, selectable: false, left: w / 2, top: h / 2})
         c.add(this.circle)
     }
