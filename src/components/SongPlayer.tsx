@@ -23,6 +23,7 @@ export default function SongPlayer({}: SongPlayerProps) {
     let height = width * 0.45;
     let mediaRecorder: MediaRecorder | null = null;
     let recordedChunks: Blob[] = [];
+    let currentAudioUrl: string | null = null;
 
     useEffect(() => {
         width = window.innerWidth;
@@ -61,43 +62,90 @@ export default function SongPlayer({}: SongPlayerProps) {
             setIsRecording(true);
             recordedChunks = [];
             
-            // Generate test audio
-            const testAudioContext = new AudioContext();
-            const duration = recordingDuration / 1000; // Convert to seconds
-            const sampleRate = testAudioContext.sampleRate;
-            const frameCount = sampleRate * duration;
-            const buffer = testAudioContext.createBuffer(1, frameCount, sampleRate);
-            const channelData = buffer.getChannelData(0);
+            let audioElement: HTMLAudioElement;
+            let audioBuffer: AudioBuffer;
+            let audioContext: AudioContext;
             
-            // Generate a simple 440Hz sine wave
-            for (let i = 0; i < frameCount; i++) {
-                channelData[i] = Math.sin(2 * Math.PI * 440 * i / sampleRate) * 0.5;
+            audioContext = new AudioContext();
+            
+            if (uploadedFile) {
+                // Use uploaded audio file
+                try {
+                    const arrayBuffer = await uploadedFile.arrayBuffer();
+                    audioBuffer = await audioContext.decodeAudioData(arrayBuffer.slice(0));
+                    
+                    // Create audio element directly from the original file
+                    currentAudioUrl = URL.createObjectURL(uploadedFile);
+                    audioElement = new Audio(currentAudioUrl);
+                    
+                    // Ensure the audio element is ready
+                    await new Promise((resolve, reject) => {
+                        audioElement.addEventListener('canplaythrough', resolve, { once: true });
+                        audioElement.addEventListener('error', reject, { once: true });
+                        audioElement.load();
+                    });
+                    
+                    console.log('Using uploaded audio file:', uploadedFile.name);
+                } catch (error) {
+                    console.error('Error decoding uploaded audio:', error);
+                    throw new Error('Unable to decode uploaded audio file. Please try a different audio format (MP3, WAV, OGG).');
+                }
+            } else {
+                // Generate default test audio (sine wave)
+                const duration = recordingDuration / 1000;
+                const sampleRate = audioContext.sampleRate;
+                const frameCount = sampleRate * duration;
+                audioBuffer = audioContext.createBuffer(1, frameCount, sampleRate);
+                const channelData = audioBuffer.getChannelData(0);
+                
+                // Generate a simple 440Hz sine wave
+                for (let i = 0; i < frameCount; i++) {
+                    channelData[i] = Math.sin(2 * Math.PI * 440 * i / sampleRate) * 0.5;
+                }
+                
+                const audioBlob = bufferToWav(audioBuffer);
+                currentAudioUrl = URL.createObjectURL(audioBlob);
+                audioElement = new Audio(currentAudioUrl);
+                
+                console.log('Using generated sine wave test audio');
             }
-            
-            // Create audio stream from buffer
-            const audioBlob = bufferToWav(buffer);
-            const audioUrl = URL.createObjectURL(audioBlob);
-            const audioElement = new Audio(audioUrl);
             
             // Get canvas stream
             const canvasStream = canvasRef.current.captureStream(framerate);
             
             // Create audio stream using Web Audio API
-            const audioContext = new AudioContext();
             const source = audioContext.createMediaElementSource(audioElement);
             const dest = audioContext.createMediaStreamDestination();
             source.connect(dest);
             source.connect(audioContext.destination);
             
+            // Wait a bit for the audio context to be ready
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
             // Combine canvas and audio streams
+            const videoTracks = canvasStream.getVideoTracks();
+            const audioTracks = dest.stream.getAudioTracks();
+            
+            console.log('Video tracks:', videoTracks.length, 'Audio tracks:', audioTracks.length);
+            
             const combinedStream = new MediaStream([
-                ...canvasStream.getVideoTracks(),
-                ...dest.stream.getAudioTracks()
+                ...videoTracks,
+                ...audioTracks
             ]);
             
-            // Set up MediaRecorder
+            // Set up MediaRecorder with fallback codec options
+            let mimeType = 'video/webm;codecs=vp9,opus';
+            if (!MediaRecorder.isTypeSupported(mimeType)) {
+                mimeType = 'video/webm;codecs=vp8,opus';
+                if (!MediaRecorder.isTypeSupported(mimeType)) {
+                    mimeType = 'video/webm';
+                }
+            }
+            
+            console.log('Using MediaRecorder with mimeType:', mimeType);
+            
             mediaRecorder = new MediaRecorder(combinedStream, {
-                mimeType: 'video/webm;codecs=vp9,opus'
+                mimeType: mimeType
             });
             
             mediaRecorder.ondataavailable = (event) => {
@@ -110,15 +158,26 @@ export default function SongPlayer({}: SongPlayerProps) {
                 const blob = new Blob(recordedChunks, { type: 'video/webm' });
                 downloadVideo(blob);
                 setIsRecording(false);
+                
+                // Clean up audio URL
+                if (currentAudioUrl) {
+                    URL.revokeObjectURL(currentAudioUrl);
+                    currentAudioUrl = null;
+                }
             };
             
             // Start recording
             mediaRecorder.start();
             
             // Start audio playback and animation
-            song.startAudioFromBuffer(testAudioContext, buffer);
+            song.startAudioFromBuffer(audioContext, audioBuffer);
             song.getTransport().start();
             audioElement.play();
+            
+            // Calculate recording duration based on audio length or user setting
+            const actualDuration = uploadedFile 
+                ? Math.min(audioBuffer.duration * 1000, recordingDuration)
+                : recordingDuration;
             
             // Stop recording after specified duration
             setTimeout(() => {
@@ -127,7 +186,7 @@ export default function SongPlayer({}: SongPlayerProps) {
                     song.getTransport().stop();
                     audioElement.pause();
                 }
-            }, recordingDuration);
+            }, actualDuration);
             
             console.log('Video recording started');
         } catch (error) {
@@ -254,7 +313,12 @@ export default function SongPlayer({}: SongPlayerProps) {
                                         : 'bg-blue-500 hover:bg-blue-700 text-white'
                                 }`}
                             >
-                                {isRecording ? 'Recording...' : 'Generate & Record Video'}
+                                {isRecording 
+                                    ? 'Recording...' 
+                                    : uploadedFile 
+                                        ? 'Record Video with Uploaded Audio'
+                                        : 'Record Video with Test Audio'
+                                }
                             </button>
                         </div>
                     </div>
