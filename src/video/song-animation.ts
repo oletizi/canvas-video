@@ -273,16 +273,65 @@ class Wanderer implements SongAnimation {
     }
 
     private setupVaporwave(c: fabric.Canvas, w: number, h: number) {
-        // Vaporwave theme - dark purple background with neon pink wandering circle
-        this.background = new fabric.Rect({fill: '#1a0033', height: h, width: w});
+        // Vaporwave theme - gradient background with classic vaporwave colors
+        // Create gradient background from dark purple to pink
+        const gradient = new fabric.Gradient({
+            type: 'linear',
+            coords: { x1: 0, y1: 0, x2: w, y2: h },
+            colorStops: [
+                { offset: 0, color: '#1a0033' },    // Dark purple
+                { offset: 0.5, color: '#4a0066' },  // Medium purple
+                { offset: 1, color: '#ff69b4' }     // Hot pink
+            ]
+        });
+        
+        this.background = new fabric.Rect({
+            fill: gradient,
+            height: h,
+            width: w
+        });
         c.add(this.background);
         
+        // Add grid lines for retro aesthetic
+        const gridSpacing = 50;
+        const gridColor = '#ff00ff';
+        const gridOpacity = 0.3;
+        
+        // Vertical grid lines
+        for (let x = 0; x <= w; x += gridSpacing) {
+            const line = new fabric.Line([x, 0, x, h], {
+                stroke: gridColor,
+                strokeWidth: 1,
+                opacity: gridOpacity,
+                selectable: false
+            });
+            c.add(line);
+        }
+        
+        // Horizontal grid lines
+        for (let y = 0; y <= h; y += gridSpacing) {
+            const line = new fabric.Line([0, y, w, y], {
+                stroke: gridColor,
+                strokeWidth: 1,
+                opacity: gridOpacity,
+                selectable: false
+            });
+            c.add(line);
+        }
+        
+        // Main wandering circle with neon cyan
         this.circle = new fabric.Circle({
             radius: Wanderer.DEFAULT_RADIUS,
-            fill: '#ff00ff',
-            stroke: '#00ffff',
-            strokeWidth: 4,
-            selectable: false
+            fill: '#00ffff',
+            stroke: '#ff00ff',
+            strokeWidth: 6,
+            selectable: false,
+            shadow: new fabric.Shadow({
+                color: '#00ffff',
+                blur: 20,
+                offsetX: 0,
+                offsetY: 0
+            })
         });
     }
 
@@ -458,11 +507,53 @@ class PulsingEye implements SongAnimation {
     }
 
     private setupVaporwave(c: fabric.Canvas, w: number, h: number) {
-        // Vaporwave theme - dark purple background with neon pink eye and cyan rings
-        this.background = new fabric.Rect({fill: '#1a0033', height: h, width: w});
+        // Vaporwave theme - gradient background with classic vaporwave colors
+        // Create gradient background from dark purple to pink
+        const gradient = new fabric.Gradient({
+            type: 'linear',
+            coords: { x1: 0, y1: 0, x2: w, y2: h },
+            colorStops: [
+                { offset: 0, color: '#1a0033' },    // Dark purple
+                { offset: 0.5, color: '#4a0066' },  // Medium purple
+                { offset: 1, color: '#ff69b4' }     // Hot pink
+            ]
+        });
+        
+        this.background = new fabric.Rect({
+            fill: gradient,
+            height: h,
+            width: w
+        });
         c.add(this.background);
         
-        // Outer ring (neon cyan)
+        // Add grid lines for retro aesthetic
+        const gridSpacing = 50;
+        const gridColor = '#ff00ff';
+        const gridOpacity = 0.3;
+        
+        // Vertical grid lines
+        for (let x = 0; x <= w; x += gridSpacing) {
+            const line = new fabric.Line([x, 0, x, h], {
+                stroke: gridColor,
+                strokeWidth: 1,
+                opacity: gridOpacity,
+                selectable: false
+            });
+            c.add(line);
+        }
+        
+        // Horizontal grid lines
+        for (let y = 0; y <= h; y += gridSpacing) {
+            const line = new fabric.Line([0, y, w, y], {
+                stroke: gridColor,
+                strokeWidth: 1,
+                opacity: gridOpacity,
+                selectable: false
+            });
+            c.add(line);
+        }
+        
+        // Outer ring (neon cyan with glow)
         this.outerRing = new fabric.Circle({
             radius: this.r + 25,
             selectable: false,
@@ -472,11 +563,17 @@ class PulsingEye implements SongAnimation {
             originY: 'center',
             fill: '#003333',
             stroke: '#00ffff',
-            strokeWidth: 4
+            strokeWidth: 4,
+            shadow: new fabric.Shadow({
+                color: '#00ffff',
+                blur: 15,
+                offsetX: 0,
+                offsetY: 0
+            })
         });
         c.add(this.outerRing);
         
-        // Inner ring (neon cyan)
+        // Inner ring (neon cyan with glow)
         this.innerRing = new fabric.Circle({
             radius: this.r + 15,
             selectable: false,
@@ -486,11 +583,17 @@ class PulsingEye implements SongAnimation {
             originY: 'center',
             fill: '#002222',
             stroke: '#00cccc',
-            strokeWidth: 3
+            strokeWidth: 3,
+            shadow: new fabric.Shadow({
+                color: '#00cccc',
+                blur: 10,
+                offsetX: 0,
+                offsetY: 0
+            })
         });
         c.add(this.innerRing);
         
-        // Main eye (neon pink)
+        // Main eye (neon pink with glow)
         this.circle = new fabric.Circle({
             radius: this.r,
             selectable: false,
@@ -498,7 +601,13 @@ class PulsingEye implements SongAnimation {
             top: h / 2,
             originX: 'center',
             originY: 'center',
-            fill: '#ff00ff'
+            fill: '#ff00ff',
+            shadow: new fabric.Shadow({
+                color: '#ff00ff',
+                blur: 20,
+                offsetX: 0,
+                offsetY: 0
+            })
         });
         c.add(this.circle);
     }
