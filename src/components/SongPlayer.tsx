@@ -5,6 +5,8 @@ import type { SongAnimation } from '@/video/song-animation';
 import AnimationTypeSelector from '@/components/animation-type';
 import ThemeSelector from '@/components/theme-selector';
 import AspectRatioSelector, { AspectRatio } from '@/components/aspect-ratio-selector';
+import VideoFormatSelector, { VideoFormat } from '@/components/video-format-selector';
+import { getPresetByFormat } from '@/components/video-format-presets';
 import { TransportView } from '@/ts/components/transport';
 import { Canvas } from 'fabric';
 
@@ -35,6 +37,7 @@ export default function SongPlayer({}: SongPlayerProps) {
     const [animationType, setAnimationType] = useState(AnimationType.PulsingEye);
     const [currentTheme, setCurrentTheme] = useState<PulsingEyeTheme | WandererTheme>(PulsingEyeTheme.BlackHole);
     const [aspectRatio, setAspectRatio] = useState<AspectRatio>(AspectRatio.Widescreen);
+    const [videoFormat, setVideoFormat] = useState<VideoFormat>(VideoFormat.Custom);
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [isRecording, setIsRecording] = useState(false);
     const [recordingDuration, setRecordingDuration] = useState(3000); // Will be updated to audio duration when audio is loaded
@@ -56,24 +59,34 @@ export default function SongPlayer({}: SongPlayerProps) {
     const [dimensions, setDimensions] = useState({ width: 1000, height: 450 });
 
     useEffect(() => {
-        // Update canvas size on mount and window resize
+        // Update canvas size based on video format or aspect ratio
         const updateDimensions = () => {
-            const height = 500; // Fixed height for all aspect ratios
             let width: number;
+            let height: number;
             
-            // Calculate width based on aspect ratio
-            switch (aspectRatio) {
-                case AspectRatio.Widescreen: // 16:9
-                    width = height * (16 / 9);
-                    break;
-                case AspectRatio.Standard: // 4:3
-                    width = height * (4 / 3);
-                    break;
-                case AspectRatio.Square: // 1:1
-                    width = height;
-                    break;
-                default:
-                    width = height * (16 / 9); // Default to 16:9
+            if (videoFormat !== VideoFormat.Custom) {
+                // Use video format presets
+                const preset = getPresetByFormat(videoFormat);
+                width = preset.width;
+                height = preset.height;
+            } else {
+                // Use aspect ratio calculation
+                height = 500; // Fixed height for all aspect ratios
+                
+                // Calculate width based on aspect ratio
+                switch (aspectRatio) {
+                    case AspectRatio.Widescreen: // 16:9
+                        width = height * (16 / 9);
+                        break;
+                    case AspectRatio.Standard: // 4:3
+                        width = height * (4 / 3);
+                        break;
+                    case AspectRatio.Square: // 1:1
+                        width = height;
+                        break;
+                    default:
+                        width = height * (16 / 9); // Default to 16:9
+                }
             }
             
             setDimensions({ width, height });
@@ -81,7 +94,7 @@ export default function SongPlayer({}: SongPlayerProps) {
         updateDimensions();
         window.addEventListener('resize', updateDimensions);
         return () => window.removeEventListener('resize', updateDimensions);
-    }, [aspectRatio]);
+    }, [aspectRatio, videoFormat]);
 
     useEffect(() => {
         // Setup canvas and animation
@@ -341,7 +354,13 @@ export default function SongPlayer({}: SongPlayerProps) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `canvas-video-${Date.now()}.webm`;
+        
+        // Create filename with format info
+        const formatName = videoFormat.toLowerCase();
+        const timestamp = Date.now();
+        const dimensionString = `${dimensions.width}x${dimensions.height}`;
+        a.download = `canvas-video-${formatName}-${dimensionString}-${timestamp}.webm`;
+        
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -475,6 +494,18 @@ export default function SongPlayer({}: SongPlayerProps) {
                             <AspectRatioSelector 
                                 onChange={setAspectRatio} 
                                 currentAspectRatio={aspectRatio}
+                            />
+                            <VideoFormatSelector 
+                                onChange={(format) => {
+                                    setVideoFormat(format);
+                                    // Auto-sync aspect ratio when format changes
+                                    if (format === VideoFormat.Instagram) {
+                                        setAspectRatio(AspectRatio.Square);
+                                    } else if (format === VideoFormat.YouTube) {
+                                        setAspectRatio(AspectRatio.Widescreen);
+                                    }
+                                }} 
+                                currentFormat={videoFormat}
                             />
                             <div className="flex items-center gap-2">
                                 <span className="text-sm font-medium">VU Level:</span>
