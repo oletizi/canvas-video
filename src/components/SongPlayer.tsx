@@ -8,6 +8,14 @@ import { Canvas } from 'fabric';
 
 interface SongPlayerProps {}
 
+// Helper function to format time in MM:SS format
+const formatTime = (milliseconds: number): string => {
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+};
+
 export default function SongPlayer({}: SongPlayerProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [animationType, setAnimationType] = useState(AnimationType.PulsingEye);
@@ -15,6 +23,8 @@ export default function SongPlayer({}: SongPlayerProps) {
     const [isRecording, setIsRecording] = useState(false);
     const [recordingDuration, setRecordingDuration] = useState(3000); // Will be updated to audio duration when audio is loaded
     const [currentVuLevel, setCurrentVuLevel] = useState(0);
+    const [transportPosition, setTransportPosition] = useState(0); // Current position in milliseconds
+    const [audioDuration, setAudioDuration] = useState(0); // Total audio duration in milliseconds
     const framerate = 60;
     const frameInterval = 1000 / framerate;
 
@@ -67,11 +77,15 @@ export default function SongPlayer({}: SongPlayerProps) {
                         const level = analyzer.getLevel();
                         setCurrentVuLevel(level);
                         
+                        // Update transport position for progress indicator
+                        setTransportPosition(transport.getPosition());
+                        
                         // Debug logging - log every 60 frames (about once per second)
                         if (Math.random() < 0.016) { // ~1/60 chance
                             console.log('Animation frame:', {
                                 vuLevel: level.toFixed(3),
                                 transportRunning: transport.isRunning(),
+                                transportPosition: transport.getPosition(),
                                 canvasObjects: fabricCanvasRef.current.getObjects().length,
                                 animationType: animationType
                             });
@@ -311,6 +325,7 @@ export default function SongPlayer({}: SongPlayerProps) {
             const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
             // Set recording duration to match audio duration
             setRecordingDuration(audioBuffer.duration * 1000);
+            setAudioDuration(audioBuffer.duration * 1000);
             songRef.current.startAudioFromBuffer(audioContext, audioBuffer);
             songRef.current.getTransport().start();
         } catch (error) {}
@@ -384,6 +399,25 @@ export default function SongPlayer({}: SongPlayerProps) {
                                 }
                             </button>
                         </div>
+                        {/* Progress indicator */}
+                        {audioDuration > 0 && (
+                            <div className="flex flex-col gap-2">
+                                <div className="flex items-center justify-between text-sm text-gray-600">
+                                    <span>Progress</span>
+                                    <span>
+                                        {formatTime(transportPosition)} / {formatTime(audioDuration)}
+                                    </span>
+                                </div>
+                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                    <div 
+                                        className="bg-blue-500 h-2 rounded-full transition-all duration-100"
+                                        style={{ 
+                                            width: `${audioDuration > 0 ? (transportPosition / audioDuration) * 100 : 0}%` 
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
