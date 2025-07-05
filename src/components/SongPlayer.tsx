@@ -78,7 +78,10 @@ export default function SongPlayer({}: SongPlayerProps) {
                         setCurrentVuLevel(level);
                         
                         // Update transport position for progress indicator
-                        setTransportPosition(transport.getPosition());
+                        // Convert transport ticks to milliseconds (60fps = 16.67ms per tick)
+                        const transportTicks = transport.getPosition();
+                        const transportMs = transportTicks * (1000 / 60); // Convert ticks to milliseconds
+                        setTransportPosition(transportMs);
                         
                         // Debug logging - log every 60 frames (about once per second)
                         if (Math.random() < 0.016) { // ~1/60 chance
@@ -188,7 +191,7 @@ export default function SongPlayer({}: SongPlayerProps) {
             songRef.current.startAudioFromBuffer(audioContext, audioBuffer);
             // Reset transport position to beginning for recording
             songRef.current.getTransport().reset();
-            setTransportPosition(0);
+            setTransportPosition(0); // This is now in milliseconds
             // Ensure canvas is rendered and animation is running before capturing
             if (fabricCanvasRef.current && animationRef.current) {
                 // Don't change background color - keep the existing one
@@ -348,7 +351,9 @@ export default function SongPlayer({}: SongPlayerProps) {
         
         // Seek to the new position
         const transport = songRef.current.getTransport();
-        transport.seek(newPosition);
+        // Convert milliseconds to transport ticks (60fps = 16.67ms per tick)
+        const seekTicks = Math.round(newPosition / (1000 / 60));
+        transport.seek(seekTicks);
         
         // Immediately update the transport position state to reflect the seek
         setTransportPosition(newPosition);
