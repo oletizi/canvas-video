@@ -114,13 +114,29 @@ export default function SongPlayer({}: SongPlayerProps) {
             // Start song first to set up audio analysis
             song.startAudioFromBuffer(audioContext, audioBuffer);
             
-            // Ensure canvas is rendered before capturing
-            if (canvas) {
+            // Ensure canvas is rendered and animation is running before capturing
+            if (canvas && animation) {
+                // Set a background color to ensure canvas isn't transparent
+                canvas.backgroundColor = '#000000';
+                
+                // Force a few animation frames to ensure canvas has content
+                animation.draw(canvas);
+                canvas.renderAll();
+                
+                // Wait a bit more for the animation to be fully active
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
+                // Draw again to ensure fresh content
+                animation.draw(canvas);
                 canvas.renderAll();
             }
             
-            // Get canvas stream after ensuring canvas is rendered
+            // Get canvas stream after ensuring canvas is actively rendered
             const canvasStream = canvasRef.current.captureStream(framerate);
+            
+            // Log stream details for debugging
+            console.log('Canvas stream video tracks:', canvasStream.getVideoTracks().length);
+            console.log('Canvas stream video track settings:', canvasStream.getVideoTracks()[0]?.getSettings());
             
             // Create a new buffer source for the MediaRecorder 
             bufferSource = audioContext.createBufferSource();
