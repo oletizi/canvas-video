@@ -1,5 +1,5 @@
 ---
-// Main page component
+import SongPlayer from '@/components/SongPlayer';
 ---
 
 <html lang="en">
@@ -8,9 +8,9 @@
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="generator" content={Astro.generator} />
-        <title>Canvas Video</title>
+        <title>Canvas Video - Song</title>
     </head>
     <body class="bg-white text-neutral-800">
-        <div>Hello, World!</div>
+        <SongPlayer songPath="waves" client:load />
     </body>
 </html>
