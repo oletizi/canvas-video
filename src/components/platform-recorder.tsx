@@ -1,5 +1,9 @@
+import { useState } from 'react';
 import { VideoFormat } from "@/components/video-format-presets";
 import { AspectRatio } from "@/components/aspect-ratio-selector";
+import { PlatformAuth, InstagramAPI, YouTubeAPI, TwitterAPI, UploadProgress } from "@/lib/platform-apis";
+import PlatformAuthComponent from "./platform-auth";
+import UploadProgressComponent from "./upload-progress";
 
 interface PlatformRecorderProps {
     onFormatChange: (format: VideoFormat) => void;
@@ -20,6 +24,10 @@ export default function PlatformRecorder({
     isRecording,
     videoFormat
 }: PlatformRecorderProps) {
+    const [platformAuths, setPlatformAuths] = useState<Record<string, PlatformAuth>>({});
+    const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
+    const [showAuth, setShowAuth] = useState(false);
+    const [selectedPlatform, setSelectedPlatform] = useState<string>('');
 
     const handleInstagramRecording = async () => {
         if (isRecording) return;
@@ -54,43 +62,57 @@ export default function PlatformRecorder({
         onStartRecording();
     };
 
+    const handleAuthSuccess = (platform: string, auth: PlatformAuth) => {
+        setPlatformAuths(prev => ({ ...prev, [platform]: auth }));
+        setShowAuth(false);
+    };
+
+    const handleAuthError = (platform: string, error: string) => {
+        console.error(`Authentication error for ${platform}:`, error);
+        alert(`Failed to authenticate with ${platform}: ${error}`);
+    };
+
+    const handleUploadProgress = (progress: UploadProgress) => {
+        setUploadProgress(progress);
+        if (progress.status === 'complete' || progress.status === 'error') {
+            setTimeout(() => setUploadProgress(null), 5000);
+        }
+    };
+
     const handleInstagramShare = async () => {
         if (!videoBlob) {
             alert('No video available to share. Please record a video first.');
             return;
         }
-        
-        // Instagram sharing guide
-        const guide = `
-Instagram Video Sharing Guide:
 
-1. Download the video file
-2. Open Instagram app on your mobile device
-3. Tap the + button to create a new post
-4. Select the downloaded video
-5. Adjust the crop if needed (Instagram will auto-crop to fit)
-6. Add caption and hashtags
-7. Share to your feed
+        const auth = platformAuths['instagram'];
+        if (!auth) {
+            setSelectedPlatform('instagram');
+            setShowAuth(true);
+            return;
+        }
 
-Video Details:
-- Format: ${videoFormat}
-- Dimensions: ${dimensions.width}x${dimensions.height}
-- File: canvas-video-${videoFormat.toLowerCase()}-${dimensions.width}x${dimensions.height}-${Date.now()}.webm
+        try {
+            setUploadProgress({
+                platform: 'Instagram',
+                progress: 0,
+                status: 'preparing',
+                message: 'Preparing Instagram upload...'
+            });
 
-Suggested hashtags: #music #visualization #art #audio #creative
-        `;
-        
-        alert(guide);
-        
-        // Trigger download for manual sharing
-        const url = URL.createObjectURL(videoBlob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `canvas-video-${videoFormat.toLowerCase()}-${dimensions.width}x${dimensions.height}-${Date.now()}.webm`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+            const caption = `🎵 Audio Visualization\n\n#music #visualization #art #audio #creative #musicvisualization`;
+            
+            const progress = await InstagramAPI.uploadVideo(videoBlob, caption, auth);
+            handleUploadProgress(progress);
+
+        } catch (error) {
+            handleUploadProgress({
+                platform: 'Instagram',
+                progress: 0,
+                status: 'error',
+                message: `Upload failed: ${error.message}`
+            });
+        }
     };
 
     const handleYouTubeShare = async () => {
@@ -98,39 +120,36 @@ Suggested hashtags: #music #visualization #art #audio #creative
             alert('No video available to share. Please record a video first.');
             return;
         }
-        
-        // YouTube sharing guide
-        const guide = `
-YouTube Video Sharing Guide:
 
-1. Download the video file
-2. Go to YouTube Studio (studio.youtube.com)
-3. Click "CREATE" → "Upload videos"
-4. Drag and drop the downloaded video
-5. Add title, description, and tags
-6. Set visibility (Public, Unlisted, or Private)
-7. Click "PUBLISH"
+        const auth = platformAuths['youtube'];
+        if (!auth) {
+            setSelectedPlatform('youtube');
+            setShowAuth(true);
+            return;
+        }
 
-Video Details:
-- Format: ${videoFormat}
-- Dimensions: ${dimensions.width}x${dimensions.height}
-- File: canvas-video-${videoFormat.toLowerCase()}-${dimensions.width}x${dimensions.height}-${Date.now()}.webm
+        try {
+            setUploadProgress({
+                platform: 'YouTube',
+                progress: 0,
+                status: 'preparing',
+                message: 'Preparing YouTube upload...'
+            });
 
-Suggested title: "Audio Visualization - [Your Song Name]"
-Suggested tags: #music #visualization #art #audio #creative #musicvisualization
-        `;
-        
-        alert(guide);
-        
-        // Trigger download for manual sharing
-        const url = URL.createObjectURL(videoBlob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `canvas-video-${videoFormat.toLowerCase()}-${dimensions.width}x${dimensions.height}-${Date.now()}.webm`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+            const title = `Audio Visualization - ${new Date().toLocaleDateString()}`;
+            const description = `🎵 Audio visualization created with Canvas Video\n\n#music #visualization #art #audio #creative #musicvisualization`;
+            
+            const progress = await YouTubeAPI.uploadVideo(videoBlob, title, description, auth);
+            handleUploadProgress(progress);
+
+        } catch (error) {
+            handleUploadProgress({
+                platform: 'YouTube',
+                progress: 0,
+                status: 'error',
+                message: `Upload failed: ${error.message}`
+            });
+        }
     };
 
     const handleTwitterShare = async () => {
@@ -138,39 +157,35 @@ Suggested tags: #music #visualization #art #audio #creative #musicvisualization
             alert('No video available to share. Please record a video first.');
             return;
         }
-        
-        // Twitter/X sharing guide
-        const guide = `
-Twitter/X Video Sharing Guide:
 
-1. Download the video file
-2. Go to Twitter/X (twitter.com or x.com)
-3. Click the "Post" button
-4. Click the media icon to attach video
-5. Select the downloaded video
-6. Add your tweet text
-7. Click "Post"
+        const auth = platformAuths['twitter'];
+        if (!auth) {
+            setSelectedPlatform('twitter');
+            setShowAuth(true);
+            return;
+        }
 
-Video Details:
-- Format: ${videoFormat}
-- Dimensions: ${dimensions.width}x${dimensions.height}
-- File: canvas-video-${videoFormat.toLowerCase()}-${dimensions.width}x${dimensions.height}-${Date.now()}.webm
+        try {
+            setUploadProgress({
+                platform: 'Twitter',
+                progress: 0,
+                status: 'preparing',
+                message: 'Preparing Twitter upload...'
+            });
 
-Note: Twitter has a 2:20 minute limit for videos
-Suggested tweet: "Check out this audio visualization! 🎵 #music #visualization"
-        `;
-        
-        alert(guide);
-        
-        // Trigger download for manual sharing
-        const url = URL.createObjectURL(videoBlob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `canvas-video-${videoFormat.toLowerCase()}-${dimensions.width}x${dimensions.height}-${Date.now()}.webm`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+            const text = `Check out this audio visualization! 🎵 #music #visualization #art #audio #creative`;
+            
+            const progress = await TwitterAPI.uploadVideo(videoBlob, text, auth);
+            handleUploadProgress(progress);
+
+        } catch (error) {
+            handleUploadProgress({
+                platform: 'Twitter',
+                progress: 0,
+                status: 'error',
+                message: `Upload failed: ${error.message}`
+            });
+        }
     };
 
     return (
@@ -237,7 +252,7 @@ Suggested tweet: "Check out this audio visualization! 🎵 #music #visualization
                             }`}
                             title="Share to Instagram"
                         >
-                            📷 Share to Instagram
+                            📷 {platformAuths['instagram'] ? 'Upload to Instagram' : 'Connect & Upload to Instagram'}
                         </button>
                         
                         <button
@@ -250,7 +265,7 @@ Suggested tweet: "Check out this audio visualization! 🎵 #music #visualization
                             }`}
                             title="Share to YouTube"
                         >
-                            📺 Share to YouTube
+                            📺 {platformAuths['youtube'] ? 'Upload to YouTube' : 'Connect & Upload to YouTube'}
                         </button>
                         
                         <button
@@ -263,7 +278,7 @@ Suggested tweet: "Check out this audio visualization! 🎵 #music #visualization
                             }`}
                             title="Share to Twitter/X"
                         >
-                            🐦 Share to Twitter
+                            🐦 {platformAuths['twitter'] ? 'Upload to Twitter' : 'Connect & Upload to Twitter'}
                         </button>
                     </div>
                 </div>
@@ -280,6 +295,34 @@ Suggested tweet: "Check out this audio visualization! 🎵 #music #visualization
                     Click a platform button above to start recording with optimized settings
                 </div>
             )}
+
+            {/* Authentication Modal */}
+            {showAuth && selectedPlatform && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold">Connect to {selectedPlatform}</h3>
+                            <button
+                                onClick={() => setShowAuth(false)}
+                                className="text-gray-400 hover:text-gray-600"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        <PlatformAuthComponent
+                            platform={selectedPlatform}
+                            onAuthSuccess={(auth) => handleAuthSuccess(selectedPlatform, auth)}
+                            onAuthError={(error) => handleAuthError(selectedPlatform, error)}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* Upload Progress Modal */}
+            <UploadProgressComponent
+                progress={uploadProgress}
+                onClose={() => setUploadProgress(null)}
+            />
         </div>
     );
 } 
