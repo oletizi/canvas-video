@@ -99,23 +99,71 @@ export default function SongPlayer({}: SongPlayerProps) {
                     throw new Error('Unable to decode uploaded audio file. Please try a different audio format (MP3, WAV, OGG).');
                 }
             } else {
-                // Generate default test audio (sine wave)
-                const duration = recordingDuration / 1000;
-                const sampleRate = audioContext.sampleRate;
-                const frameCount = sampleRate * duration;
-                audioBuffer = audioContext.createBuffer(1, frameCount, sampleRate);
-                const channelData = audioBuffer.getChannelData(0);
-                
-                // Generate a simple 440Hz sine wave
-                for (let i = 0; i < frameCount; i++) {
-                    channelData[i] = Math.sin(2 * Math.PI * 440 * i / sampleRate) * 0.5;
+                // Load the default test audio file and extract a 3-second clip
+                try {
+                    const response = await fetch('/audio/2025-06-17 Killing Your Gods verse+chorus.mp3');
+                    if (!response.ok) {
+                        throw new Error(`Failed to load audio file: ${response.statusText}`);
+                    }
+                    
+                    const arrayBuffer = await response.arrayBuffer();
+                    const fullAudioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                    
+                    // Extract a 3-second clip starting from 30 seconds into the song
+                    const startTime = 30; // Start at 30 seconds
+                    const clipDuration = 3; // 3-second clip
+                    const sampleRate = fullAudioBuffer.sampleRate;
+                    const startSample = Math.floor(startTime * sampleRate);
+                    const clipSamples = Math.floor(clipDuration * sampleRate);
+                    
+                    // Create a new buffer for the 3-second clip
+                    audioBuffer = audioContext.createBuffer(
+                        fullAudioBuffer.numberOfChannels,
+                        clipSamples,
+                        sampleRate
+                    );
+                    
+                    // Copy the audio data from the specified time range
+                    for (let channel = 0; channel < fullAudioBuffer.numberOfChannels; channel++) {
+                        const sourceData = fullAudioBuffer.getChannelData(channel);
+                        const targetData = audioBuffer.getChannelData(channel);
+                        
+                        for (let i = 0; i < clipSamples; i++) {
+                            const sourceIndex = startSample + i;
+                            if (sourceIndex < sourceData.length) {
+                                targetData[i] = sourceData[sourceIndex];
+                            } else {
+                                targetData[i] = 0; // Silence if we go beyond the source
+                            }
+                        }
+                    }
+                    
+                    // Create audio element for the clip
+                    const audioBlob = bufferToWav(audioBuffer);
+                    currentAudioUrl = URL.createObjectURL(audioBlob);
+                    audioElement = new Audio(currentAudioUrl);
+                    
+                    console.log(`Using 3-second clip from "Killing Your Gods" starting at ${startTime}s`);
+                } catch (error) {
+                    console.error('Error loading default audio file:', error);
+                    // Fallback to sine wave if the file can't be loaded
+                    const duration = recordingDuration / 1000;
+                    const sampleRate = audioContext.sampleRate;
+                    const frameCount = sampleRate * duration;
+                    audioBuffer = audioContext.createBuffer(1, frameCount, sampleRate);
+                    const channelData = audioBuffer.getChannelData(0);
+                    
+                    // Generate a simple 440Hz sine wave
+                    for (let i = 0; i < frameCount; i++) {
+                        channelData[i] = Math.sin(2 * Math.PI * 440 * i / sampleRate) * 0.5;
+                    }
+                    
+                    const audioBlob = bufferToWav(audioBuffer);
+                    currentAudioUrl = URL.createObjectURL(audioBlob);
+                    audioElement = new Audio(currentAudioUrl);
+                    
+                    console.log('Fallback: Using generated sine wave test audio');
                 }
-                
-                const audioBlob = bufferToWav(audioBuffer);
-                currentAudioUrl = URL.createObjectURL(audioBlob);
-                audioElement = new Audio(currentAudioUrl);
-                
-                console.log('Using generated sine wave test audio');
             }
             
             // Start song first to set up audio analysis
@@ -224,7 +272,7 @@ export default function SongPlayer({}: SongPlayerProps) {
                 }
             }, actualDuration);
             
-            console.log('Video recording started');
+            console.log(`Video recording started with ${uploadedFile ? 'uploaded audio' : '3-second "Killing Your Gods" clip'}`);
         } catch (error) {
             console.error('Error starting video recording:', error);
             setIsRecording(false);
@@ -375,7 +423,7 @@ export default function SongPlayer({}: SongPlayerProps) {
                                     ? 'Recording...' 
                                     : uploadedFile 
                                         ? 'Record Video with Uploaded Audio'
-                                        : 'Record Video with Test Audio'
+                                        : 'Record Video with "Killing Your Gods" Clip'
                                 }
                             </button>
                         </div>
