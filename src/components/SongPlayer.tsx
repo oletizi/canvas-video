@@ -4,6 +4,7 @@ import { AnimationType, newAnimation, PulsingEyeTheme, WandererTheme } from '@/v
 import type { SongAnimation } from '@/video/song-animation';
 import AnimationTypeSelector from '@/components/animation-type';
 import ThemeSelector from '@/components/theme-selector';
+import AspectRatioSelector, { AspectRatio } from '@/components/aspect-ratio-selector';
 import { TransportView } from '@/ts/components/transport';
 import { Canvas } from 'fabric';
 
@@ -33,6 +34,7 @@ export default function SongPlayer({}: SongPlayerProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [animationType, setAnimationType] = useState(AnimationType.PulsingEye);
     const [currentTheme, setCurrentTheme] = useState<PulsingEyeTheme | WandererTheme>(PulsingEyeTheme.BlackHole);
+    const [aspectRatio, setAspectRatio] = useState<AspectRatio>(AspectRatio.Widescreen);
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [isRecording, setIsRecording] = useState(false);
     const [recordingDuration, setRecordingDuration] = useState(3000); // Will be updated to audio duration when audio is loaded
@@ -57,13 +59,29 @@ export default function SongPlayer({}: SongPlayerProps) {
         // Update canvas size on mount and window resize
         const updateDimensions = () => {
             const width = window.innerWidth;
-            const height = width * 0.45;
+            let height: number;
+            
+            // Calculate height based on aspect ratio
+            switch (aspectRatio) {
+                case AspectRatio.Widescreen: // 16:9
+                    height = width * (9 / 16);
+                    break;
+                case AspectRatio.Standard: // 4:3
+                    height = width * (3 / 4);
+                    break;
+                case AspectRatio.Square: // 1:1
+                    height = width;
+                    break;
+                default:
+                    height = width * (9 / 16); // Default to 16:9
+            }
+            
             setDimensions({ width, height });
         };
         updateDimensions();
         window.addEventListener('resize', updateDimensions);
         return () => window.removeEventListener('resize', updateDimensions);
-    }, []);
+    }, [aspectRatio]);
 
     useEffect(() => {
         // Setup canvas and animation
@@ -432,6 +450,10 @@ export default function SongPlayer({}: SongPlayerProps) {
                                     setCurrentTheme(WandererTheme.BlackHole);
                                 }
                             }} />
+                            <AspectRatioSelector 
+                                onChange={setAspectRatio} 
+                                currentAspectRatio={aspectRatio}
+                            />
                             <div className="flex items-center gap-2">
                                 <span className="text-sm font-medium">VU Level:</span>
                                 <div className="w-32 h-4 bg-gray-200 rounded-full overflow-hidden">
