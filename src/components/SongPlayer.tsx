@@ -5,9 +5,8 @@ import type { SongAnimation } from '@/video/song-animation';
 import AnimationTypeSelector from '@/components/animation-type';
 import ThemeSelector from '@/components/theme-selector';
 import AspectRatioSelector, { AspectRatio } from '@/components/aspect-ratio-selector';
-import VideoFormatSelector from '@/components/video-format-selector';
 import { VideoFormat, getPresetByFormat } from '@/components/video-format-presets';
-import VideoShareButtons from '@/components/video-share-buttons';
+import PlatformRecorder from '@/components/platform-recorder';
 import { TransportView } from '@/ts/components/transport';
 import { Canvas } from 'fabric';
 
@@ -494,22 +493,6 @@ export default function SongPlayer({}: SongPlayerProps) {
                                     setCurrentTheme(WandererTheme.BlackHole);
                                 }
                             }} />
-                            <AspectRatioSelector 
-                                onChange={setAspectRatio} 
-                                currentAspectRatio={aspectRatio}
-                            />
-                            <VideoFormatSelector 
-                                onChange={(format) => {
-                                    setVideoFormat(format);
-                                    // Auto-sync aspect ratio when format changes
-                                    if (format === VideoFormat.Instagram) {
-                                        setAspectRatio(AspectRatio.Square);
-                                    } else if (format === VideoFormat.YouTube) {
-                                        setAspectRatio(AspectRatio.Widescreen);
-                                    }
-                                }} 
-                                currentFormat={videoFormat}
-                            />
                             <div className="flex items-center gap-2">
                                 <span className="text-sm font-medium">VU Level:</span>
                                 <div className="w-32 h-4 bg-gray-200 rounded-full overflow-hidden">
@@ -522,23 +505,18 @@ export default function SongPlayer({}: SongPlayerProps) {
                                     {(currentVuLevel * 100).toFixed(1)}%
                                 </span>
                             </div>
-                            <button 
-                                onClick={startVideoRecording}
-                                disabled={isRecording}
-                                className={`font-bold py-2 px-4 rounded ${
-                                    isRecording 
-                                        ? 'bg-red-500 text-white cursor-not-allowed' 
-                                        : 'bg-blue-500 hover:bg-blue-700 text-white'
-                                }`}
-                            >
-                                {isRecording 
-                                    ? 'Recording...' 
-                                    : uploadedFile 
-                                        ? 'Record Video with Uploaded Audio'
-                                        : 'Record Test'
-                                }
-                            </button>
                         </div>
+                        
+                        {/* Platform-specific recording and sharing */}
+                        <PlatformRecorder 
+                            onFormatChange={setVideoFormat}
+                            onAspectRatioChange={setAspectRatio}
+                            onStartRecording={startVideoRecording}
+                            videoBlob={recordedVideoBlob}
+                            dimensions={dimensions}
+                            isRecording={isRecording}
+                            videoFormat={videoFormat}
+                        />
                         {/* Theme selector - show for PulsingEye and Wanderer */}
                         {(animationType === AnimationType.PulsingEye || animationType === AnimationType.Wanderer) && (
                             <ThemeSelector 
@@ -572,14 +550,6 @@ export default function SongPlayer({}: SongPlayerProps) {
                                 </div>
                             </div>
                         )}
-                        
-                        {/* Share buttons */}
-                        <VideoShareButtons 
-                            videoBlob={recordedVideoBlob}
-                            videoFormat={videoFormat}
-                            dimensions={dimensions}
-                            isRecording={isRecording}
-                        />
                     </div>
                 </div>
             </div>
