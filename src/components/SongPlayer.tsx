@@ -58,22 +58,22 @@ export default function SongPlayer({}: SongPlayerProps) {
     useEffect(() => {
         // Update canvas size on mount and window resize
         const updateDimensions = () => {
-            const width = window.innerWidth;
-            let height: number;
+            const height = 500; // Fixed height for all aspect ratios
+            let width: number;
             
-            // Calculate height based on aspect ratio
+            // Calculate width based on aspect ratio
             switch (aspectRatio) {
                 case AspectRatio.Widescreen: // 16:9
-                    height = width * (9 / 16);
+                    width = height * (16 / 9);
                     break;
                 case AspectRatio.Standard: // 4:3
-                    height = width * (3 / 4);
+                    width = height * (4 / 3);
                     break;
                 case AspectRatio.Square: // 1:1
-                    height = width;
+                    width = height;
                     break;
                 default:
-                    height = width * (9 / 16); // Default to 16:9
+                    width = height * (16 / 9); // Default to 16:9
             }
             
             setDimensions({ width, height });
