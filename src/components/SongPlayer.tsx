@@ -436,7 +436,7 @@ export default function SongPlayer({}: SongPlayerProps) {
                                     title="Click to seek to position"
                                 >
                                     <div 
-                                        className="bg-blue-500 h-2 rounded-full transition-all duration-100"
+                                        className="bg-blue-500 h-2 rounded-full"
                                         style={{ 
                                             width: `${audioDuration > 0 ? (transportPosition / audioDuration) * 100 : 0}%` 
                                         }}
