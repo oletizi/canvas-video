@@ -117,17 +117,14 @@ export default function SongPlayer({}: SongPlayerProps) {
             // Start song first to set up audio analysis
             song.startAudioFromBuffer(audioContext, audioBuffer);
             
-            // Get the audio source from the sample that's being analyzed
-            const currentSample = song.getCurrentSample();
-            if (!currentSample) {
-                throw new Error('No audio sample available');
-            }
+            // Create a new buffer source for the MediaRecorder 
+            bufferSource = audioContext.createBufferSource();
+            bufferSource.buffer = audioBuffer;
             
-            // Use the same audio source for recording that's being analyzed
-            bufferSource = currentSample.getAudioSource();
-            
+            // Create media stream destination for recording
             const dest = audioContext.createMediaStreamDestination();
             bufferSource.connect(dest);
+            bufferSource.connect(audioContext.destination);
             
             // Start the transport and audio
             song.getTransport().start();
@@ -182,6 +179,9 @@ export default function SongPlayer({}: SongPlayerProps) {
             // Start recording
             mediaRecorder.start();
             
+            // Start the buffer source for recording (separate from the sample's transport-managed source)
+            bufferSource.start();
+            
             // Calculate recording duration based on audio length or user setting
             const actualDuration = uploadedFile 
                 ? Math.min(audioBuffer.duration * 1000, recordingDuration)
@@ -192,6 +192,7 @@ export default function SongPlayer({}: SongPlayerProps) {
                 if (mediaRecorder && mediaRecorder.state === 'recording') {
                     mediaRecorder.stop();
                     song.getTransport().stop();
+                    bufferSource.stop();
                 }
             }, actualDuration);
             
