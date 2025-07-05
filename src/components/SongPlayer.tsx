@@ -17,85 +17,98 @@ export default function SongPlayer({}: SongPlayerProps) {
     const [currentVuLevel, setCurrentVuLevel] = useState(0);
     const framerate = 60;
     const frameInterval = 1000 / framerate;
-    const song = newSong();
-    let animation: SongAnimation;
-    let canvas: any = null;
-    let width = 1000;
-    let height = width * 0.45;
-    let mediaRecorder: MediaRecorder | null = null;
-    let recordedChunks: Blob[] = [];
-    let currentAudioUrl: string | null = null;
+
+    // Persistent objects as refs
+    const songRef = useRef(newSong());
+    const animationRef = useRef<SongAnimation | null>(null);
+    const fabricCanvasRef = useRef<any>(null);
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const recordedChunksRef = useRef<Blob[]>([]);
+    const currentAudioUrlRef = useRef<string | null>(null);
+
+    // Canvas dimensions
+    const [dimensions, setDimensions] = useState({ width: 1000, height: 450 });
 
     useEffect(() => {
-        width = window.innerWidth;
-        height = width * 0.45;
-        console.log(`Setting up canvas...`);
-        let interval: NodeJS.Timeout | null = null;
-        const transport = song.getTransport();
-        
+        // Update canvas size on mount and window resize
+        const updateDimensions = () => {
+            const width = window.innerWidth;
+            const height = width * 0.45;
+            setDimensions({ width, height });
+        };
+        updateDimensions();
+        window.addEventListener('resize', updateDimensions);
+        return () => window.removeEventListener('resize', updateDimensions);
+    }, []);
+
+    useEffect(() => {
+        // Setup canvas and animation
         if (canvasRef.current) {
-            canvas = new Canvas(canvasRef.current, { selection: false });
+            fabricCanvasRef.current = new Canvas(canvasRef.current, { selection: false });
+            fabricCanvasRef.current.backgroundColor = '#444444'; // Slightly lighter for debugging
+            fabricCanvasRef.current.renderAll();
             
-            animation = newAnimation(animationType, song, framerate);
-            animation?.setup(canvas);
+            animationRef.current = newAnimation(animationType, songRef.current, framerate);
+            console.log('Animation created:', animationType, 'animation object:', animationRef.current);
+            animationRef.current?.setup(fabricCanvasRef.current);
+            console.log('Animation setup complete. Canvas objects:', fabricCanvasRef.current.getObjects().length);
             
-            interval = setInterval(() => {
-                animation?.draw(canvas);
-                transport.tick();
-                canvas?.renderAll();
-                
-                // Update VU meter level display for debugging
-                const analyzer = song.getSampleAnalyzer();
-                if (analyzer) {
-                    setCurrentVuLevel(analyzer.getLevel());
+            // Animation loop
+            const transport = songRef.current.getTransport();
+            const interval = setInterval(() => {
+                if (animationRef.current && fabricCanvasRef.current) {
+                    animationRef.current.draw(fabricCanvasRef.current);
+                    transport.tick();
+                    fabricCanvasRef.current.renderAll();
+                    
+                    // Update VU meter level display for debugging
+                    const analyzer = songRef.current.getSampleAnalyzer();
+                    if (analyzer) {
+                        const level = analyzer.getLevel();
+                        setCurrentVuLevel(level);
+                        
+                        // Debug logging - log every 60 frames (about once per second)
+                        if (Math.random() < 0.016) { // ~1/60 chance
+                            console.log('Animation frame:', {
+                                vuLevel: level.toFixed(3),
+                                transportRunning: transport.isRunning(),
+                                canvasObjects: fabricCanvasRef.current.getObjects().length,
+                                animationType: animationType
+                            });
+                        }
+                    }
                 }
             }, frameInterval);
-        } else {
-            console.log(`Canvas ref is null. Not setting up canvas.`);
-        }
-        
-        return () => {
-            canvas?.dispose();
-            if (interval) {
+            return () => {
+                fabricCanvasRef.current?.dispose();
                 clearInterval(interval);
-            }
-        };
-    }, [animationType]);
+            };
+        }
+    }, [animationType, dimensions.width, dimensions.height]);
 
     const startVideoRecording = async () => {
         if (!canvasRef.current || isRecording) return;
-        
         try {
             setIsRecording(true);
-            recordedChunks = [];
-            
+            recordedChunksRef.current = [];
             let audioElement: HTMLAudioElement;
             let audioBuffer: AudioBuffer;
             let audioContext: AudioContext;
             let bufferSource: AudioBufferSourceNode;
-            
             audioContext = new AudioContext();
-            
             if (uploadedFile) {
                 // Use uploaded audio file
                 try {
                     const arrayBuffer = await uploadedFile.arrayBuffer();
                     audioBuffer = await audioContext.decodeAudioData(arrayBuffer.slice(0));
-                    
-                    // Create audio element directly from the original file
-                    currentAudioUrl = URL.createObjectURL(uploadedFile);
-                    audioElement = new Audio(currentAudioUrl);
-                    
-                    // Ensure the audio element is ready
+                    currentAudioUrlRef.current = URL.createObjectURL(uploadedFile);
+                    audioElement = new Audio(currentAudioUrlRef.current);
                     await new Promise((resolve, reject) => {
                         audioElement.addEventListener('canplaythrough', resolve, { once: true });
                         audioElement.addEventListener('error', reject, { once: true });
                         audioElement.load();
                     });
-                    
-                    console.log('Using uploaded audio file:', uploadedFile.name);
                 } catch (error) {
-                    console.error('Error decoding uploaded audio:', error);
                     throw new Error('Unable to decode uploaded audio file. Please try a different audio format (MP3, WAV, OGG).');
                 }
             } else {
@@ -105,120 +118,80 @@ export default function SongPlayer({}: SongPlayerProps) {
                     if (!response.ok) {
                         throw new Error(`Failed to load audio file: ${response.statusText}`);
                     }
-                    
                     const arrayBuffer = await response.arrayBuffer();
                     const fullAudioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-                    
-                    // Extract a 3-second clip starting from 30 seconds into the song
-                    const startTime = 30; // Start at 30 seconds
-                    const clipDuration = 3; // 3-second clip
+                    // Extract a 3-second clip from the start
+                    const clipDuration = 3;
                     const sampleRate = fullAudioBuffer.sampleRate;
+                    const totalDuration = fullAudioBuffer.duration;
+                    const startTime = 0;
                     const startSample = Math.floor(startTime * sampleRate);
-                    const clipSamples = Math.floor(clipDuration * sampleRate);
-                    
-                    // Create a new buffer for the 3-second clip
+                    const clipSamples = Math.min(Math.floor(clipDuration * sampleRate), fullAudioBuffer.length - startSample);
                     audioBuffer = audioContext.createBuffer(
                         fullAudioBuffer.numberOfChannels,
                         clipSamples,
                         sampleRate
                     );
-                    
-                    // Copy the audio data from the specified time range
                     for (let channel = 0; channel < fullAudioBuffer.numberOfChannels; channel++) {
                         const sourceData = fullAudioBuffer.getChannelData(channel);
                         const targetData = audioBuffer.getChannelData(channel);
-                        
                         for (let i = 0; i < clipSamples; i++) {
                             const sourceIndex = startSample + i;
                             if (sourceIndex < sourceData.length) {
                                 targetData[i] = sourceData[sourceIndex];
                             } else {
-                                targetData[i] = 0; // Silence if we go beyond the source
+                                targetData[i] = 0;
                             }
                         }
                     }
-                    
-                    // Create audio element for the clip
                     const audioBlob = bufferToWav(audioBuffer);
-                    currentAudioUrl = URL.createObjectURL(audioBlob);
-                    audioElement = new Audio(currentAudioUrl);
-                    
-                    console.log(`Using 3-second clip from "Killing Your Gods" starting at ${startTime}s`);
+                    currentAudioUrlRef.current = URL.createObjectURL(audioBlob);
+                    audioElement = new Audio(currentAudioUrlRef.current);
                 } catch (error) {
-                    console.error('Error loading default audio file:', error);
                     // Fallback to sine wave if the file can't be loaded
                     const duration = recordingDuration / 1000;
                     const sampleRate = audioContext.sampleRate;
                     const frameCount = sampleRate * duration;
                     audioBuffer = audioContext.createBuffer(1, frameCount, sampleRate);
                     const channelData = audioBuffer.getChannelData(0);
-                    
-                    // Generate a simple 440Hz sine wave
                     for (let i = 0; i < frameCount; i++) {
                         channelData[i] = Math.sin(2 * Math.PI * 440 * i / sampleRate) * 0.5;
                     }
-                    
                     const audioBlob = bufferToWav(audioBuffer);
-                    currentAudioUrl = URL.createObjectURL(audioBlob);
-                    audioElement = new Audio(currentAudioUrl);
-                    
-                    console.log('Fallback: Using generated sine wave test audio');
+                    currentAudioUrlRef.current = URL.createObjectURL(audioBlob);
+                    audioElement = new Audio(currentAudioUrlRef.current);
                 }
             }
-            
             // Start song first to set up audio analysis
-            song.startAudioFromBuffer(audioContext, audioBuffer);
-            
+            songRef.current.startAudioFromBuffer(audioContext, audioBuffer);
             // Ensure canvas is rendered and animation is running before capturing
-            if (canvas && animation) {
-                // Set a background color to ensure canvas isn't transparent
-                canvas.backgroundColor = '#000000';
-                
-                // Force a few animation frames to ensure canvas has content
-                animation.draw(canvas);
-                canvas.renderAll();
-                
-                // Wait a bit more for the animation to be fully active
+            if (fabricCanvasRef.current && animationRef.current) {
+                // Don't change background color - keep the existing one
+                animationRef.current.draw(fabricCanvasRef.current);
+                fabricCanvasRef.current.renderAll();
                 await new Promise(resolve => setTimeout(resolve, 200));
-                
-                // Draw again to ensure fresh content
-                animation.draw(canvas);
-                canvas.renderAll();
+                animationRef.current.draw(fabricCanvasRef.current);
+                fabricCanvasRef.current.renderAll();
             }
-            
             // Get canvas stream after ensuring canvas is actively rendered
             const canvasStream = canvasRef.current.captureStream(framerate);
-            
-            // Log stream details for debugging
-            console.log('Canvas stream video tracks:', canvasStream.getVideoTracks().length);
-            console.log('Canvas stream video track settings:', canvasStream.getVideoTracks()[0]?.getSettings());
-            
             // Create a new buffer source for the MediaRecorder 
             bufferSource = audioContext.createBufferSource();
             bufferSource.buffer = audioBuffer;
-            
             // Create media stream destination for recording
             const dest = audioContext.createMediaStreamDestination();
             bufferSource.connect(dest);
             // Don't connect to audioContext.destination to avoid double audio playback
-            
             // Start the transport and audio
-            song.getTransport().start();
-            
-            // Wait for canvas to start rendering actively
+            songRef.current.getTransport().start();
             await new Promise(resolve => setTimeout(resolve, 500));
-            
             // Combine canvas and audio streams
             const videoTracks = canvasStream.getVideoTracks();
             const audioTracks = dest.stream.getAudioTracks();
-            
-            console.log('Video tracks:', videoTracks.length, 'Audio tracks:', audioTracks.length);
-            
             const combinedStream = new MediaStream([
                 ...videoTracks,
                 ...audioTracks
             ]);
-            
             // Set up MediaRecorder with fallback codec options
             let mimeType = 'video/webm;codecs=vp9,opus';
             if (!MediaRecorder.isTypeSupported(mimeType)) {
@@ -227,58 +200,53 @@ export default function SongPlayer({}: SongPlayerProps) {
                     mimeType = 'video/webm';
                 }
             }
-            
-            console.log('Using MediaRecorder with mimeType:', mimeType);
-            
-            mediaRecorder = new MediaRecorder(combinedStream, {
+            mediaRecorderRef.current = new MediaRecorder(combinedStream, {
                 mimeType: mimeType
             });
-            
-            mediaRecorder.ondataavailable = (event) => {
+            mediaRecorderRef.current.ondataavailable = (event) => {
                 if (event.data.size > 0) {
-                    recordedChunks.push(event.data);
+                    recordedChunksRef.current.push(event.data);
                 }
             };
-            
-            mediaRecorder.onstop = () => {
-                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+            mediaRecorderRef.current.onstop = () => {
+                console.log('Recording stopped - animation should continue');
+                const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
                 downloadVideo(blob);
                 setIsRecording(false);
-                
-                // Clean up audio URL
-                if (currentAudioUrl) {
-                    URL.revokeObjectURL(currentAudioUrl);
-                    currentAudioUrl = null;
+                if (currentAudioUrlRef.current) {
+                    URL.revokeObjectURL(currentAudioUrlRef.current);
+                    currentAudioUrlRef.current = null;
                 }
             };
-            
             // Start recording
-            mediaRecorder.start();
+            mediaRecorderRef.current.start();
+            console.log('Recording started - animation should continue running');
             
+            // Force a redraw of the animation and canvas after starting recording
+            if (animationRef.current && fabricCanvasRef.current) {
+                animationRef.current.draw(fabricCanvasRef.current);
+                fabricCanvasRef.current.renderAll();
+                console.log('Forced redraw after starting recording');
+            }
             // Start the buffer source for recording (separate from the sample's transport-managed source)
             bufferSource.start();
-            
             // Calculate recording duration based on audio length or user setting
             const actualDuration = uploadedFile 
                 ? Math.min(audioBuffer.duration * 1000, recordingDuration)
                 : recordingDuration;
-            
             // Stop recording after specified duration
             setTimeout(() => {
-                if (mediaRecorder && mediaRecorder.state === 'recording') {
-                    mediaRecorder.stop();
-                    song.getTransport().stop();
+                if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+                    mediaRecorderRef.current.stop();
+                    songRef.current.getTransport().stop();
                     bufferSource.stop();
                 }
             }, actualDuration);
-            
-            console.log(`Video recording started with ${uploadedFile ? 'uploaded audio' : '3-second "Killing Your Gods" clip'}`);
         } catch (error) {
-            console.error('Error starting video recording:', error);
             setIsRecording(false);
         }
     };
-    
+
     const downloadVideo = (blob: Blob) => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -288,7 +256,6 @@ export default function SongPlayer({}: SongPlayerProps) {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        console.log('Video download initiated');
     };
 
     const bufferToWav = (buffer: AudioBuffer) => {
@@ -296,14 +263,11 @@ export default function SongPlayer({}: SongPlayerProps) {
         const sampleRate = buffer.sampleRate;
         const arrayBuffer = new ArrayBuffer(44 + length * 2);
         const view = new DataView(arrayBuffer);
-        
-        // WAV header
         const writeString = (offset: number, string: string) => {
             for (let i = 0; i < string.length; i++) {
                 view.setUint8(offset + i, string.charCodeAt(i));
             }
         };
-        
         writeString(0, 'RIFF');
         view.setUint32(4, 36 + length * 2, true);
         writeString(8, 'WAVE');
@@ -317,51 +281,34 @@ export default function SongPlayer({}: SongPlayerProps) {
         view.setUint16(34, 16, true);
         writeString(36, 'data');
         view.setUint32(40, length * 2, true);
-        
-        // Audio data
         const channelData = buffer.getChannelData(0);
         let offset = 44;
         for (let i = 0; i < length; i++) {
             view.setInt16(offset, channelData[i] * 0x7FFF, true);
             offset += 2;
         }
-        
         return new Blob([arrayBuffer], { type: 'audio/wav' });
     };
 
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
-        
         setUploadedFile(file);
-        
         try {
             const audioContext = new AudioContext();
-            
-            // Resume audio context if suspended (required for user interaction)
             if (audioContext.state === 'suspended') {
                 await audioContext.resume();
-                console.log('Audio context resumed');
             }
-            
             const arrayBuffer = await file.arrayBuffer();
             const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-            
-            // Start playing the uploaded audio immediately
-            song.startAudioFromBuffer(audioContext, audioBuffer);
-            
-            // Start the transport to begin audio playback and analysis
-            song.getTransport().start();
-            
-            console.log('Uploaded audio file loaded and started');
-        } catch (error) {
-            console.error('Error loading uploaded audio file:', error);
-        }
+            songRef.current.startAudioFromBuffer(audioContext, audioBuffer);
+            songRef.current.getTransport().start();
+        } catch (error) {}
     };
 
     return (
         <div>
-            <canvas ref={canvasRef} width={width} height={height} />
+            <canvas ref={canvasRef} width={dimensions.width} height={dimensions.height} />
             <div className="container mx-auto pt-5">
                 <div className="flex flex-col gap-4">
                     <div className="flex items-center gap-4">
@@ -396,7 +343,7 @@ export default function SongPlayer({}: SongPlayerProps) {
                             </label>
                         </div>
                         <div className="flex items-center content-center gap-5">
-                            <TransportView model={song.getTransport()} />
+                            <TransportView model={songRef.current.getTransport()} />
                             <AnimationTypeSelector onChange={(v) => setAnimationType(v)} />
                             <div className="flex items-center gap-2">
                                 <span className="text-sm font-medium">VU Level:</span>

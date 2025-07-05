@@ -1,9 +1,6 @@
-import {Center} from "@chakra-ui/react";
-import {NumberInputField, NumberInputRoot} from "@/components/chakra/number-input";
+// This file is no longer used - SongPlayer component doesn't use Chakra UI or p5
+// Keeping minimal imports to prevent build errors
 import React from "react";
-import p5 from "p5";
-import {noiseBand} from "@/sketch/noise-band";
-import {Color, ColorRange, Graphics, Range, SketchModel} from "@/sketch/sketch-common";
 
 export interface NoiseBandOptions {
     // Height

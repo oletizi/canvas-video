@@ -1,4 +1,5 @@
-import p5 from "p5";
+// This file is no longer used - SongPlayer component doesn't use p5
+// import p5 from "p5";
 
 class Position {
     x: number
