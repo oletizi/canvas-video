@@ -62,17 +62,15 @@ export default function SongPlayer({}: SongPlayerProps) {
         // Update canvas size based on video format or aspect ratio
         const updateDimensions = () => {
             let width: number;
-            let height: number;
+            const height = 500; // Always 500px high
             
             if (videoFormat !== VideoFormat.Custom) {
-                // Use video format presets
+                // Use video format presets but scale to 500px height
                 const preset = getPresetByFormat(videoFormat);
-                width = preset.width;
-                height = preset.height;
+                const scale = height / preset.height;
+                width = preset.width * scale;
             } else {
                 // Use aspect ratio calculation
-                height = 500; // Fixed height for all aspect ratios
-                
                 // Calculate width based on aspect ratio
                 switch (aspectRatio) {
                     case AspectRatio.Widescreen: // 16:9
