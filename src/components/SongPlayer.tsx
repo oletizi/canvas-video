@@ -425,7 +425,9 @@ export default function SongPlayer({}: SongPlayerProps) {
 
     return (
         <div>
-            <canvas ref={canvasRef} width={dimensions.width} height={dimensions.height} />
+            <div className="flex justify-center">
+                <canvas ref={canvasRef} width={dimensions.width} height={dimensions.height} />
+            </div>
             <div className="container mx-auto pt-5">
                 <div className="flex flex-col gap-4">
                     <div className="flex items-center gap-4">
