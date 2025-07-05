@@ -7,6 +7,7 @@ import ThemeSelector from '@/components/theme-selector';
 import AspectRatioSelector, { AspectRatio } from '@/components/aspect-ratio-selector';
 import VideoFormatSelector from '@/components/video-format-selector';
 import { VideoFormat, getPresetByFormat } from '@/components/video-format-presets';
+import VideoShareButtons from '@/components/video-share-buttons';
 import { TransportView } from '@/ts/components/transport';
 import { Canvas } from 'fabric';
 
@@ -41,6 +42,7 @@ export default function SongPlayer({}: SongPlayerProps) {
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [isRecording, setIsRecording] = useState(false);
     const [recordingDuration, setRecordingDuration] = useState(3000); // Will be updated to audio duration when audio is loaded
+    const [recordedVideoBlob, setRecordedVideoBlob] = useState<Blob | null>(null);
     const [currentVuLevel, setCurrentVuLevel] = useState(0);
     const [transportPosition, setTransportPosition] = useState(0); // Current position in milliseconds
     const [audioDuration, setAudioDuration] = useState(0); // Total audio duration in milliseconds
@@ -349,6 +351,9 @@ export default function SongPlayer({}: SongPlayerProps) {
     };
 
     const downloadVideo = (blob: Blob) => {
+        // Store the blob for sharing
+        setRecordedVideoBlob(blob);
+        
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -567,6 +572,14 @@ export default function SongPlayer({}: SongPlayerProps) {
                                 </div>
                             </div>
                         )}
+                        
+                        {/* Share buttons */}
+                        <VideoShareButtons 
+                            videoBlob={recordedVideoBlob}
+                            videoFormat={videoFormat}
+                            dimensions={dimensions}
+                            isRecording={isRecording}
+                        />
                     </div>
                 </div>
             </div>
