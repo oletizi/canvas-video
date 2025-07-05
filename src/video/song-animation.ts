@@ -22,6 +22,12 @@ export enum PulsingEyeTheme {
     Sauron = "Sauron",
 }
 
+export enum WandererTheme {
+    BlackHole = "Black Hole",
+    HAL = "HAL",
+    Sauron = "Sauron",
+}
+
 // TODO: Rename this to something more general—like, <Something>Component
 export interface SongAnimation {
     setup(c: fabric.Canvas): void
@@ -33,13 +39,13 @@ export function newDefaultAnimation(song: Song, fps: number) {
     return newAnimation(AnimationType.DEFAULT, song, fps)
 }
 
-export function newAnimation(type: AnimationType, song: Song, fps: number, theme?: PulsingEyeTheme) {
+export function newAnimation(type: AnimationType, song: Song, fps: number, theme?: PulsingEyeTheme | WandererTheme) {
     console.log(`New animation! type:`, type, `theme:`, theme)
     switch (type) {
         case AnimationType.Wanderer:
-            return new Wanderer(song, fps)
+            return new Wanderer(song, fps, theme as WandererTheme)
         case AnimationType.PulsingEye:
-            return new PulsingEye(song, fps, theme || PulsingEyeTheme.BlackHole)
+            return new PulsingEye(song, fps, theme as PulsingEyeTheme || PulsingEyeTheme.BlackHole)
         case AnimationType.Waves:
             return new Waves(song, fps)
         case AnimationType.Face:
@@ -190,17 +196,75 @@ class Wanderer implements SongAnimation {
     private direction = 1
     private x = 1
     private y = 0
+    private theme: WandererTheme;
+    private background: fabric.Rect;
 
-    constructor(song: Song, fps: number) {
+    constructor(song: Song, fps: number, theme: WandererTheme = WandererTheme.BlackHole) {
         this.song = song
+        this.theme = theme
         this.vu = song.newVuMeter(0.1, 0.5, fps)
     }
 
     setup(c: fabric.Canvas) {
-        const w = c.width//this.w = c.width ? c.width : this.w
-        this.y = w / 2
-        this.x = Wanderer.DEFAULT_RADIUS + 1
-        c.add(this.circle)
+        const w = c.width;
+        const h = c.height;
+        
+        // Setup based on theme
+        switch (this.theme) {
+            case WandererTheme.BlackHole:
+                this.setupBlackHole(c, w, h);
+                break;
+            case WandererTheme.HAL:
+                this.setupHAL(c, w, h);
+                break;
+            case WandererTheme.Sauron:
+                this.setupSauron(c, w, h);
+                break;
+        }
+        
+        this.y = h / 2;
+        this.x = Wanderer.DEFAULT_RADIUS + 1;
+        c.add(this.circle);
+    }
+
+    private setupBlackHole(c: fabric.Canvas, w: number, h: number) {
+        // Black Hole theme - simple white background
+        this.background = new fabric.Rect({fill: '#ffffff', height: h, width: w});
+        c.add(this.background);
+        
+        this.circle = new fabric.Circle({
+            radius: Wanderer.DEFAULT_RADIUS,
+            fill: 'black',
+            selectable: false
+        });
+    }
+
+    private setupHAL(c: fabric.Canvas, w: number, h: number) {
+        // HAL theme - black background with red wandering circle
+        this.background = new fabric.Rect({fill: '#000000', height: h, width: w});
+        c.add(this.background);
+        
+        this.circle = new fabric.Circle({
+            radius: Wanderer.DEFAULT_RADIUS,
+            fill: '#ff0000',
+            stroke: '#666666',
+            strokeWidth: 2,
+            selectable: false
+        });
+    }
+
+    private setupSauron(c: fabric.Canvas, w: number, h: number) {
+        // Sauron theme - dark background with fiery orange wandering circle
+        this.background = new fabric.Rect({fill: '#1a0f0f', height: h, width: w});
+        c.add(this.background);
+        
+        this.circle = new fabric.Circle({
+            radius: Wanderer.DEFAULT_RADIUS,
+            fill: '#ff8c00',
+            stroke: '#ff4500',
+            strokeWidth: 3,
+            selectable: false
+        });
     }
 
     draw(c: Canvas) {

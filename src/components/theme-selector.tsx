@@ -1,20 +1,24 @@
-import { PulsingEyeTheme } from "@/video/song-animation";
+import { PulsingEyeTheme, WandererTheme } from "@/video/song-animation";
 import { useState } from "react";
+
+type ThemeType = PulsingEyeTheme | WandererTheme;
 
 export default function ThemeSelector({ 
     onChange, 
-    currentTheme = PulsingEyeTheme.BlackHole 
+    currentTheme,
+    themes
 }: { 
-    onChange: (theme: PulsingEyeTheme) => void;
-    currentTheme?: PulsingEyeTheme;
+    onChange: (theme: ThemeType) => void;
+    currentTheme: ThemeType;
+    themes: ThemeType[];
 }) {
-    const [selected, setSelected] = useState<PulsingEyeTheme>(currentTheme);
+    const [selected, setSelected] = useState<ThemeType>(currentTheme);
 
     return (
         <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-gray-700">Theme:</label>
             <div className="flex gap-1">
-                {Object.values(PulsingEyeTheme).map((theme) => (
+                {themes.map((theme) => (
                     <button
                         key={theme}
                         onClick={() => {

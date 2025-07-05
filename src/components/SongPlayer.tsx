@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { newSong } from '@/song/song';
-import { AnimationType, newAnimation, PulsingEyeTheme } from '@/video/song-animation';
+import { AnimationType, newAnimation, PulsingEyeTheme, WandererTheme } from '@/video/song-animation';
 import type { SongAnimation } from '@/video/song-animation';
 import AnimationTypeSelector from '@/components/animation-type';
 import ThemeSelector from '@/components/theme-selector';
@@ -17,10 +17,22 @@ const formatTime = (milliseconds: number): string => {
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 };
 
+// Helper function to get themes for current animation type
+const getThemesForAnimation = (animationType: AnimationType): (PulsingEyeTheme | WandererTheme)[] => {
+    switch (animationType) {
+        case AnimationType.PulsingEye:
+            return Object.values(PulsingEyeTheme);
+        case AnimationType.Wanderer:
+            return Object.values(WandererTheme);
+        default:
+            return [];
+    }
+};
+
 export default function SongPlayer({}: SongPlayerProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [animationType, setAnimationType] = useState(AnimationType.PulsingEye);
-    const [currentTheme, setCurrentTheme] = useState(PulsingEyeTheme.BlackHole);
+    const [currentTheme, setCurrentTheme] = useState<PulsingEyeTheme | WandererTheme>(PulsingEyeTheme.BlackHole);
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [isRecording, setIsRecording] = useState(false);
     const [recordingDuration, setRecordingDuration] = useState(3000); // Will be updated to audio duration when audio is loaded
@@ -411,7 +423,15 @@ export default function SongPlayer({}: SongPlayerProps) {
                         </div>
                         <div className="flex items-center content-center gap-5">
                             <TransportView model={songRef.current.getTransport()} />
-                            <AnimationTypeSelector onChange={(v) => setAnimationType(v)} />
+                            <AnimationTypeSelector onChange={(v) => {
+                                setAnimationType(v);
+                                // Reset theme to default for new animation type
+                                if (v === AnimationType.PulsingEye) {
+                                    setCurrentTheme(PulsingEyeTheme.BlackHole);
+                                } else if (v === AnimationType.Wanderer) {
+                                    setCurrentTheme(WandererTheme.BlackHole);
+                                }
+                            }} />
                             <div className="flex items-center gap-2">
                                 <span className="text-sm font-medium">VU Level:</span>
                                 <div className="w-32 h-4 bg-gray-200 rounded-full overflow-hidden">
@@ -441,11 +461,12 @@ export default function SongPlayer({}: SongPlayerProps) {
                                 }
                             </button>
                         </div>
-                        {/* Theme selector - only show for PulsingEye */}
-                        {animationType === AnimationType.PulsingEye && (
+                        {/* Theme selector - show for PulsingEye and Wanderer */}
+                        {(animationType === AnimationType.PulsingEye || animationType === AnimationType.Wanderer) && (
                             <ThemeSelector 
                                 onChange={setCurrentTheme} 
                                 currentTheme={currentTheme}
+                                themes={getThemesForAnimation(animationType)}
                             />
                         )}
                         {/* Progress indicator */}
