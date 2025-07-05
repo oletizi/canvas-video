@@ -2,6 +2,12 @@ import type { APIRoute } from 'astro';
 import path from 'path';
 import fs from 'fs';
 
+export async function getStaticPaths() {
+    return [
+        { params: { path: 'waves.wav' } },
+    ];
+}
+
 export const GET: APIRoute = async ({ params }) => {
     const audioPath = params.path;
     

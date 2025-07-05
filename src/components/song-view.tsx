@@ -1,6 +1,7 @@
 "use client"
 import React from "react";
-import {Transport, TransportView} from "@/ts/components/transport";
+import {TransportView} from "@/ts/components/transport";
+import type {Transport} from "@/ts/components/transport";
 
 export function SongView({startAudio, transport}: { startAudio: () => void, transport: Transport }) {
     return (

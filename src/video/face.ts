@@ -1,8 +1,8 @@
-import {SongAnimation} from "@/video/song-animation";
+import type {SongAnimation} from "@/video/song-animation";
 import {Canvas, Circle, Rect} from "fabric"
 import {Pixels} from "@/video/pixels";
-import {Song} from "@/song/song";
-import {VuMeter} from "@/ts/audio/vu-meter";
+import type {Song} from "@/song/song";
+import type {VuMeter} from "@/ts/audio/vu-meter";
 import {scale} from "@/lib/lib-core";
 
 export class Face implements SongAnimation {

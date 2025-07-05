@@ -1,12 +1,19 @@
 "use client"
-import {newClientOutput, ProcessOutput} from "@/lib/process-output"
-import {loadAudio, newSamplePlayer, SampleResult} from "@/ts/audio/audio"
-import {newSampleAnalyzer, nullSampleAnalyzer, SampleAnalyzer} from "@/ts/audio/sample-analyzer"
-import {newTransport, Transport, TransportListener} from "@/ts/components/transport"
-import {newVuFactory, VuFactory, VuMeter} from "@/ts/audio/vu-meter";
+import {newClientOutput} from "@/lib/process-output"
+import type {ProcessOutput} from "@/lib/process-output"
+import {loadAudio, newSamplePlayer, WebAudioSample} from "@/ts/audio/audio"
+import type {SampleResult} from "@/ts/audio/audio"
+import {newSampleAnalyzer, nullSampleAnalyzer} from "@/ts/audio/sample-analyzer"
+import type {SampleAnalyzer} from "@/ts/audio/sample-analyzer"
+import {newTransport} from "@/ts/components/transport"
+import type {Transport, TransportListener} from "@/ts/components/transport"
+import {newVuFactory} from "@/ts/audio/vu-meter"
+import type {VuFactory, VuMeter} from "@/ts/audio/vu-meter";
 
 export interface Song {
     startAudio(audioContext: AudioContext, url: string): void
+
+    startAudioFromBuffer(audioContext: AudioContext, buffer: AudioBuffer): void
 
     getTransport(): Transport
 
@@ -48,6 +55,23 @@ class SongBase implements Song, TransportListener {
                 this.sampleAnalyzer = newSampleAnalyzer(s)
             }
         }).catch(e => console.error(e))
+    }
+
+    startAudioFromBuffer(audioContext: AudioContext, buffer: AudioBuffer) {
+        const out = this.out
+        out.log(`Starting audio from buffer...`)
+        
+        try {
+            // Create WebAudioSample directly from buffer
+            const sample = new WebAudioSample(audioContext, buffer)
+            
+            out.log(`Creating new sample player for generated audio buffer`)
+            newSamplePlayer(this.transport, sample)
+            this.sampleAnalyzer = newSampleAnalyzer(sample)
+        } catch (e) {
+            out.error(`Error starting audio from buffer: ${e}`)
+            console.error(e)
+        }
     }
 
     getTransport(): Transport {

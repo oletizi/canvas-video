@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { newSong } from '@/song/song';
-import { AnimationType, newAnimation, SongAnimation } from '@/video/song-animation';
+import { AnimationType, newAnimation } from '@/video/song-animation';
+import type { SongAnimation } from '@/video/song-animation';
 import { SongView } from '@/components/song-view';
 import AnimationTypeSelector from '@/components/animation-type';
 import { Canvas } from 'fabric';
@@ -50,6 +51,67 @@ export default function SongPlayer({ songPath }: SongPlayerProps) {
         };
     }, [animationType]);
 
+    const generateTestVideo = () => {
+        const testAudioContext = new AudioContext();
+        const duration = 3; // 3 seconds
+        const sampleRate = testAudioContext.sampleRate;
+        const frameCount = sampleRate * duration;
+        const buffer = testAudioContext.createBuffer(1, frameCount, sampleRate);
+        const channelData = buffer.getChannelData(0);
+        
+        // Generate a simple 440Hz sine wave
+        for (let i = 0; i < frameCount; i++) {
+            channelData[i] = Math.sin(2 * Math.PI * 440 * i / sampleRate) * 0.5;
+        }
+        
+        // Create audio blob and URL
+        const audioBlob = bufferToWav(buffer);
+        const audioUrl = URL.createObjectURL(audioBlob);
+        
+        // Start playing the generated audio
+        song.startAudioFromBuffer(testAudioContext, buffer);
+        
+        console.log('Test video generation started with generated audio');
+    };
+
+    const bufferToWav = (buffer: AudioBuffer) => {
+        const length = buffer.length;
+        const sampleRate = buffer.sampleRate;
+        const arrayBuffer = new ArrayBuffer(44 + length * 2);
+        const view = new DataView(arrayBuffer);
+        
+        // WAV header
+        const writeString = (offset: number, string: string) => {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        };
+        
+        writeString(0, 'RIFF');
+        view.setUint32(4, 36 + length * 2, true);
+        writeString(8, 'WAVE');
+        writeString(12, 'fmt ');
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, 1, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * 2, true);
+        view.setUint16(32, 2, true);
+        view.setUint16(34, 16, true);
+        writeString(36, 'data');
+        view.setUint32(40, length * 2, true);
+        
+        // Audio data
+        const channelData = buffer.getChannelData(0);
+        let offset = 44;
+        for (let i = 0; i < length; i++) {
+            view.setInt16(offset, channelData[i] * 0x7FFF, true);
+            offset += 2;
+        }
+        
+        return new Blob([arrayBuffer], { type: 'audio/wav' });
+    };
+
     return (
         <div>
             <canvas ref={canvasRef} width={width} height={height} />
@@ -62,6 +124,12 @@ export default function SongPlayer({ songPath }: SongPlayerProps) {
                         transport={song.getTransport()}
                     />
                     <AnimationTypeSelector onChange={(v) => setAnimationType(v)} />
+                    <button 
+                        onClick={generateTestVideo}
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                    >
+                        Generate Test Video
+                    </button>
                 </div>
             </div>
         </div>

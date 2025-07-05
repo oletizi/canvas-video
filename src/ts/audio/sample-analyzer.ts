@@ -1,4 +1,4 @@
-import {Sample} from "@/ts/audio/audio";
+import type {Sample} from "@/ts/audio/audio";
 
 export interface SampleAnalyzer {
     getLevel(): number

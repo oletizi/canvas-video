@@ -1,9 +1,10 @@
 // import {fabric} from "fabric";
 import * as fabric from "fabric";
 import {scale} from '@/lib/lib-core'
-import {Song} from "@/song/song";
-import {VuMeter} from "@/ts/audio/vu-meter";
-import {newWave, WaveOptions} from "@/video/wave";
+import type {Song} from "@/song/song";
+import type {VuMeter} from "@/ts/audio/vu-meter";
+import {newWave} from "@/video/wave";
+import type {WaveOptions} from "@/video/wave";
 import {Face} from "@/video/face";
 import {Canvas} from "fabric";
 

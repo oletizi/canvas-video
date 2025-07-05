@@ -1,4 +1,4 @@
-import {SongAnimation} from "@/video/song-animation";
+import type {SongAnimation} from "@/video/song-animation";
 import {Canvas, Rect} from "fabric";
 
 export class Pixels implements SongAnimation {

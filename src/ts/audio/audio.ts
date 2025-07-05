@@ -1,5 +1,5 @@
-import {Result} from "@/lib/lib-core";
-import {Transport} from "@/ts/components/transport";
+import type {Result} from "@/lib/lib-core";
+import type {Transport} from "@/ts/components/transport";
 import {newClientOutput} from "@/lib/process-output";
 
 export interface Sample {
@@ -135,3 +135,5 @@ export async function loadAudio(c: AudioContext, url: string): Promise<SampleRes
     }
     return rv
 }
+
+export { WebAudioSample }
