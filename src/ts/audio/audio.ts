@@ -11,6 +11,10 @@ export interface Sample {
     stop(): void
 
     reset(): void
+    
+    getAnalyzer(): AnalyserNode
+    
+    getAudioSource(): AudioBufferSourceNode
 }
 
 export interface SampleResult extends Result {
@@ -39,6 +43,7 @@ class WebAudioSample implements Sample {
         this.c = c
         this.audioBuffer = buffer
         this.analyzer = c.createAnalyser()
+        this.analyzer.fftSize = 2048
         this.timeDomainBuffer = new Float32Array(this.analyzer.frequencyBinCount)
         this.frequencyDomainBuffer = new Float32Array(this.analyzer.frequencyBinCount)
         setInterval((me: WebAudioSample) => {
@@ -62,6 +67,14 @@ class WebAudioSample implements Sample {
         this.source.buffer = this.audioBuffer
         this.source.connect(this.c.destination)
         this.source.connect(this.analyzer)
+    }
+    
+    getAnalyzer(): AnalyserNode {
+        return this.analyzer
+    }
+    
+    getAudioSource(): AudioBufferSourceNode {
+        return this.source
     }
 
     reset() {

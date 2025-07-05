@@ -65,6 +65,7 @@ export default function SongPlayer({}: SongPlayerProps) {
             let audioElement: HTMLAudioElement;
             let audioBuffer: AudioBuffer;
             let audioContext: AudioContext;
+            let bufferSource: AudioBufferSourceNode;
             
             audioContext = new AudioContext();
             
@@ -113,11 +114,23 @@ export default function SongPlayer({}: SongPlayerProps) {
             // Get canvas stream
             const canvasStream = canvasRef.current.captureStream(framerate);
             
-            // Create audio stream using Web Audio API
-            const source = audioContext.createMediaElementSource(audioElement);
+            // Start song first to set up audio analysis
+            song.startAudioFromBuffer(audioContext, audioBuffer);
+            
+            // Get the audio source from the sample that's being analyzed
+            const currentSample = song.getCurrentSample();
+            if (!currentSample) {
+                throw new Error('No audio sample available');
+            }
+            
+            // Use the same audio source for recording that's being analyzed
+            bufferSource = currentSample.getAudioSource();
+            
             const dest = audioContext.createMediaStreamDestination();
-            source.connect(dest);
-            source.connect(audioContext.destination);
+            bufferSource.connect(dest);
+            
+            // Start the transport and audio
+            song.getTransport().start();
             
             // Wait a bit for the audio context to be ready
             await new Promise(resolve => setTimeout(resolve, 100));
@@ -169,11 +182,6 @@ export default function SongPlayer({}: SongPlayerProps) {
             // Start recording
             mediaRecorder.start();
             
-            // Start audio playback and animation
-            song.startAudioFromBuffer(audioContext, audioBuffer);
-            song.getTransport().start();
-            audioElement.play();
-            
             // Calculate recording duration based on audio length or user setting
             const actualDuration = uploadedFile 
                 ? Math.min(audioBuffer.duration * 1000, recordingDuration)
@@ -184,7 +192,6 @@ export default function SongPlayer({}: SongPlayerProps) {
                 if (mediaRecorder && mediaRecorder.state === 'recording') {
                     mediaRecorder.stop();
                     song.getTransport().stop();
-                    audioElement.pause();
                 }
             }, actualDuration);
             

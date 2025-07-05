@@ -2,6 +2,7 @@
 import {newClientOutput} from "@/lib/process-output"
 import type {ProcessOutput} from "@/lib/process-output"
 import {newSamplePlayer, WebAudioSample} from "@/ts/audio/audio"
+import type {Sample} from "@/ts/audio/audio"
 import {newSampleAnalyzer, nullSampleAnalyzer} from "@/ts/audio/sample-analyzer"
 import type {SampleAnalyzer} from "@/ts/audio/sample-analyzer"
 import {newTransport} from "@/ts/components/transport"
@@ -15,6 +16,8 @@ export interface Song {
     getTransport(): Transport
 
     getSampleAnalyzer(): SampleAnalyzer
+    
+    getCurrentSample(): Sample | null
 
     newVuMeter(attackTime: number, decayTime: number, fps: number): VuMeter
 }
@@ -28,6 +31,7 @@ class SongBase implements Song, TransportListener {
     private readonly transport: Transport;
     private sampleAnalyzer: SampleAnalyzer = nullSampleAnalyzer()
     private vuMeters: VuFactory;
+    private currentSample: Sample | null = null;
 
     constructor(out: ProcessOutput = newClientOutput('SongBase'), transport: Transport = newTransport()) {
         this.out = out
@@ -44,6 +48,7 @@ class SongBase implements Song, TransportListener {
         try {
             // Create WebAudioSample directly from buffer
             const sample = new WebAudioSample(audioContext, buffer)
+            this.currentSample = sample
             
             out.log(`Creating new sample player for generated audio buffer`)
             newSamplePlayer(this.transport, sample)
@@ -82,10 +87,15 @@ class SongBase implements Song, TransportListener {
 
     ticked() {
         if (this.sampleAnalyzer) {
-            if (this.transport.getPosition() % 8 == 0) {
-                this.vuMeters.setTarget(this.sampleAnalyzer.getLevel())
-            }
+            // Update VU meters every tick for responsive visual feedback
+            const level = this.sampleAnalyzer.getLevel()
+            this.vuMeters.setTarget(level)
             this.vuMeters.update()
+            
+            // Debug logging (remove in production)
+            if (this.transport.getPosition() % 120 == 0 && level > 0) { // Log every ~2 seconds when there's audio
+                console.log('VU meter level:', level.toFixed(3))
+            }
         }
     }
 
