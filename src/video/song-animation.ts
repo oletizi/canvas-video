@@ -16,6 +16,12 @@ export enum AnimationType {
     Face,
 }
 
+export enum PulsingEyeTheme {
+    BlackHole = "Black Hole",
+    HAL = "HAL",
+    Sauron = "Sauron",
+}
+
 // TODO: Rename this to something more general—like, <Something>Component
 export interface SongAnimation {
     setup(c: fabric.Canvas): void
@@ -27,14 +33,13 @@ export function newDefaultAnimation(song: Song, fps: number) {
     return newAnimation(AnimationType.DEFAULT, song, fps)
 }
 
-export function newAnimation(type: AnimationType, song: Song, fps: number) {
-    console.log(`New animation! type:`)
-    console.log(type)
+export function newAnimation(type: AnimationType, song: Song, fps: number, theme?: PulsingEyeTheme) {
+    console.log(`New animation! type:`, type, `theme:`, theme)
     switch (type) {
         case AnimationType.Wanderer:
             return new Wanderer(song, fps)
         case AnimationType.PulsingEye:
-            return new PulsingEye(song, fps)
+            return new PulsingEye(song, fps, theme || PulsingEyeTheme.BlackHole)
         case AnimationType.Waves:
             return new Waves(song, fps)
         case AnimationType.Face:
@@ -227,20 +232,41 @@ class PulsingEye implements SongAnimation {
     private song: Song;
     private fps: number;
     private vu: VuMeter;
+    private theme: PulsingEyeTheme;
+    private background: fabric.Rect;
+    private outerRing: fabric.Circle;
+    private innerRing: fabric.Circle;
 
-    constructor(song: Song, fps: number) {
+    constructor(song: Song, fps: number, theme: PulsingEyeTheme = PulsingEyeTheme.BlackHole) {
         this.song = song
         this.fps = fps
+        this.theme = theme
         this.vu = song.newVuMeter(0.1, 0.3, fps)
     }
 
     setup(c: fabric.Canvas) {
         const w = c.width;
         const h = c.height;
-        // Add white background for PulsingEye
-        const background = new fabric.Rect({fill: '#ffffff', height: h, width: w})
-        c.add(background)
-        // Center the circle
+        
+        // Setup based on theme
+        switch (this.theme) {
+            case PulsingEyeTheme.BlackHole:
+                this.setupBlackHole(c, w, h);
+                break;
+            case PulsingEyeTheme.HAL:
+                this.setupHAL(c, w, h);
+                break;
+            case PulsingEyeTheme.Sauron:
+                this.setupSauron(c, w, h);
+                break;
+        }
+    }
+
+    private setupBlackHole(c: fabric.Canvas, w: number, h: number) {
+        // Original PulsingEye configuration
+        this.background = new fabric.Rect({fill: '#ffffff', height: h, width: w});
+        c.add(this.background);
+        
         this.circle = new fabric.Circle({
             radius: this.r,
             selectable: false,
@@ -250,13 +276,106 @@ class PulsingEye implements SongAnimation {
             originY: 'center',
             fill: 'black'
         });
-        c.add(this.circle)
+        c.add(this.circle);
+    }
+
+    private setupHAL(c: fabric.Canvas, w: number, h: number) {
+        // HAL 9000 theme - red eye with black background and outer ring
+        this.background = new fabric.Rect({fill: '#000000', height: h, width: w});
+        c.add(this.background);
+        
+        // Outer ring (camera housing)
+        this.outerRing = new fabric.Circle({
+            radius: this.r + 20,
+            selectable: false,
+            left: w / 2,
+            top: h / 2,
+            originX: 'center',
+            originY: 'center',
+            fill: '#333333',
+            stroke: '#666666',
+            strokeWidth: 3
+        });
+        c.add(this.outerRing);
+        
+        // Inner ring (lens)
+        this.innerRing = new fabric.Circle({
+            radius: this.r + 10,
+            selectable: false,
+            left: w / 2,
+            top: h / 2,
+            originX: 'center',
+            originY: 'center',
+            fill: '#222222',
+            stroke: '#444444',
+            strokeWidth: 2
+        });
+        c.add(this.innerRing);
+        
+        // Main eye (red)
+        this.circle = new fabric.Circle({
+            radius: this.r,
+            selectable: false,
+            left: w / 2,
+            top: h / 2,
+            originX: 'center',
+            originY: 'center',
+            fill: '#ff0000'
+        });
+        c.add(this.circle);
+    }
+
+    private setupSauron(c: fabric.Canvas, w: number, h: number) {
+        // Sauron theme - fiery orange eye with dark background and flame effects
+        this.background = new fabric.Rect({fill: '#1a0f0f', height: h, width: w});
+        c.add(this.background);
+        
+        // Outer ring (dark metal)
+        this.outerRing = new fabric.Circle({
+            radius: this.r + 25,
+            selectable: false,
+            left: w / 2,
+            top: h / 2,
+            originX: 'center',
+            originY: 'center',
+            fill: '#2a1a1a',
+            stroke: '#8b4513',
+            strokeWidth: 4
+        });
+        c.add(this.outerRing);
+        
+        // Inner ring (fire border)
+        this.innerRing = new fabric.Circle({
+            radius: this.r + 15,
+            selectable: false,
+            left: w / 2,
+            top: h / 2,
+            originX: 'center',
+            originY: 'center',
+            fill: '#4a2a1a',
+            stroke: '#ff4500',
+            strokeWidth: 3
+        });
+        c.add(this.innerRing);
+        
+        // Main eye (fiery orange)
+        this.circle = new fabric.Circle({
+            radius: this.r,
+            selectable: false,
+            left: w / 2,
+            top: h / 2,
+            originX: 'center',
+            originY: 'center',
+            fill: '#ff8c00'
+        });
+        c.add(this.circle);
     }
 
     draw(c: fabric.Canvas) {
         const w = c.width;
         const h = c.height;
         const transport = this.song.getTransport();
+        
         if (transport?.isRunning()) {
             this.r = PulsingEye.DEFAULT_RADIUS + PulsingEye.DEFAULT_RADIUS * this.vu.getValue();
         } else {
@@ -265,7 +384,83 @@ class PulsingEye implements SongAnimation {
                 this.direction *= -1;
             }
         }
+        
+        // Update based on theme
+        switch (this.theme) {
+            case PulsingEyeTheme.BlackHole:
+                this.drawBlackHole(c, w, h);
+                break;
+            case PulsingEyeTheme.HAL:
+                this.drawHAL(c, w, h);
+                break;
+            case PulsingEyeTheme.Sauron:
+                this.drawSauron(c, w, h);
+                break;
+        }
+    }
+
+    private drawBlackHole(c: fabric.Canvas, w: number, h: number) {
         // Update radius and keep the circle centered
+        this.circle.set({
+            radius: this.r,
+            left: w / 2,
+            top: h / 2,
+            originX: 'center',
+            originY: 'center'
+        });
+        this.circle.setCoords();
+    }
+
+    private drawHAL(c: fabric.Canvas, w: number, h: number) {
+        // Update all rings
+        this.outerRing.set({
+            radius: this.r + 20,
+            left: w / 2,
+            top: h / 2,
+            originX: 'center',
+            originY: 'center'
+        });
+        this.outerRing.setCoords();
+        
+        this.innerRing.set({
+            radius: this.r + 10,
+            left: w / 2,
+            top: h / 2,
+            originX: 'center',
+            originY: 'center'
+        });
+        this.innerRing.setCoords();
+        
+        this.circle.set({
+            radius: this.r,
+            left: w / 2,
+            top: h / 2,
+            originX: 'center',
+            originY: 'center'
+        });
+        this.circle.setCoords();
+    }
+
+    private drawSauron(c: fabric.Canvas, w: number, h: number) {
+        // Update all rings with fiery effects
+        this.outerRing.set({
+            radius: this.r + 25,
+            left: w / 2,
+            top: h / 2,
+            originX: 'center',
+            originY: 'center'
+        });
+        this.outerRing.setCoords();
+        
+        this.innerRing.set({
+            radius: this.r + 15,
+            left: w / 2,
+            top: h / 2,
+            originX: 'center',
+            originY: 'center'
+        });
+        this.innerRing.setCoords();
+        
         this.circle.set({
             radius: this.r,
             left: w / 2,

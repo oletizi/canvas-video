@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { newSong } from '@/song/song';
-import { AnimationType, newAnimation } from '@/video/song-animation';
+import { AnimationType, newAnimation, PulsingEyeTheme } from '@/video/song-animation';
 import type { SongAnimation } from '@/video/song-animation';
 import AnimationTypeSelector from '@/components/animation-type';
+import ThemeSelector from '@/components/theme-selector';
 import { TransportView } from '@/ts/components/transport';
 import { Canvas } from 'fabric';
 
@@ -19,6 +20,7 @@ const formatTime = (milliseconds: number): string => {
 export default function SongPlayer({}: SongPlayerProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [animationType, setAnimationType] = useState(AnimationType.PulsingEye);
+    const [currentTheme, setCurrentTheme] = useState(PulsingEyeTheme.BlackHole);
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [isRecording, setIsRecording] = useState(false);
     const [recordingDuration, setRecordingDuration] = useState(3000); // Will be updated to audio duration when audio is loaded
@@ -58,7 +60,7 @@ export default function SongPlayer({}: SongPlayerProps) {
             fabricCanvasRef.current.backgroundColor = '#444444'; // Slightly lighter for debugging
             fabricCanvasRef.current.renderAll();
             
-            animationRef.current = newAnimation(animationType, songRef.current, framerate);
+            animationRef.current = newAnimation(animationType, songRef.current, framerate, currentTheme);
             console.log('Animation created:', animationType, 'animation object:', animationRef.current);
             animationRef.current?.setup(fabricCanvasRef.current);
             console.log('Animation setup complete. Canvas objects:', fabricCanvasRef.current.getObjects().length);
@@ -111,7 +113,7 @@ export default function SongPlayer({}: SongPlayerProps) {
                 clearInterval(interval);
             };
         }
-    }, [animationType, dimensions.width, dimensions.height]);
+    }, [animationType, currentTheme, dimensions.width, dimensions.height]);
 
     const startVideoRecording = async () => {
         if (!canvasRef.current || isRecording) return;
@@ -439,6 +441,13 @@ export default function SongPlayer({}: SongPlayerProps) {
                                 }
                             </button>
                         </div>
+                        {/* Theme selector - only show for PulsingEye */}
+                        {animationType === AnimationType.PulsingEye && (
+                            <ThemeSelector 
+                                onChange={setCurrentTheme} 
+                                currentTheme={currentTheme}
+                            />
+                        )}
                         {/* Progress indicator */}
                         {audioDuration > 0 && (
                             <div className="flex flex-col gap-2">
