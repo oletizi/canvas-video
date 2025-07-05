@@ -114,7 +114,7 @@ export default function SongPlayer({}: SongPlayerProps) {
             } else {
                 // Load the default test audio file and extract a 3-second clip
                 try {
-                    const response = await fetch('/audio/2025-06-17 Killing Your Gods verse+chorus.mp3');
+                    const response = await fetch('/audio/test.mp3');
                     if (!response.ok) {
                         throw new Error(`Failed to load audio file: ${response.statusText}`);
                     }
