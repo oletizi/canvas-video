@@ -83,6 +83,16 @@ export default function SongPlayer({}: SongPlayerProps) {
                         const transportMs = transportTicks * (1000 / 60); // Convert ticks to milliseconds
                         setTransportPosition(transportMs);
                         
+                        // Debug: Log if transport position exceeds audio duration
+                        if (audioDuration > 0 && transportMs > audioDuration) {
+                            console.log('Transport position exceeds audio duration:', {
+                                transportMs: transportMs.toFixed(0),
+                                audioDuration: audioDuration.toFixed(0),
+                                transportTicks: transportTicks,
+                                percentage: ((transportMs / audioDuration) * 100).toFixed(1) + '%'
+                            });
+                        }
+                        
                         // Debug logging - log every 60 frames (about once per second)
                         if (Math.random() < 0.016) { // ~1/60 chance
                             console.log('Animation frame:', {
@@ -446,7 +456,7 @@ export default function SongPlayer({}: SongPlayerProps) {
                                     <div 
                                         className="bg-blue-500 h-2 rounded-full"
                                         style={{ 
-                                            width: `${audioDuration > 0 ? (transportPosition / audioDuration) * 100 : 0}%` 
+                                            width: `${audioDuration > 0 ? Math.min(100, (transportPosition / audioDuration) * 100) : 0}%` 
                                         }}
                                     />
                                     {/* Hover indicator */}
