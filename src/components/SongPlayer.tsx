@@ -5,8 +5,8 @@ import type { SongAnimation } from '@/video/song-animation';
 import AnimationTypeSelector from '@/components/animation-type';
 import ThemeSelector from '@/components/theme-selector';
 import AspectRatioSelector, { AspectRatio } from '@/components/aspect-ratio-selector';
-import VideoFormatSelector, { VideoFormat } from '@/components/video-format-selector';
-import { getPresetByFormat } from '@/components/video-format-presets';
+import VideoFormatSelector from '@/components/video-format-selector';
+import { VideoFormat, getPresetByFormat } from '@/components/video-format-presets';
 import { TransportView } from '@/ts/components/transport';
 import { Canvas } from 'fabric';
 
