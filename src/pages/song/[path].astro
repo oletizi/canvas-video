@@ -1,6 +1,12 @@
 ---
 import SongPlayer from '@/components/SongPlayer';
 
+export async function getStaticPaths() {
+  return [
+    { params: { path: 'waves' } },
+  ];
+}
+
 const { path } = Astro.params;
 ---
 
