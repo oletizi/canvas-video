@@ -2,8 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { newSong } from '@/song/song';
 import { AnimationType, newAnimation } from '@/video/song-animation';
 import type { SongAnimation } from '@/video/song-animation';
-import { SongView } from '@/components/song-view';
 import AnimationTypeSelector from '@/components/animation-type';
+import { TransportView } from '@/ts/components/transport';
 import { Canvas } from 'fabric';
 
 interface SongPlayerProps {}
@@ -122,19 +122,13 @@ export default function SongPlayer({}: SongPlayerProps) {
             const arrayBuffer = await file.arrayBuffer();
             const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
             
-            // Start playing the uploaded audio
+            // Start playing the uploaded audio immediately
             song.startAudioFromBuffer(audioContext, audioBuffer);
             
             console.log('Uploaded audio file loaded and started');
         } catch (error) {
             console.error('Error loading uploaded audio file:', error);
         }
-    };
-
-    const startUploadedAudio = () => {
-        if (!uploadedFile) return;
-        
-        handleFileUpload({ target: { files: [uploadedFile] } } as any);
     };
 
     return (
@@ -159,11 +153,7 @@ export default function SongPlayer({}: SongPlayerProps) {
                         )}
                     </div>
                     <div className="flex items-center content-center gap-5">
-                        <SongView 
-                            startAudio={startUploadedAudio}
-                            transport={song.getTransport()}
-                            disabled={!uploadedFile}
-                        />
+                        <TransportView model={song.getTransport()} />
                         <AnimationTypeSelector onChange={(v) => setAnimationType(v)} />
                         <button 
                             onClick={generateTestVideo}
