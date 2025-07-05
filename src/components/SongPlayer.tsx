@@ -12,6 +12,8 @@ export default function SongPlayer({}: SongPlayerProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [animationType, setAnimationType] = useState(AnimationType.DEFAULT);
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+    const [isRecording, setIsRecording] = useState(false);
+    const [recordingDuration, setRecordingDuration] = useState(3000); // 3 seconds default
     const framerate = 60;
     const frameInterval = 1000 / framerate;
     const song = newSong();
@@ -19,6 +21,8 @@ export default function SongPlayer({}: SongPlayerProps) {
     let canvas: any = null;
     let width = 1000;
     let height = width * 0.45;
+    let mediaRecorder: MediaRecorder | null = null;
+    let recordedChunks: Blob[] = [];
 
     useEffect(() => {
         width = window.innerWidth;
@@ -50,27 +54,98 @@ export default function SongPlayer({}: SongPlayerProps) {
         };
     }, [animationType]);
 
-    const generateTestVideo = () => {
-        const testAudioContext = new AudioContext();
-        const duration = 3; // 3 seconds
-        const sampleRate = testAudioContext.sampleRate;
-        const frameCount = sampleRate * duration;
-        const buffer = testAudioContext.createBuffer(1, frameCount, sampleRate);
-        const channelData = buffer.getChannelData(0);
+    const startVideoRecording = async () => {
+        if (!canvasRef.current || isRecording) return;
         
-        // Generate a simple 440Hz sine wave
-        for (let i = 0; i < frameCount; i++) {
-            channelData[i] = Math.sin(2 * Math.PI * 440 * i / sampleRate) * 0.5;
+        try {
+            setIsRecording(true);
+            recordedChunks = [];
+            
+            // Generate test audio
+            const testAudioContext = new AudioContext();
+            const duration = recordingDuration / 1000; // Convert to seconds
+            const sampleRate = testAudioContext.sampleRate;
+            const frameCount = sampleRate * duration;
+            const buffer = testAudioContext.createBuffer(1, frameCount, sampleRate);
+            const channelData = buffer.getChannelData(0);
+            
+            // Generate a simple 440Hz sine wave
+            for (let i = 0; i < frameCount; i++) {
+                channelData[i] = Math.sin(2 * Math.PI * 440 * i / sampleRate) * 0.5;
+            }
+            
+            // Create audio stream from buffer
+            const audioBlob = bufferToWav(buffer);
+            const audioUrl = URL.createObjectURL(audioBlob);
+            const audioElement = new Audio(audioUrl);
+            
+            // Get canvas stream
+            const canvasStream = canvasRef.current.captureStream(framerate);
+            
+            // Create audio stream using Web Audio API
+            const audioContext = new AudioContext();
+            const source = audioContext.createMediaElementSource(audioElement);
+            const dest = audioContext.createMediaStreamDestination();
+            source.connect(dest);
+            source.connect(audioContext.destination);
+            
+            // Combine canvas and audio streams
+            const combinedStream = new MediaStream([
+                ...canvasStream.getVideoTracks(),
+                ...dest.stream.getAudioTracks()
+            ]);
+            
+            // Set up MediaRecorder
+            mediaRecorder = new MediaRecorder(combinedStream, {
+                mimeType: 'video/webm;codecs=vp9,opus'
+            });
+            
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                }
+            };
+            
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                downloadVideo(blob);
+                setIsRecording(false);
+            };
+            
+            // Start recording
+            mediaRecorder.start();
+            
+            // Start audio playback and animation
+            song.startAudioFromBuffer(testAudioContext, buffer);
+            song.getTransport().start();
+            audioElement.play();
+            
+            // Stop recording after specified duration
+            setTimeout(() => {
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    mediaRecorder.stop();
+                    song.getTransport().stop();
+                    audioElement.pause();
+                }
+            }, recordingDuration);
+            
+            console.log('Video recording started');
+        } catch (error) {
+            console.error('Error starting video recording:', error);
+            setIsRecording(false);
         }
-        
-        // Create audio blob and URL
-        const audioBlob = bufferToWav(buffer);
-        const audioUrl = URL.createObjectURL(audioBlob);
-        
-        // Start playing the generated audio
-        song.startAudioFromBuffer(testAudioContext, buffer);
-        
-        console.log('Test video generation started with generated audio');
+    };
+    
+    const downloadVideo = (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `canvas-video-${Date.now()}.webm`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        console.log('Video download initiated');
     };
 
     const bufferToWav = (buffer: AudioBuffer) => {
@@ -152,15 +227,36 @@ export default function SongPlayer({}: SongPlayerProps) {
                             </span>
                         )}
                     </div>
-                    <div className="flex items-center content-center gap-5">
-                        <TransportView model={song.getTransport()} />
-                        <AnimationTypeSelector onChange={(v) => setAnimationType(v)} />
-                        <button 
-                            onClick={generateTestVideo}
-                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                        >
-                            Generate Test Video
-                        </button>
+                    <div className="flex flex-col gap-4">
+                        <div className="flex items-center gap-4">
+                            <label className="text-sm font-medium">
+                                Recording Duration (seconds):
+                                <input 
+                                    type="number" 
+                                    min="1" 
+                                    max="30" 
+                                    value={recordingDuration / 1000}
+                                    onChange={(e) => setRecordingDuration(Number(e.target.value) * 1000)}
+                                    className="ml-2 px-2 py-1 border border-gray-300 rounded w-16"
+                                    disabled={isRecording}
+                                />
+                            </label>
+                        </div>
+                        <div className="flex items-center content-center gap-5">
+                            <TransportView model={song.getTransport()} />
+                            <AnimationTypeSelector onChange={(v) => setAnimationType(v)} />
+                            <button 
+                                onClick={startVideoRecording}
+                                disabled={isRecording}
+                                className={`font-bold py-2 px-4 rounded ${
+                                    isRecording 
+                                        ? 'bg-red-500 text-white cursor-not-allowed' 
+                                        : 'bg-blue-500 hover:bg-blue-700 text-white'
+                                }`}
+                            >
+                                {isRecording ? 'Recording...' : 'Generate & Record Video'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
