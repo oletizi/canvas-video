@@ -186,6 +186,9 @@ export default function SongPlayer({}: SongPlayerProps) {
             }
             // Start song first to set up audio analysis
             songRef.current.startAudioFromBuffer(audioContext, audioBuffer);
+            // Reset transport position to beginning for recording
+            songRef.current.getTransport().reset();
+            setTransportPosition(0);
             // Ensure canvas is rendered and animation is running before capturing
             if (fabricCanvasRef.current && animationRef.current) {
                 // Don't change background color - keep the existing one
