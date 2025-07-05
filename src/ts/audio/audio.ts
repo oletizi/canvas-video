@@ -40,6 +40,7 @@ class WebAudioSample implements Sample {
     private isPlaying = false
     private source: any;
     private pauseTime: number = 0;
+    private isSeeking: boolean = false;
 
     constructor(c: AudioContext, buffer: AudioBuffer) {
         this.c = c
@@ -92,14 +93,23 @@ class WebAudioSample implements Sample {
 
     seek(position: number) {
         this.out.log(`Seek to position: ${position}`)
+        this.isSeeking = true
         // Convert position from milliseconds to seconds
         const seekTime = position / 1000
         this.pauseTime = seekTime
         
         // If currently playing, restart from new position
         if (this.isPlaying) {
-            this.stop()
-            this.play()
+            // Stop current playback without updating pauseTime
+            this.source.stop(0)
+            this.isPlaying = false
+            // Small delay to ensure stop is processed
+            setTimeout(() => {
+                this.play()
+                this.isSeeking = false
+            }, 10)
+        } else {
+            this.isSeeking = false
         }
         this.out.log(this)
     }
@@ -107,7 +117,10 @@ class WebAudioSample implements Sample {
     stop() {
         if (this.isPlaying) {
             this.out.log(`Stop!`)
-            this.pauseTime = this.c.currentTime
+            // Only update pauseTime if we're not in the middle of a seek operation
+            if (!this.isSeeking) {
+                this.pauseTime = this.c.currentTime
+            }
             this.source.stop(0)
             this.isPlaying = false
             this.out.log(this)
