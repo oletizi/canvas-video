@@ -89,6 +89,14 @@ export default function SongPlayer({}: SongPlayerProps) {
     const startVideoRecording = async () => {
         if (!canvasRef.current || isRecording) return;
         try {
+            // Stop any currently playing audio before starting recording
+            const transport = songRef.current.getTransport();
+            if (transport.isRunning()) {
+                console.log('Stopping currently playing audio before recording');
+                transport.stop();
+                // Give a small delay to ensure audio stops cleanly
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
             setIsRecording(true);
             recordedChunksRef.current = [];
             let audioElement: HTMLAudioElement;
