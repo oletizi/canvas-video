@@ -347,6 +347,9 @@ export default function SongPlayer({}: SongPlayerProps) {
         const transport = songRef.current.getTransport();
         transport.seek(newPosition);
         
+        // Immediately update the transport position state to reflect the seek
+        setTransportPosition(newPosition);
+        
         console.log(`Seeking to ${formatTime(newPosition)} (${(clickPercentage * 100).toFixed(1)}% of audio)`);
     };
 
