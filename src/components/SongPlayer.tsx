@@ -370,7 +370,7 @@ export default function SongPlayer({}: SongPlayerProps) {
                                     ? 'Recording...' 
                                     : uploadedFile 
                                         ? 'Record Video with Uploaded Audio'
-                                        : 'Record Video with "Killing Your Gods" Clip'
+                                        : 'Record Test'
                                 }
                             </button>
                         </div>

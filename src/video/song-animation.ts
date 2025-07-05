@@ -235,32 +235,45 @@ class PulsingEye implements SongAnimation {
     }
 
     setup(c: fabric.Canvas) {
-        const w = c.width//this.w = c?.width ? c.width : this.w
-        const h = c.height//this.h = c?.height ? c.height : this.h
-        
+        const w = c.width;
+        const h = c.height;
         // Add white background for PulsingEye
         const background = new fabric.Rect({fill: '#ffffff', height: h, width: w})
         c.add(background)
-        
-        this.circle = new fabric.Circle({radius: this.r, selectable: false, left: w / 2, top: h / 2})
+        // Center the circle
+        this.circle = new fabric.Circle({
+            radius: this.r,
+            selectable: false,
+            left: w / 2,
+            top: h / 2,
+            originX: 'center',
+            originY: 'center',
+            fill: 'black'
+        });
         c.add(this.circle)
     }
 
     draw(c: fabric.Canvas) {
-        const transport = this.song.getTransport()
+        const w = c.width;
+        const h = c.height;
+        const transport = this.song.getTransport();
         if (transport?.isRunning()) {
-            // this.r = analyzer.getLevel() * 100
-            this.r = PulsingEye.DEFAULT_RADIUS + PulsingEye.DEFAULT_RADIUS * this.vu.getValue()
-
+            this.r = PulsingEye.DEFAULT_RADIUS + PulsingEye.DEFAULT_RADIUS * this.vu.getValue();
         } else {
-            this.r += this.direction
+            this.r += this.direction;
             if (this.r <= this.min || this.r >= this.max) {
-                this.direction *= -1
+                this.direction *= -1;
             }
         }
-
-        this.circle.setRadius(this.r)
-        // this.circle.center()
+        // Update radius and keep the circle centered
+        this.circle.set({
+            radius: this.r,
+            left: w / 2,
+            top: h / 2,
+            originX: 'center',
+            originY: 'center'
+        });
+        this.circle.setCoords();
     }
 }
 
