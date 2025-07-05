@@ -13,7 +13,7 @@ export default function SongPlayer({}: SongPlayerProps) {
     const [animationType, setAnimationType] = useState(AnimationType.PulsingEye);
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [isRecording, setIsRecording] = useState(false);
-    const [recordingDuration, setRecordingDuration] = useState(3000); // 3 seconds default
+    const [recordingDuration, setRecordingDuration] = useState(3000); // Will be updated to audio duration when audio is loaded
     const [currentVuLevel, setCurrentVuLevel] = useState(0);
     const framerate = 60;
     const frameInterval = 1000 / framerate;
@@ -232,7 +232,7 @@ export default function SongPlayer({}: SongPlayerProps) {
             bufferSource.start();
             // Calculate recording duration based on audio length or user setting
             const actualDuration = uploadedFile 
-                ? Math.min(audioBuffer.duration * 1000, recordingDuration)
+                ? Math.min(audioBuffer.duration * 1000, recordingDuration) // Use audio duration as default, but allow user override
                 : recordingDuration;
             // Stop recording after specified duration
             setTimeout(() => {
@@ -301,6 +301,8 @@ export default function SongPlayer({}: SongPlayerProps) {
             }
             const arrayBuffer = await file.arrayBuffer();
             const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            // Set recording duration to match audio duration
+            setRecordingDuration(audioBuffer.duration * 1000);
             songRef.current.startAudioFromBuffer(audioContext, audioBuffer);
             songRef.current.getTransport().start();
         } catch (error) {}
@@ -323,7 +325,7 @@ export default function SongPlayer({}: SongPlayerProps) {
                         </label>
                         {uploadedFile && (
                             <span className="text-sm text-gray-600">
-                                {uploadedFile.name}
+                                {uploadedFile.name} ({(recordingDuration / 1000).toFixed(1)}s)
                             </span>
                         )}
                     </div>
@@ -334,7 +336,7 @@ export default function SongPlayer({}: SongPlayerProps) {
                                 <input 
                                     type="number" 
                                     min="1" 
-                                    max="30" 
+                                    max={uploadedFile ? Math.ceil(recordingDuration / 1000) : 30} 
                                     value={recordingDuration / 1000}
                                     onChange={(e) => setRecordingDuration(Number(e.target.value) * 1000)}
                                     className="ml-2 px-2 py-1 border border-gray-300 rounded w-16"
