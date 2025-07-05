@@ -80,6 +80,12 @@ class SongBase implements Song, TransportListener {
     }
 
     started() {
+        this.out.log(`Song started - audio should be playing now`)
+        if (this.currentSample) {
+            this.out.log(`Current sample exists, should be playing`)
+        } else {
+            this.out.log(`No current sample available`)
+        }
     }
 
     stopped() {
@@ -93,8 +99,8 @@ class SongBase implements Song, TransportListener {
             this.vuMeters.update()
             
             // Debug logging (remove in production)
-            if (this.transport.getPosition() % 120 == 0 && level > 0) { // Log every ~2 seconds when there's audio
-                console.log('VU meter level:', level.toFixed(3))
+            if (this.transport.getPosition() % 3600 == 0 && level > 0) { // Log every ~60 seconds when there's audio
+                console.log('VU meter level:', level.toFixed(3), 'position:', this.transport.getPosition())
             }
         }
     }

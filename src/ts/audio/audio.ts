@@ -44,6 +44,7 @@ class WebAudioSample implements Sample {
         this.audioBuffer = buffer
         this.analyzer = c.createAnalyser()
         this.analyzer.fftSize = 2048
+        this.analyzer.smoothingTimeConstant = 0.3 // Add some smoothing for better visualization
         this.timeDomainBuffer = new Float32Array(this.analyzer.frequencyBinCount)
         this.frequencyDomainBuffer = new Float32Array(this.analyzer.frequencyBinCount)
         setInterval((me: WebAudioSample) => {
@@ -55,7 +56,7 @@ class WebAudioSample implements Sample {
                     l.frequencyDomainData(me.frequencyDomainBuffer)
                 })
             }
-        }, 100, this)
+        }, 16, this) // Increased frequency to ~60fps for more responsive audio analysis
     }
 
     addListener(l: SampleListener) {
@@ -99,6 +100,15 @@ class WebAudioSample implements Sample {
 
     play() {
         if (!this.isPlaying) {
+            // Resume audio context if it's suspended (required for user interaction)
+            if (this.c.state === 'suspended') {
+                this.c.resume().then(() => {
+                    this.out.log('Audio context resumed')
+                }).catch(e => {
+                    this.out.error(`Failed to resume audio context: ${e}`)
+                })
+            }
+            
             this.init()
             const offset = this.pauseTime || 0;
             this.source.start(0, offset)

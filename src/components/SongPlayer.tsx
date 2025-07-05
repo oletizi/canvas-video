@@ -14,6 +14,7 @@ export default function SongPlayer({}: SongPlayerProps) {
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [isRecording, setIsRecording] = useState(false);
     const [recordingDuration, setRecordingDuration] = useState(3000); // 3 seconds default
+    const [currentVuLevel, setCurrentVuLevel] = useState(0);
     const framerate = 60;
     const frameInterval = 1000 / framerate;
     const song = newSong();
@@ -42,6 +43,12 @@ export default function SongPlayer({}: SongPlayerProps) {
                 animation?.draw(canvas);
                 transport.tick();
                 canvas?.renderAll();
+                
+                // Update VU meter level display for debugging
+                const analyzer = song.getSampleAnalyzer();
+                if (analyzer) {
+                    setCurrentVuLevel(analyzer.getLevel());
+                }
             }, frameInterval);
         } else {
             console.log(`Canvas ref is null. Not setting up canvas.`);
@@ -282,11 +289,21 @@ export default function SongPlayer({}: SongPlayerProps) {
         
         try {
             const audioContext = new AudioContext();
+            
+            // Resume audio context if suspended (required for user interaction)
+            if (audioContext.state === 'suspended') {
+                await audioContext.resume();
+                console.log('Audio context resumed');
+            }
+            
             const arrayBuffer = await file.arrayBuffer();
             const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
             
             // Start playing the uploaded audio immediately
             song.startAudioFromBuffer(audioContext, audioBuffer);
+            
+            // Start the transport to begin audio playback and analysis
+            song.getTransport().start();
             
             console.log('Uploaded audio file loaded and started');
         } catch (error) {
@@ -333,6 +350,18 @@ export default function SongPlayer({}: SongPlayerProps) {
                         <div className="flex items-center content-center gap-5">
                             <TransportView model={song.getTransport()} />
                             <AnimationTypeSelector onChange={(v) => setAnimationType(v)} />
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium">VU Level:</span>
+                                <div className="w-32 h-4 bg-gray-200 rounded-full overflow-hidden">
+                                    <div 
+                                        className="h-full bg-green-500 transition-all duration-100"
+                                        style={{ width: `${currentVuLevel * 100}%` }}
+                                    />
+                                </div>
+                                <span className="text-sm text-gray-600 w-12">
+                                    {(currentVuLevel * 100).toFixed(1)}%
+                                </span>
+                            </div>
                             <button 
                                 onClick={startVideoRecording}
                                 disabled={isRecording}

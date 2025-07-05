@@ -25,10 +25,17 @@ export function newSampleAnalyzer(s: Sample): SampleAnalyzer {
             fft = buf
         },
         timeDomainData(buf: Float32Array) {
-            level = Math.sqrt(buf.reduce((a, f) => a + f * f) / buf.length)
+            // Calculate RMS (Root Mean Square) for better audio level detection
+            const sum = buf.reduce((a, f) => a + f * f, 0)
+            level = Math.sqrt(sum / buf.length)
+            
+            // Apply some smoothing and scaling for better visualization response
+            // Normalize to a reasonable range (0-1) for visualization
+            level = Math.min(1, level * 3) // Scale up the level for better visibility
+            
             // Debug logging (remove in production)
-            if (Math.random() < 0.01) { // Log ~1% of the time to avoid spam
-                console.log('Audio level:', level.toFixed(3))
+            if (Math.random() < 0.01) { // Slightly more frequent logging for debugging
+                console.log('Audio level:', level.toFixed(3), 'buffer length:', buf.length)
             }
         }
     })

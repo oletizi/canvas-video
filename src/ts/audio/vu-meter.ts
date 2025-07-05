@@ -34,10 +34,10 @@ class VuMeterBallistics implements VuMeter {
     private targetValue: number;
     private readonly frameDuration: number;
 
-    constructor(attackTime = 0.1, decayTime = 0.3, fps = 24) {
-        this.attackTime = attackTime; // Time to respond to increase (in seconds)
-        this.decayTime = decayTime;  // Time to decay (in seconds)
-        this.fps = fps;              // Frames per second for updates
+    constructor(attackTime = 0.05, decayTime = 0.15, fps = 60) {
+        this.attackTime = attackTime; // Time to respond to increase (in seconds) - faster attack
+        this.decayTime = decayTime;  // Time to decay (in seconds) - faster decay
+        this.fps = fps;              // Frames per second for updates - higher fps
 
         this.currentValue = 0;       // Current VU level (0 to 1)
         this.targetValue = 0;        // Target VU level
