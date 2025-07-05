@@ -143,7 +143,27 @@ export default function SongPlayer({}: SongPlayerProps) {
                 clearInterval(interval);
             };
         }
-    }, [animationType, currentTheme, dimensions.width, dimensions.height]);
+    }, [animationType, currentTheme]);
+
+    // Separate effect to handle canvas resizing when dimensions change
+    useEffect(() => {
+        if (fabricCanvasRef.current && canvasRef.current) {
+            // Update the fabric canvas dimensions
+            fabricCanvasRef.current.setDimensions({
+                width: dimensions.width,
+                height: dimensions.height
+            });
+            
+            // Re-setup the animation with the new canvas dimensions
+            if (animationRef.current) {
+                // Clear existing objects
+                fabricCanvasRef.current.clear();
+                // Re-setup the animation
+                animationRef.current.setup(fabricCanvasRef.current);
+                console.log('Canvas resized to:', dimensions.width, 'x', dimensions.height);
+            }
+        }
+    }, [dimensions.width, dimensions.height]);
 
     const startVideoRecording = async () => {
         if (!canvasRef.current || isRecording) return;
