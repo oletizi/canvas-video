@@ -92,17 +92,92 @@ export default function TranscriptionDisplay({
     }
 
     const renderWord = (word: TranscriptionWord, index: number) => {
-        // Use calibrated timing if available, otherwise use original timing
-        const calibratedTiming = calibratedWords.get(index);
-        const wordStartTime = calibratedTiming ? calibratedTiming.startTime : word.startTime;
-        const wordEndTime = calibratedTiming ? calibratedTiming.endTime : word.endTime;
+        // Calculate interpolated timing for uncalibrated words
+        const getInterpolatedTiming = (wordIndex: number): {startTime: number, endTime: number} => {
+            const calibratedTiming = calibratedWords.get(wordIndex);
+            if (calibratedTiming) {
+                return calibratedTiming;
+            }
+            
+            // Find the nearest calibrated words before and after this word
+            const calibratedIndices = Array.from(calibratedWords.keys()).sort((a, b) => a - b);
+            const beforeIndex = calibratedIndices.filter(i => i < wordIndex).pop();
+            const afterIndex = calibratedIndices.find(i => i > wordIndex);
+            
+            if (beforeIndex !== undefined && afterIndex !== undefined) {
+                // Interpolate between two calibrated words
+                const beforeWord = transcription?.words[beforeIndex];
+                const afterWord = transcription?.words[afterIndex];
+                const beforeTiming = calibratedWords.get(beforeIndex);
+                
+                if (beforeWord && afterWord && beforeTiming) {
+                    const beforeOriginalStart = beforeWord.startTime;
+                    const afterOriginalStart = afterWord.startTime;
+                    const beforeCalibratedStart = beforeTiming.startTime;
+                    
+                    // Calculate the ratio of this word's position between the two calibrated words
+                    const originalPosition = (word.startTime - beforeOriginalStart) / (afterOriginalStart - beforeOriginalStart);
+                    
+                    // Estimate the calibrated start time of the after word (use original duration)
+                    const afterCalibratedStart = beforeCalibratedStart + (afterOriginalStart - beforeOriginalStart);
+                    
+                    // Interpolate this word's start time
+                    const interpolatedStart = beforeCalibratedStart + (afterCalibratedStart - beforeCalibratedStart) * originalPosition;
+                    const wordDuration = word.endTime - word.startTime;
+                    
+                    return {
+                        startTime: interpolatedStart,
+                        endTime: interpolatedStart + wordDuration
+                    };
+                }
+            } else if (beforeIndex !== undefined) {
+                // Extrapolate from the last calibrated word
+                const beforeWord = transcription?.words[beforeIndex];
+                const beforeTiming = calibratedWords.get(beforeIndex);
+                
+                if (beforeWord && beforeTiming) {
+                    const timeDiff = word.startTime - beforeWord.startTime;
+                    const wordDuration = word.endTime - word.startTime;
+                    
+                    return {
+                        startTime: beforeTiming.startTime + timeDiff,
+                        endTime: beforeTiming.startTime + timeDiff + wordDuration
+                    };
+                }
+            } else if (afterIndex !== undefined) {
+                // Extrapolate from the first calibrated word
+                const afterWord = transcription?.words[afterIndex];
+                const afterTiming = calibratedWords.get(afterIndex);
+                
+                if (afterWord && afterTiming) {
+                    const timeDiff = afterWord.startTime - word.startTime;
+                    const wordDuration = word.endTime - word.startTime;
+                    
+                    return {
+                        startTime: afterTiming.startTime - timeDiff,
+                        endTime: afterTiming.startTime - timeDiff + wordDuration
+                    };
+                }
+            }
+            
+            // Fallback to original timing
+            return { startTime: word.startTime, endTime: word.endTime };
+        };
+        
+        const timing = getInterpolatedTiming(index);
+        const wordStartTime = timing.startTime;
+        const wordEndTime = timing.endTime;
         
         const adjustedCurrentTime = currentTime + timeOffset + syncOffset;
         const isCurrent = adjustedCurrentTime >= wordStartTime && adjustedCurrentTime <= wordEndTime;
         const hasPassed = adjustedCurrentTime > wordEndTime;
         
-        // Check if this word was clicked during calibration
+        // Check if this word was clicked during calibration or is interpolated
         const isCalibrated = calibrationClicks.some(click => click.wordIndex === index) || calibratedWords.has(index);
+        const isInterpolated = !isCalibrated && calibratedWords.size > 0 && (
+            Array.from(calibratedWords.keys()).some(calibratedIndex => calibratedIndex < index) ||
+            Array.from(calibratedWords.keys()).some(calibratedIndex => calibratedIndex > index)
+        );
         
         const handleWordClick = () => {
             if (isCalibrating) {
@@ -123,7 +198,7 @@ export default function TranscriptionDisplay({
                             : hasPassed 
                                 ? 'text-gray-600' 
                                 : 'text-gray-800'
-                } ${isCalibrated ? 'ring-2 ring-green-500' : ''}`}
+                } ${isCalibrated ? 'ring-2 ring-green-500' : ''} ${isInterpolated ? 'ring-1 ring-blue-300' : ''}`}
                 title={isCalibrating 
                     ? `Click when you hear "${word.word}"` 
                     : `${formatTime(wordStartTime)} - ${formatTime(wordEndTime)} (confidence: ${(word.confidence * 100).toFixed(1)}%)`
@@ -295,6 +370,12 @@ export default function TranscriptionDisplay({
                     <span>🟡 Current word</span>
                     <span>⚫ Past words</span>
                     <span>⚪ Future words</span>
+                    {calibratedWords.size > 0 && (
+                        <>
+                            <span>🟢 Calibrated words</span>
+                            <span>🔵 Interpolated words</span>
+                        </>
+                    )}
                 </div>
             </div>
         </div>
