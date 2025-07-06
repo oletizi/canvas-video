@@ -9,6 +9,11 @@ import { VideoFormat, getPresetByFormat } from '@/components/video-format-preset
 import PlatformRecorder from '@/components/platform-recorder';
 import { TransportView } from '@/ts/components/transport';
 import { Canvas } from 'fabric';
+import { SpeechToText, AudioFileTranscription } from '@/lib/speech-to-text';
+import type { TranscriptionResult } from '@/lib/speech-types';
+import { LyricsDisplay } from '@/components/lyrics-display';
+import type { LyricsDisplayOptions } from '@/lib/speech-types';
+import LyricsControls from '@/components/lyrics-controls';
 
 interface SongPlayerProps {}
 
@@ -45,6 +50,20 @@ export default function SongPlayer({}: SongPlayerProps) {
     const [currentVuLevel, setCurrentVuLevel] = useState(0);
     const [transportPosition, setTransportPosition] = useState(0); // Current position in milliseconds
     const [audioDuration, setAudioDuration] = useState(0); // Total audio duration in milliseconds
+    const [isTranscribing, setIsTranscribing] = useState(false);
+    const [currentTranscription, setCurrentTranscription] = useState<TranscriptionResult | null>(null);
+    const [lyricsOptions, setLyricsOptions] = useState<LyricsDisplayOptions>({
+        fontSize: 24,
+        fontFamily: 'Arial, sans-serif',
+        color: '#ffffff',
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        position: 'bottom',
+        alignment: 'center',
+        maxWordsPerLine: 8,
+        lineSpacing: 8,
+        highlightCurrentWord: true,
+        currentWordColor: '#ffff00'
+    });
     const framerate = 60;
     const frameInterval = 1000 / framerate;
 
@@ -55,6 +74,9 @@ export default function SongPlayer({}: SongPlayerProps) {
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const recordedChunksRef = useRef<Blob[]>([]);
     const currentAudioUrlRef = useRef<string | null>(null);
+    const speechToTextRef = useRef<SpeechToText | null>(null);
+    const audioFileTranscriptionRef = useRef<AudioFileTranscription | null>(null);
+    const lyricsDisplayRef = useRef<LyricsDisplay | null>(null);
 
     // Canvas dimensions
     const [dimensions, setDimensions] = useState({ width: 1000, height: 450 });
@@ -102,6 +124,27 @@ export default function SongPlayer({}: SongPlayerProps) {
             fabricCanvasRef.current.backgroundColor = '#444444'; // Slightly lighter for debugging
             fabricCanvasRef.current.renderAll();
             
+            // Initialize speech-to-text
+            speechToTextRef.current = new SpeechToText();
+            
+            // Initialize audio file transcription
+            audioFileTranscriptionRef.current = new AudioFileTranscription();
+            
+            // Initialize lyrics display
+            lyricsDisplayRef.current = new LyricsDisplay(lyricsOptions);
+            lyricsDisplayRef.current.setCanvas(fabricCanvasRef.current);
+            console.log('SongPlayer: Lyrics display initialized');
+            
+            // Set up transcription callback
+            if (speechToTextRef.current) {
+                speechToTextRef.current.onTranscription((result) => {
+                    setCurrentTranscription(result);
+                    if (lyricsDisplayRef.current) {
+                        lyricsDisplayRef.current.updateTranscription(result);
+                    }
+                });
+            }
+            
             animationRef.current = newAnimation(animationType, songRef.current, framerate, currentTheme);
             console.log('Animation created:', animationType, 'animation object:', animationRef.current);
             animationRef.current?.setup(fabricCanvasRef.current);
@@ -113,6 +156,15 @@ export default function SongPlayer({}: SongPlayerProps) {
                 if (animationRef.current && fabricCanvasRef.current) {
                     animationRef.current.draw(fabricCanvasRef.current);
                     transport.tick();
+                    
+                    // Update lyrics display with current time
+                    if (lyricsDisplayRef.current) {
+                        // Use transport ticks directly for more accurate timing
+                        const transportTicks = transport.getPosition();
+                        const currentTimeInSeconds = transportTicks / 60; // 60fps = 60 ticks per second
+                        lyricsDisplayRef.current.updateTime(currentTimeInSeconds);
+                    }
+                    
                     fabricCanvasRef.current.renderAll();
                     
                     // Update VU meter level display for debugging
@@ -166,6 +218,12 @@ export default function SongPlayer({}: SongPlayerProps) {
                 height: dimensions.height
             });
             
+            // Update lyrics display canvas reference
+            if (lyricsDisplayRef.current) {
+                lyricsDisplayRef.current.setCanvas(fabricCanvasRef.current);
+                console.log('SongPlayer: Lyrics display canvas updated after resize');
+            }
+            
             // Re-setup the animation with the new canvas dimensions
             if (animationRef.current) {
                 // Clear existing objects
@@ -173,6 +231,11 @@ export default function SongPlayer({}: SongPlayerProps) {
                 // Re-setup the animation
                 animationRef.current.setup(fabricCanvasRef.current);
                 console.log('Canvas resized to:', dimensions.width, 'x', dimensions.height);
+                
+                // Re-render lyrics if we have any
+                if (lyricsDisplayRef.current) {
+                    lyricsDisplayRef.current.updateTime(0); // Force a re-render
+                }
             }
         }
     }, [dimensions.width, dimensions.height]);
@@ -416,7 +479,20 @@ export default function SongPlayer({}: SongPlayerProps) {
             setAudioDuration(audioBuffer.duration * 1000);
             songRef.current.startAudioFromBuffer(audioContext, audioBuffer);
             songRef.current.getTransport().start();
-        } catch (error) {}
+            
+            // Transcribe the audio file
+            if (audioFileTranscriptionRef.current) {
+                console.log('SongPlayer: Starting audio file transcription...');
+                const transcriptionResult = await audioFileTranscriptionRef.current.transcribeAudioFile(audioBuffer);
+                setCurrentTranscription(transcriptionResult);
+                if (lyricsDisplayRef.current) {
+                    lyricsDisplayRef.current.updateTranscription(transcriptionResult);
+                }
+                console.log('SongPlayer: Audio file transcription complete:', transcriptionResult.words.length, 'words');
+            }
+        } catch (error) {
+            console.error('SongPlayer: Error processing audio file:', error);
+        }
     };
 
     const handleProgressBarClick = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -441,6 +517,44 @@ export default function SongPlayer({}: SongPlayerProps) {
         setTransportPosition(newPosition);
         
         console.log(`Seeking to ${formatTime(newPosition)} (${(clickPercentage * 100).toFixed(1)}% of audio)`);
+    };
+
+    const handleToggleTranscription = () => {
+        if (!speechToTextRef.current) return;
+
+        if (isTranscribing) {
+            speechToTextRef.current.stop();
+            setIsTranscribing(false);
+        } else {
+            // Start transcription when audio is playing
+            const transport = songRef.current.getTransport();
+            if (transport.isRunning()) {
+                const audioContext = songRef.current.getAudioContext();
+                if (audioContext) {
+                    speechToTextRef.current.start(audioContext);
+                    setIsTranscribing(true);
+                }
+            } else {
+                alert('Please start playing audio before starting transcription');
+            }
+        }
+    };
+
+    const handleLyricsOptionsChange = (options: Partial<LyricsDisplayOptions>) => {
+        const newOptions = { ...lyricsOptions, ...options };
+        setLyricsOptions(newOptions);
+        if (lyricsDisplayRef.current) {
+            lyricsDisplayRef.current.setOptions(newOptions);
+        }
+    };
+
+    const handleTestLyrics = () => {
+        console.log('SongPlayer: Test lyrics button clicked');
+        if (lyricsDisplayRef.current) {
+            lyricsDisplayRef.current.addTestWords();
+        } else {
+            console.log('SongPlayer: Lyrics display ref is null');
+        }
     };
 
     return (
@@ -511,6 +625,17 @@ export default function SongPlayer({}: SongPlayerProps) {
                             themes={getThemesForAnimation(animationType)}
                         />
                     )}
+
+                    {/* Lyrics Controls */}
+                    <LyricsControls
+                        isTranscribing={isTranscribing}
+                        onToggleTranscription={handleToggleTranscription}
+                        onOptionsChange={handleLyricsOptionsChange}
+                        currentOptions={lyricsOptions}
+                        transcriptionSupported={speechToTextRef.current?.isSupported() || false}
+                        currentText={currentTranscription?.fullText || ''}
+                        onTestLyrics={handleTestLyrics}
+                    />
                     
                     {/* Platform-specific recording and sharing */}
                     <PlatformRecorder 
