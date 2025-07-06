@@ -216,7 +216,6 @@ export class LyricsDisplay {
                 evented: false
             });
             this.canvas.add(background);
-            this.canvas.sendToBack(background);
         }
 
         this.canvas.add(textObj);
@@ -253,7 +252,6 @@ export class LyricsDisplay {
             });
             
             this.canvas.add(highlight);
-            this.canvas.sendToBack(highlight);
         }
     }
 
