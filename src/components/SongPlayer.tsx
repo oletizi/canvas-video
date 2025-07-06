@@ -149,10 +149,22 @@ export default function SongPlayer({}: SongPlayerProps) {
                 });
             }
             
+            // Save lyrics objects before animation setup
+            const lyricsObjects = fabricCanvasRef.current ? 
+                fabricCanvasRef.current.getObjects().filter((obj: any) => obj.lyricsObject === true) : [];
+            
             animationRef.current = newAnimation(animationType, songRef.current, framerate, currentTheme);
             console.log('Animation created:', animationType, 'animation object:', animationRef.current);
             animationRef.current?.setup(fabricCanvasRef.current);
             console.log('Animation setup complete. Canvas objects:', fabricCanvasRef.current.getObjects().length);
+            
+            // Restore lyrics objects after animation setup
+            if (lyricsObjects.length > 0) {
+                lyricsObjects.forEach((obj: any) => {
+                    fabricCanvasRef.current.add(obj);
+                });
+                console.log('Restored', lyricsObjects.length, 'lyrics objects after animation setup');
+            }
             
             // Animation loop
             const transport = songRef.current.getTransport();
@@ -230,11 +242,22 @@ export default function SongPlayer({}: SongPlayerProps) {
             
             // Re-setup the animation with the new canvas dimensions
             if (animationRef.current) {
+                // Save lyrics objects before clearing
+                const lyricsObjects = fabricCanvasRef.current.getObjects().filter((obj: any) => obj.lyricsObject === true);
+                
                 // Clear existing objects
                 fabricCanvasRef.current.clear();
                 // Re-setup the animation
                 animationRef.current.setup(fabricCanvasRef.current);
                 console.log('Canvas resized to:', dimensions.width, 'x', dimensions.height);
+                
+                // Restore lyrics objects after animation setup
+                if (lyricsObjects.length > 0) {
+                    lyricsObjects.forEach((obj: any) => {
+                        fabricCanvasRef.current.add(obj);
+                    });
+                    console.log('Restored', lyricsObjects.length, 'lyrics objects after resize');
+                }
                 
                 // Re-render lyrics if we have any
                 if (lyricsDisplayRef.current) {
