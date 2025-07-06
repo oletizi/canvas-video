@@ -4,6 +4,7 @@ import type { TranscriptionResult, TranscriptionWord } from '@/lib/speech-types'
 interface TranscriptionDisplayProps {
     transcription: TranscriptionResult | null;
     currentTime: number; // Current playback time in seconds
+    timeOffset?: number; // Offset to apply to timing (in seconds)
 }
 
 const formatTime = (seconds: number): string => {
@@ -14,7 +15,8 @@ const formatTime = (seconds: number): string => {
 
 export default function TranscriptionDisplay({ 
     transcription, 
-    currentTime 
+    currentTime,
+    timeOffset = 0
 }: TranscriptionDisplayProps) {
     const [showTimestamps, setShowTimestamps] = useState(true);
     const [groupByLine, setGroupByLine] = useState(true);
@@ -43,8 +45,9 @@ export default function TranscriptionDisplay({
     }
 
     const renderWord = (word: TranscriptionWord, index: number) => {
-        const isCurrent = currentTime >= word.startTime && currentTime <= word.endTime;
-        const hasPassed = currentTime > word.endTime;
+        const adjustedCurrentTime = currentTime + timeOffset;
+        const isCurrent = adjustedCurrentTime >= word.startTime && adjustedCurrentTime <= word.endTime;
+        const hasPassed = adjustedCurrentTime > word.endTime;
         
         return (
             <span
@@ -134,6 +137,7 @@ export default function TranscriptionDisplay({
                     <span>Total words: {transcription.words.length}</span>
                     <span>Duration: {formatTime(transcription.words[transcription.words.length - 1]?.endTime || 0)}</span>
                     <span>Current time: {formatTime(currentTime)}</span>
+                    <span>Adjusted time: {formatTime(currentTime + timeOffset)}</span>
                 </div>
             </div>
 

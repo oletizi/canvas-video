@@ -663,6 +663,7 @@ export default function SongPlayer({}: SongPlayerProps) {
                     <TranscriptionDisplay
                         transcription={currentTranscription}
                         currentTime={transportPosition / 1000} // Convert milliseconds to seconds
+                        timeOffset={-0.5} // Delay transcription by 0.5 seconds to sync with audio
                     />
 
                     {/* Transcription Service Settings */}
