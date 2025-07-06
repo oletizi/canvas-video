@@ -489,6 +489,7 @@ export default function SongPlayer({}: SongPlayerProps) {
                 console.log('SongPlayer: Starting audio file transcription...');
                 try {
                     const transcriptionResult = await transcriptionServiceManagerRef.current.transcribe(audioBuffer);
+                    console.log('SongPlayer: Transcription result received:', transcriptionResult);
                     setCurrentTranscription(transcriptionResult);
                     if (lyricsDisplayRef.current) {
                         lyricsDisplayRef.current.updateTranscription(transcriptionResult);
@@ -655,6 +656,7 @@ export default function SongPlayer({}: SongPlayerProps) {
                     <div className="text-xs text-gray-600 flex items-center gap-2">
                         <span>Transcription API calls this session:</span>
                         <span className="font-mono font-bold text-blue-700">{transcriptionApiCallCount}</span>
+                        <span>| Current transcription: {currentTranscription ? `${currentTranscription.words.length} words` : 'none'}</span>
                     </div>
 
                     {/* Transcription Display */}

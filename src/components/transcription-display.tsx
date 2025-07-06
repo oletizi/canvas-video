@@ -19,6 +19,14 @@ export default function TranscriptionDisplay({
     const [showTimestamps, setShowTimestamps] = useState(true);
     const [groupByLine, setGroupByLine] = useState(true);
 
+    // Debug logging
+    console.log('TranscriptionDisplay: Received props:', {
+        transcription: transcription,
+        hasTranscription: !!transcription,
+        wordCount: transcription?.words?.length || 0,
+        currentTime: currentTime
+    });
+
     if (!transcription || transcription.words.length === 0) {
         return (
             <div className="p-4 border rounded-lg bg-gray-50">
@@ -27,6 +35,8 @@ export default function TranscriptionDisplay({
                 </div>
                 <div className="text-sm text-gray-500 italic">
                     No transcription available. Upload an audio file to see results.
+                    <br />
+                    <span className="text-xs">Debug: transcription={JSON.stringify(transcription)}</span>
                 </div>
             </div>
         );
