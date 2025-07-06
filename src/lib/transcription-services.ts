@@ -143,20 +143,43 @@ export class WhisperTranscriptionService implements TranscriptionService {
             });
         } else {
             console.log('No words array found in response, creating word-level timing from full text');
-            // Fallback: create word-level timing from full text
+            // Fallback: create word-level timing from full text with more realistic distribution
             const fullText = result.text || '';
             if (fullText) {
                 const textWords = fullText.split(/\s+/).filter(word => word.length > 0);
-                const wordDuration = audioDuration / textWords.length;
                 
+                // Use a more realistic timing model based on word length and position
+                let currentTime = 0;
                 textWords.forEach((word: string, index: number) => {
+                    // Base duration based on word length (longer words take more time)
+                    const baseDuration = Math.max(0.2, Math.min(0.8, word.length * 0.1));
+                    
+                    // Add some variation based on position (words at start/end might be slower)
+                    const positionFactor = index < 3 || index > textWords.length - 3 ? 1.2 : 1.0;
+                    
+                    // Add some random variation
+                    const randomFactor = 0.8 + (Math.random() * 0.4); // 0.8 to 1.2
+                    
+                    const wordDuration = baseDuration * positionFactor * randomFactor;
+                    
                     words.push({
                         word: word.toLowerCase(),
-                        startTime: index * wordDuration,
-                        endTime: (index + 1) * wordDuration,
+                        startTime: currentTime,
+                        endTime: currentTime + wordDuration,
                         confidence: 0.8
                     });
+                    
+                    currentTime += wordDuration;
                 });
+                
+                // Scale the timing to fit the actual audio duration
+                if (currentTime > 0) {
+                    const scaleFactor = audioDuration / currentTime;
+                    words.forEach(word => {
+                        word.startTime *= scaleFactor;
+                        word.endTime *= scaleFactor;
+                    });
+                }
             }
         }
         

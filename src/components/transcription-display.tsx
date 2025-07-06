@@ -20,6 +20,7 @@ export default function TranscriptionDisplay({
 }: TranscriptionDisplayProps) {
     const [showTimestamps, setShowTimestamps] = useState(true);
     const [groupByLine, setGroupByLine] = useState(true);
+    const [syncOffset, setSyncOffset] = useState(-0.5); // User-adjustable sync offset
 
     // Debug logging
     console.log('TranscriptionDisplay: Received props:', {
@@ -45,7 +46,7 @@ export default function TranscriptionDisplay({
     }
 
     const renderWord = (word: TranscriptionWord, index: number) => {
-        const adjustedCurrentTime = currentTime + timeOffset;
+        const adjustedCurrentTime = currentTime + timeOffset + syncOffset;
         const isCurrent = adjustedCurrentTime >= word.startTime && adjustedCurrentTime <= word.endTime;
         const hasPassed = adjustedCurrentTime > word.endTime;
         
@@ -129,6 +130,19 @@ export default function TranscriptionDisplay({
                         />
                         <span>Group by line</span>
                     </label>
+                    <div className="flex items-center gap-2 text-xs">
+                        <span>Sync offset:</span>
+                        <input
+                            type="range"
+                            min="-2"
+                            max="2"
+                            step="0.1"
+                            value={syncOffset}
+                            onChange={(e) => setSyncOffset(parseFloat(e.target.value))}
+                            className="w-20"
+                        />
+                        <span className="w-12">{syncOffset.toFixed(1)}s</span>
+                    </div>
                 </div>
             </div>
 
@@ -137,7 +151,7 @@ export default function TranscriptionDisplay({
                     <span>Total words: {transcription.words.length}</span>
                     <span>Duration: {formatTime(transcription.words[transcription.words.length - 1]?.endTime || 0)}</span>
                     <span>Current time: {formatTime(currentTime)}</span>
-                    <span>Adjusted time: {formatTime(currentTime + timeOffset)}</span>
+                    <span>Adjusted time: {formatTime(currentTime + timeOffset + syncOffset)}</span>
                 </div>
             </div>
 
