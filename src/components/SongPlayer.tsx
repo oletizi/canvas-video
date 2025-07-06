@@ -68,6 +68,7 @@ export default function SongPlayer({}: SongPlayerProps) {
     });
     const framerate = 60;
     const frameInterval = 1000 / framerate;
+    const [transcriptionApiCallCount, setTranscriptionApiCallCount] = useState(0);
 
     // Persistent objects as refs
     const songRef = useRef(newSong());
@@ -476,14 +477,14 @@ export default function SongPlayer({}: SongPlayerProps) {
             }
             const arrayBuffer = await file.arrayBuffer();
             const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-            // Set recording duration to match audio duration
             setRecordingDuration(audioBuffer.duration * 1000);
             setAudioDuration(audioBuffer.duration * 1000);
             songRef.current.startAudioFromBuffer(audioContext, audioBuffer);
             songRef.current.getTransport().start();
-            
+
             // Transcribe the audio file
             if (transcriptionServiceManagerRef.current) {
+                setTranscriptionApiCallCount(count => count + 1);
                 console.log('SongPlayer: Starting audio file transcription...');
                 try {
                     const transcriptionResult = await transcriptionServiceManagerRef.current.transcribe(audioBuffer);
@@ -494,7 +495,6 @@ export default function SongPlayer({}: SongPlayerProps) {
                     console.log('SongPlayer: Audio file transcription complete:', transcriptionResult.words.length, 'words');
                 } catch (error) {
                     console.error('SongPlayer: Transcription failed:', error);
-                    // Fallback to sample lyrics
                     alert('Transcription failed. Using sample lyrics instead.');
                 }
             }
@@ -649,6 +649,12 @@ export default function SongPlayer({}: SongPlayerProps) {
                         currentText={currentTranscription?.fullText || ''}
                         onTestLyrics={handleTestLyrics}
                     />
+
+                    {/* Transcription API Call Count Display */}
+                    <div className="text-xs text-gray-600 flex items-center gap-2">
+                        <span>Transcription API calls this session:</span>
+                        <span className="font-mono font-bold text-blue-700">{transcriptionApiCallCount}</span>
+                    </div>
 
                     {/* Transcription Service Settings */}
                     {transcriptionServiceManagerRef.current && (
