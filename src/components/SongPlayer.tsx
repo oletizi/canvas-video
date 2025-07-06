@@ -15,6 +15,7 @@ import type { TranscriptionResult } from '@/lib/speech-types';
 import { LyricsDisplay } from '@/components/lyrics-display';
 import type { LyricsDisplayOptions } from '@/lib/speech-types';
 import TranscriptionSettings from '@/components/transcription-settings';
+import TranscriptionDisplay from '@/components/transcription-display';
 import LyricsControls from '@/components/lyrics-controls';
 
 interface SongPlayerProps {}
@@ -655,6 +656,12 @@ export default function SongPlayer({}: SongPlayerProps) {
                         <span>Transcription API calls this session:</span>
                         <span className="font-mono font-bold text-blue-700">{transcriptionApiCallCount}</span>
                     </div>
+
+                    {/* Transcription Display */}
+                    <TranscriptionDisplay
+                        transcription={currentTranscription}
+                        currentTime={transportPosition / 1000} // Convert milliseconds to seconds
+                    />
 
                     {/* Transcription Service Settings */}
                     {transcriptionServiceManagerRef.current && (
