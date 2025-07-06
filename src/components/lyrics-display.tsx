@@ -98,162 +98,141 @@ export class LyricsDisplay {
 
         console.log('LyricsDisplay: Rendering', visibleWords.length, 'words at time', this.currentTime);
 
-        // Group words into lines
-        const lines = this.groupWordsIntoLines(visibleWords);
+        // Calculate position for horizontal scroll
+        const position = this.calculateHorizontalPosition(canvasWidth, canvasHeight);
 
-        // Calculate position
-        const position = this.calculatePosition(canvasWidth, canvasHeight, lines.length);
-
-        // Render each line
-        lines.forEach((line, lineIndex) => {
-            this.renderLine(line, position, lineIndex, canvasWidth);
-        });
+        // Render horizontal scrolling text
+        this.renderHorizontalScroll(visibleWords, position, canvasWidth);
 
         this.canvas.renderAll();
     }
 
     private getVisibleWords(): TranscriptionWord[] {
-        const bufferTime = 2; // Show words 2 seconds before and after
+        const bufferTime = 5; // Show more words for smooth scrolling
         return this.currentWords.filter(word => 
             word.startTime <= this.currentTime + bufferTime && 
             word.endTime >= this.currentTime - bufferTime
         );
     }
 
-    private groupWordsIntoLines(words: TranscriptionWord[]): TranscriptionWord[][] {
-        const lines: TranscriptionWord[][] = [];
-        let currentLine: TranscriptionWord[] = [];
 
-        words.forEach(word => {
-            if (currentLine.length >= this.options.maxWordsPerLine!) {
-                lines.push([...currentLine]);
-                currentLine = [word];
-            } else {
-                currentLine.push(word);
-            }
-        });
 
-        if (currentLine.length > 0) {
-            lines.push(currentLine);
-        }
-
-        return lines;
-    }
-
-    private calculatePosition(canvasWidth: number, canvasHeight: number, lineCount: number): { x: number, y: number } {
-        const lineHeight = this.options.fontSize! + this.options.lineSpacing!;
-        const totalHeight = lineCount * lineHeight;
-        
+    private calculateHorizontalPosition(canvasWidth: number, canvasHeight: number): { x: number, y: number } {
         let y: number;
         switch (this.options.position) {
             case 'top':
                 y = 20;
                 break;
             case 'center':
-                y = (canvasHeight - totalHeight) / 2;
+                y = canvasHeight / 2;
                 break;
             case 'bottom':
             default:
-                y = canvasHeight - totalHeight - 20;
+                y = canvasHeight - this.options.fontSize! - 20;
                 break;
         }
 
-        let x: number;
-        switch (this.options.alignment) {
-            case 'left':
-                x = 20;
-                break;
-            case 'right':
-                x = canvasWidth - 20;
-                break;
-            case 'center':
-            default:
-                x = canvasWidth / 2;
-                break;
-        }
+        // For horizontal scroll, we'll calculate x dynamically based on current word position
+        const x = canvasWidth / 2; // Center point for scrolling
 
         return { x, y };
     }
 
-    private renderLine(line: TranscriptionWord[], position: { x: number, y: number }, lineIndex: number, canvasWidth: number) {
-        if (!this.canvas) return;
+    private renderHorizontalScroll(words: TranscriptionWord[], position: { x: number, y: number }, canvasWidth: number) {
+        if (!this.canvas || words.length === 0) return;
 
-        const lineHeight = this.options.fontSize! + this.options.lineSpacing!;
-        const y = position.y + (lineIndex * lineHeight);
-
-        // Create text for the line
-        const text = line.map(word => word.word).join(' ');
+        const ctx = this.canvas.getContext();
+        const wordSpacing = 20; // Space between words
+        let currentX = position.x;
         
-        // Create Fabric.js text object
-        const textObj = new fabric.Text(text, {
-            left: position.x,
-            top: y,
-            fontSize: this.options.fontSize,
-            fontFamily: this.options.fontFamily,
-            fill: this.options.color,
-            textAlign: this.options.alignment,
-            originX: this.options.alignment === 'center' ? 'center' : 
-                     this.options.alignment === 'right' ? 'right' : 'left',
-            originY: 'top',
-            lyricsObject: true, // Mark as lyrics object for easy removal
-            selectable: false,
-            evented: false
-        });
-
-        // Add background if specified
-        if (this.options.backgroundColor) {
-            const padding = 8;
-            const background = new fabric.Rect({
-                left: textObj.left! - padding,
-                top: textObj.top! - padding,
-                width: textObj.width! + (padding * 2),
-                height: textObj.height! + (padding * 2),
-                fill: this.options.backgroundColor,
-                rx: 4,
-                ry: 4,
-                lyricsObject: true,
-                selectable: false,
-                evented: false
-            });
-            this.canvas.add(background);
-        }
-
-        this.canvas.add(textObj);
-
-        // Highlight current word if enabled
-        if (this.options.highlightCurrentWord) {
-            this.highlightCurrentWord(line, textObj);
-        }
-    }
-
-    private highlightCurrentWord(line: TranscriptionWord[], textObj: any) {
-        const currentWord = line.find(word => 
+        // Find the current word to center the scroll
+        const currentWordIndex = words.findIndex(word => 
             this.currentTime >= word.startTime && this.currentTime <= word.endTime
         );
+        
+        // Calculate the offset to center the current word
+        let centerOffset = 0;
+        if (currentWordIndex !== -1) {
+            // Calculate width of all words before the current word
+            for (let i = 0; i < currentWordIndex; i++) {
+                const wordWidth = ctx.measureText(words[i].word).width;
+                centerOffset += wordWidth + wordSpacing;
+            }
+            // Add half the current word width
+            const currentWordWidth = ctx.measureText(words[currentWordIndex].word).width;
+            centerOffset += currentWordWidth / 2;
+        }
+        
+        // Adjust starting position to center the current word
+        currentX -= centerOffset;
 
-        if (currentWord && this.options.currentWordColor) {
-            // Find the position of the current word in the text
-            const wordIndex = line.findIndex(word => word === currentWord);
-            const wordsBefore = line.slice(0, wordIndex);
-            const textBefore = wordsBefore.map(w => w.word).join(' ');
-            const wordWidth = this.canvas.getContext().measureText(currentWord.word).width;
+        // Render each word
+        words.forEach((word, index) => {
+            const wordWidth = ctx.measureText(word.word).width;
             
-            // Create highlight rectangle
-            const highlight = new fabric.Rect({
-                left: textObj.left! + this.canvas.getContext().measureText(textBefore + ' ').width,
-                top: textObj.top!,
-                width: wordWidth,
-                height: textObj.height!,
-                fill: this.options.currentWordColor,
-                opacity: 0.3,
+            // Determine word color based on timing
+            let wordColor = this.options.color;
+            let isCurrent = false;
+            
+            if (this.currentTime >= word.startTime && this.currentTime <= word.endTime) {
+                wordColor = this.options.currentWordColor || this.options.color;
+                isCurrent = true;
+            } else if (this.currentTime > word.endTime) {
+                // Past words - dimmed
+                wordColor = this.dimColor(this.options.color, 0.5);
+            }
+            
+            // Create word text object
+            const textObj = new fabric.Text(word.word, {
+                left: currentX,
+                top: position.y,
+                fontSize: this.options.fontSize,
+                fontFamily: this.options.fontFamily,
+                fill: wordColor,
+                originX: 'left',
+                originY: 'top',
                 lyricsObject: true,
                 selectable: false,
                 evented: false
             });
             
-            this.canvas.add(highlight);
-        }
+            // Add background for current word if highlighting is enabled
+            if (isCurrent && this.options.highlightCurrentWord && this.options.backgroundColor) {
+                const padding = 4;
+                const background = new fabric.Rect({
+                    left: currentX - padding,
+                    top: position.y - padding,
+                    width: wordWidth + (padding * 2),
+                    height: this.options.fontSize! + (padding * 2),
+                    fill: this.options.backgroundColor,
+                    rx: 2,
+                    ry: 2,
+                    lyricsObject: true,
+                    selectable: false,
+                    evented: false
+                });
+                this.canvas.add(background);
+            }
+            
+            this.canvas.add(textObj);
+            
+            // Move to next word position
+            currentX += wordWidth + wordSpacing;
+        });
     }
+    
+    private dimColor(color: string, factor: number): string {
+        // Simple color dimming - convert hex to rgba and reduce opacity
+        if (color.startsWith('#')) {
+            const r = parseInt(color.slice(1, 3), 16);
+            const g = parseInt(color.slice(3, 5), 16);
+            const b = parseInt(color.slice(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, ${factor})`;
+        }
+        return color;
+    }
+
+
 
     public setOptions(options: Partial<LyricsDisplayOptions>) {
         this.options = { ...this.options, ...options };
