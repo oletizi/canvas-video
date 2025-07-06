@@ -9,10 +9,12 @@ import { VideoFormat, getPresetByFormat } from '@/components/video-format-preset
 import PlatformRecorder from '@/components/platform-recorder';
 import { TransportView } from '@/ts/components/transport';
 import { Canvas } from 'fabric';
-import { SpeechToText, AudioFileTranscription } from '@/lib/speech-to-text';
+import { SpeechToText } from '@/lib/speech-to-text';
+import { TranscriptionServiceManager } from '@/lib/transcription-services';
 import type { TranscriptionResult } from '@/lib/speech-types';
 import { LyricsDisplay } from '@/components/lyrics-display';
 import type { LyricsDisplayOptions } from '@/lib/speech-types';
+import TranscriptionSettings from '@/components/transcription-settings';
 import LyricsControls from '@/components/lyrics-controls';
 
 interface SongPlayerProps {}
@@ -75,7 +77,7 @@ export default function SongPlayer({}: SongPlayerProps) {
     const recordedChunksRef = useRef<Blob[]>([]);
     const currentAudioUrlRef = useRef<string | null>(null);
     const speechToTextRef = useRef<SpeechToText | null>(null);
-    const audioFileTranscriptionRef = useRef<AudioFileTranscription | null>(null);
+    const transcriptionServiceManagerRef = useRef<TranscriptionServiceManager | null>(null);
     const lyricsDisplayRef = useRef<LyricsDisplay | null>(null);
 
     // Canvas dimensions
@@ -127,8 +129,8 @@ export default function SongPlayer({}: SongPlayerProps) {
             // Initialize speech-to-text
             speechToTextRef.current = new SpeechToText();
             
-            // Initialize audio file transcription
-            audioFileTranscriptionRef.current = new AudioFileTranscription();
+            // Initialize transcription service manager
+            transcriptionServiceManagerRef.current = new TranscriptionServiceManager();
             
             // Initialize lyrics display
             lyricsDisplayRef.current = new LyricsDisplay(lyricsOptions);
@@ -481,14 +483,20 @@ export default function SongPlayer({}: SongPlayerProps) {
             songRef.current.getTransport().start();
             
             // Transcribe the audio file
-            if (audioFileTranscriptionRef.current) {
+            if (transcriptionServiceManagerRef.current) {
                 console.log('SongPlayer: Starting audio file transcription...');
-                const transcriptionResult = await audioFileTranscriptionRef.current.transcribeAudioFile(audioBuffer);
-                setCurrentTranscription(transcriptionResult);
-                if (lyricsDisplayRef.current) {
-                    lyricsDisplayRef.current.updateTranscription(transcriptionResult);
+                try {
+                    const transcriptionResult = await transcriptionServiceManagerRef.current.transcribe(audioBuffer);
+                    setCurrentTranscription(transcriptionResult);
+                    if (lyricsDisplayRef.current) {
+                        lyricsDisplayRef.current.updateTranscription(transcriptionResult);
+                    }
+                    console.log('SongPlayer: Audio file transcription complete:', transcriptionResult.words.length, 'words');
+                } catch (error) {
+                    console.error('SongPlayer: Transcription failed:', error);
+                    // Fallback to sample lyrics
+                    alert('Transcription failed. Using sample lyrics instead.');
                 }
-                console.log('SongPlayer: Audio file transcription complete:', transcriptionResult.words.length, 'words');
             }
         } catch (error) {
             console.error('SongPlayer: Error processing audio file:', error);
@@ -555,6 +563,11 @@ export default function SongPlayer({}: SongPlayerProps) {
         } else {
             console.log('SongPlayer: Lyrics display ref is null');
         }
+    };
+
+    const handleTranscriptionServiceChange = (serviceName: string) => {
+        console.log('SongPlayer: Transcription service changed to:', serviceName);
+        // The service manager will handle the change internally
     };
 
     return (
@@ -636,6 +649,14 @@ export default function SongPlayer({}: SongPlayerProps) {
                         currentText={currentTranscription?.fullText || ''}
                         onTestLyrics={handleTestLyrics}
                     />
+
+                    {/* Transcription Service Settings */}
+                    {transcriptionServiceManagerRef.current && (
+                        <TranscriptionSettings
+                            serviceManager={transcriptionServiceManagerRef.current}
+                            onServiceChange={handleTranscriptionServiceChange}
+                        />
+                    )}
                     
                     {/* Platform-specific recording and sharing */}
                     <PlatformRecorder 
