@@ -52,7 +52,7 @@ export class WhisperTranscriptionService implements TranscriptionService {
             }
 
             const result = await response.json();
-            return this.convertWhisperResult(result);
+            return this.convertWhisperResult(result, audioBuffer.duration);
         } catch (error) {
             console.error('Whisper transcription error:', error);
             throw error;
@@ -125,8 +125,9 @@ export class WhisperTranscriptionService implements TranscriptionService {
         return buffer;
     }
 
-    private convertWhisperResult(result: any): TranscriptionResult {
+    private convertWhisperResult(result: any, audioDuration: number): TranscriptionResult {
         console.log('Whisper API response:', JSON.stringify(result, null, 2));
+        console.log('Audio duration:', audioDuration, 'seconds');
         
         const words: TranscriptionWord[] = [];
         
@@ -146,8 +147,7 @@ export class WhisperTranscriptionService implements TranscriptionService {
             const fullText = result.text || '';
             if (fullText) {
                 const textWords = fullText.split(/\s+/).filter(word => word.length > 0);
-                const estimatedDuration = 3.0; // Assume 3 seconds for the test audio
-                const wordDuration = estimatedDuration / textWords.length;
+                const wordDuration = audioDuration / textWords.length;
                 
                 textWords.forEach((word: string, index: number) => {
                     words.push({
