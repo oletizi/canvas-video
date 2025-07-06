@@ -26,25 +26,29 @@ export class WhisperTranscriptionService implements TranscriptionService {
         }
 
         try {
-            // Convert audio buffer to base64
-            const audioData = this.audioBufferToBase64(audioBuffer);
+            // Convert audio buffer to WAV format
+            const wavData = this.audioBufferToWav(audioBuffer);
+            
+            // Create FormData for multipart/form-data request
+            const formData = new FormData();
+            const audioBlob = new Blob([wavData], { type: 'audio/wav' });
+            formData.append('file', audioBlob, 'audio.wav');
+            formData.append('model', 'whisper-1');
+            formData.append('response_format', 'verbose_json');
+            formData.append('timestamp_granularities', 'word');
             
             const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${this.apiKey}`,
-                    'Content-Type': 'application/json',
+                    // Don't set Content-Type - let the browser set it with boundary for multipart/form-data
                 },
-                body: JSON.stringify({
-                    file: audioData,
-                    model: 'whisper-1',
-                    response_format: 'verbose_json',
-                    timestamp_granularities: ['word']
-                })
+                body: formData
             });
 
             if (!response.ok) {
-                throw new Error(`Whisper API error: ${response.statusText}`);
+                const errorText = await response.text();
+                throw new Error(`Whisper API error: ${response.status} ${response.statusText} - ${errorText}`);
             }
 
             const result = await response.json();
