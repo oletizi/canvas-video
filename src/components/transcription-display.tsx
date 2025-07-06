@@ -23,36 +23,37 @@ export default function TranscriptionDisplay({
     const [syncOffset, setSyncOffset] = useState(-0.5); // User-adjustable sync offset
     const [isCalibrating, setIsCalibrating] = useState(false);
     const [calibrationClicks, setCalibrationClicks] = useState<Array<{wordIndex: number, clickTime: number}>>([]);
+    const [calibratedWords, setCalibratedWords] = useState<Map<number, {startTime: number, endTime: number}>>(new Map());
 
     // Calibration logic
-    const calculateOptimalOffset = () => {
-        if (calibrationClicks.length < 2) return;
+    const applyCalibration = () => {
+        if (calibrationClicks.length === 0) return;
         
-        let totalOffset = 0;
-        let validComparisons = 0;
+        // Create a map of calibrated word timings
+        const newCalibratedWords = new Map<number, {startTime: number, endTime: number}>();
         
         calibrationClicks.forEach(click => {
             const word = transcription?.words[click.wordIndex];
             if (word) {
-                // Calculate the offset needed to align this word's timing with when it was clicked
-                const neededOffset = click.clickTime - word.startTime;
-                totalOffset += neededOffset;
-                validComparisons++;
+                // Set the word's start time to when it was clicked
+                const wordDuration = word.endTime - word.startTime;
+                newCalibratedWords.set(click.wordIndex, {
+                    startTime: click.clickTime,
+                    endTime: click.clickTime + wordDuration
+                });
             }
         });
         
-        if (validComparisons > 0) {
-            const averageOffset = totalOffset / validComparisons;
-            console.log(`Calibration complete: ${validComparisons} clicks, average offset: ${averageOffset.toFixed(2)}s`);
-            setSyncOffset(averageOffset);
-            setIsCalibrating(false);
-            setCalibrationClicks([]);
-        }
+        setCalibratedWords(newCalibratedWords);
+        console.log(`Calibration applied: ${calibrationClicks.length} words calibrated`);
+        setIsCalibrating(false);
+        setCalibrationClicks([]);
     };
     
     const startCalibration = () => {
         setIsCalibrating(true);
         setCalibrationClicks([]);
+        setCalibratedWords(new Map()); // Clear previous calibrations
         console.log('Starting calibration mode - click words as you hear them');
     };
     
@@ -60,6 +61,11 @@ export default function TranscriptionDisplay({
         setIsCalibrating(false);
         setCalibrationClicks([]);
         console.log('Calibration cancelled');
+    };
+    
+    const clearCalibration = () => {
+        setCalibratedWords(new Map());
+        console.log('Calibration cleared');
     };
 
     // Debug logging
@@ -86,12 +92,17 @@ export default function TranscriptionDisplay({
     }
 
     const renderWord = (word: TranscriptionWord, index: number) => {
+        // Use calibrated timing if available, otherwise use original timing
+        const calibratedTiming = calibratedWords.get(index);
+        const wordStartTime = calibratedTiming ? calibratedTiming.startTime : word.startTime;
+        const wordEndTime = calibratedTiming ? calibratedTiming.endTime : word.endTime;
+        
         const adjustedCurrentTime = currentTime + timeOffset + syncOffset;
-        const isCurrent = adjustedCurrentTime >= word.startTime && adjustedCurrentTime <= word.endTime;
-        const hasPassed = adjustedCurrentTime > word.endTime;
+        const isCurrent = adjustedCurrentTime >= wordStartTime && adjustedCurrentTime <= wordEndTime;
+        const hasPassed = adjustedCurrentTime > wordEndTime;
         
         // Check if this word was clicked during calibration
-        const isCalibrated = calibrationClicks.some(click => click.wordIndex === index);
+        const isCalibrated = calibrationClicks.some(click => click.wordIndex === index) || calibratedWords.has(index);
         
         const handleWordClick = () => {
             if (isCalibrating) {
@@ -115,13 +126,13 @@ export default function TranscriptionDisplay({
                 } ${isCalibrated ? 'ring-2 ring-green-500' : ''}`}
                 title={isCalibrating 
                     ? `Click when you hear "${word.word}"` 
-                    : `${formatTime(word.startTime)} - ${formatTime(word.endTime)} (confidence: ${(word.confidence * 100).toFixed(1)}%)`
+                    : `${formatTime(wordStartTime)} - ${formatTime(wordEndTime)} (confidence: ${(word.confidence * 100).toFixed(1)}%)`
                 }
                 onClick={handleWordClick}
             >
                 {showTimestamps && (
                     <span className="text-xs text-gray-500 mr-1">
-                        [{formatTime(word.startTime)}]
+                        [{formatTime(wordStartTime)}]
                     </span>
                 )}
                 {word.word}
@@ -208,30 +219,40 @@ export default function TranscriptionDisplay({
             <div className="mb-3 p-2 bg-blue-50 rounded border">
                 <div className="flex items-center justify-between">
                     <div className="text-xs">
-                        <span className="font-medium text-blue-800">Sync Calibration:</span>
+                        <span className="font-medium text-blue-800">Word Calibration:</span>
                         {isCalibrating ? (
                             <span className="text-blue-600 ml-2">
                                 Click words as you hear them ({calibrationClicks.length} clicks)
                             </span>
                         ) : (
                             <span className="text-gray-600 ml-2">
-                                Click words during playback to auto-sync
+                                Set individual word timings by clicking during playback
                             </span>
                         )}
                     </div>
                     <div className="flex items-center gap-2">
                         {!isCalibrating ? (
-                            <button
-                                onClick={startCalibration}
-                                className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
-                            >
-                                Start Calibration
-                            </button>
+                            <>
+                                <button
+                                    onClick={startCalibration}
+                                    className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                                >
+                                    Start Calibration
+                                </button>
+                                {calibratedWords.size > 0 && (
+                                    <button
+                                        onClick={clearCalibration}
+                                        className="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600"
+                                    >
+                                        Clear ({calibratedWords.size})
+                                    </button>
+                                )}
+                            </>
                         ) : (
                             <>
                                 <button
-                                    onClick={calculateOptimalOffset}
-                                    disabled={calibrationClicks.length < 2}
+                                    onClick={applyCalibration}
+                                    disabled={calibrationClicks.length === 0}
                                     className="px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
                                 >
                                     Apply ({calibrationClicks.length})
@@ -251,6 +272,7 @@ export default function TranscriptionDisplay({
             <div className="mb-3 text-xs text-gray-600">
                 <div className="flex items-center gap-4">
                     <span>Total words: {transcription.words.length}</span>
+                    <span>Calibrated words: {calibratedWords.size}</span>
                     <span>Duration: {formatTime(transcription.words[transcription.words.length - 1]?.endTime || 0)}</span>
                     <span>Current time: {formatTime(currentTime)}</span>
                     <span>Adjusted time: {formatTime(currentTime + timeOffset + syncOffset)}</span>
