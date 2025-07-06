@@ -614,34 +614,6 @@ export default function SongPlayer({}: SongPlayerProps) {
             </div>
             <div className="container mx-auto pt-5">
                 <div className="flex flex-col gap-4">
-                    <div className="flex items-center gap-4">
-                        <label className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded cursor-pointer">
-                            Upload Audio File
-                            <input 
-                                type="file" 
-                                accept="audio/*" 
-                                onChange={handleFileUpload}
-                                className="hidden"
-                            />
-                        </label>
-                        {uploadedFile && (
-                            <span className="text-sm text-gray-600">
-                                {uploadedFile.name} ({(recordingDuration / 1000).toFixed(1)}s)
-                            </span>
-                        )}
-                        <label className="text-sm font-medium">
-                            Duration (s):
-                            <input 
-                                type="number" 
-                                min="1" 
-                                max={uploadedFile ? Math.ceil(recordingDuration / 1000) : 30} 
-                                value={recordingDuration / 1000}
-                                onChange={(e) => setRecordingDuration(Number(e.target.value) * 1000)}
-                                className="ml-2 px-2 py-1 border border-gray-300 rounded w-16"
-                                disabled={isRecording}
-                            />
-                        </label>
-                    </div>
                     <div className="flex items-center content-center gap-5">
                         <TransportView model={songRef.current.getTransport()} />
                         <AnimationTypeSelector onChange={(v) => {
@@ -678,6 +650,32 @@ export default function SongPlayer({}: SongPlayerProps) {
 
                     {/* Transcription Toggle */}
                     <div className="flex items-center gap-4">
+                        <label className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded cursor-pointer">
+                            Upload Audio File
+                            <input 
+                                type="file" 
+                                accept="audio/*" 
+                                onChange={handleFileUpload}
+                                className="hidden"
+                            />
+                        </label>
+                        {uploadedFile && (
+                            <span className="text-sm text-gray-600">
+                                {uploadedFile.name} ({(recordingDuration / 1000).toFixed(1)}s)
+                            </span>
+                        )}
+                        <label className="text-sm font-medium">
+                            Duration (s):
+                            <input 
+                                type="number" 
+                                min="1" 
+                                max={uploadedFile ? Math.ceil(recordingDuration / 1000) : 30} 
+                                value={recordingDuration / 1000}
+                                onChange={(e) => setRecordingDuration(Number(e.target.value) * 1000)}
+                                className="ml-2 px-2 py-1 border border-gray-300 rounded w-16"
+                                disabled={isRecording}
+                            />
+                        </label>
                         <button
                             onClick={handleToggleTranscriptionEnabled}
                             className={`px-4 py-2 rounded font-medium transition-colors ${
