@@ -58,7 +58,22 @@ export class WhisperTranscriptionService implements TranscriptionService {
     private audioBufferToBase64(audioBuffer: AudioBuffer): string {
         // Convert audio buffer to WAV format and then to base64
         const wavData = this.audioBufferToWav(audioBuffer);
-        return btoa(String.fromCharCode(...new Uint8Array(wavData)));
+        return this.arrayBufferToBase64(wavData);
+    }
+
+    private arrayBufferToBase64(buffer: ArrayBuffer): string {
+        const bytes = new Uint8Array(buffer);
+        let binary = '';
+        const len = bytes.byteLength;
+        // Process in chunks to avoid stack overflow
+        const chunkSize = 8192; // 8KB chunks
+        for (let i = 0; i < len; i += chunkSize) {
+            const chunk = bytes.subarray(i, Math.min(i + chunkSize, len));
+            for (let j = 0; j < chunk.length; j++) {
+                binary += String.fromCharCode(chunk[j]);
+            }
+        }
+        return btoa(binary);
     }
 
     private audioBufferToWav(audioBuffer: AudioBuffer): ArrayBuffer {
@@ -183,7 +198,22 @@ export class GoogleSpeechTranscriptionService implements TranscriptionService {
 
     private audioBufferToBase64(audioBuffer: AudioBuffer): string {
         const wavData = this.audioBufferToWav(audioBuffer);
-        return btoa(String.fromCharCode(...new Uint8Array(wavData)));
+        return this.arrayBufferToBase64(wavData);
+    }
+
+    private arrayBufferToBase64(buffer: ArrayBuffer): string {
+        const bytes = new Uint8Array(buffer);
+        let binary = '';
+        const len = bytes.byteLength;
+        // Process in chunks to avoid stack overflow
+        const chunkSize = 8192; // 8KB chunks
+        for (let i = 0; i < len; i += chunkSize) {
+            const chunk = bytes.subarray(i, Math.min(i + chunkSize, len));
+            for (let j = 0; j < chunk.length; j++) {
+                binary += String.fromCharCode(chunk[j]);
+            }
+        }
+        return btoa(binary);
     }
 
     private audioBufferToWav(audioBuffer: AudioBuffer): ArrayBuffer {
