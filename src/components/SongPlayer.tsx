@@ -70,6 +70,7 @@ export default function SongPlayer({}: SongPlayerProps) {
     const framerate = 60;
     const frameInterval = 1000 / framerate;
     const [transcriptionApiCallCount, setTranscriptionApiCallCount] = useState(0);
+    const [transcriptionEnabled, setTranscriptionEnabled] = useState(false);
 
     // Persistent objects as refs
     const songRef = useRef(newSong());
@@ -506,8 +507,8 @@ export default function SongPlayer({}: SongPlayerProps) {
             songRef.current.startAudioFromBuffer(audioContext, audioBuffer);
             songRef.current.getTransport().start();
 
-            // Transcribe the audio file
-            if (transcriptionServiceManagerRef.current) {
+            // Transcribe the audio file only if transcription is enabled
+            if (transcriptionEnabled && transcriptionServiceManagerRef.current) {
                 setTranscriptionApiCallCount(count => count + 1);
                 console.log('SongPlayer: Starting audio file transcription...');
                 try {
@@ -595,6 +596,17 @@ export default function SongPlayer({}: SongPlayerProps) {
         // The service manager will handle the change internally
     };
 
+    const handleToggleTranscriptionEnabled = () => {
+        setTranscriptionEnabled(!transcriptionEnabled);
+        // Clear transcription when disabling
+        if (transcriptionEnabled) {
+            setCurrentTranscription(null);
+            if (lyricsDisplayRef.current) {
+                lyricsDisplayRef.current.clear();
+            }
+        }
+    };
+
     return (
         <div>
             <div className="flex justify-center">
@@ -664,37 +676,54 @@ export default function SongPlayer({}: SongPlayerProps) {
                         />
                     )}
 
-                    {/* Lyrics Controls */}
-                    <LyricsControls
-                        isTranscribing={isTranscribing}
-                        onToggleTranscription={handleToggleTranscription}
-                        onOptionsChange={handleLyricsOptionsChange}
-                        currentOptions={lyricsOptions}
-                        transcriptionSupported={speechToTextRef.current?.isSupported() || false}
-                        currentText={currentTranscription?.fullText || ''}
-                        onTestLyrics={handleTestLyrics}
-                    />
-
-                    {/* Transcription API Call Count Display */}
-                    <div className="text-xs text-gray-600 flex items-center gap-2">
-                        <span>Transcription API calls this session:</span>
-                        <span className="font-mono font-bold text-blue-700">{transcriptionApiCallCount}</span>
-                        <span>| Current transcription: {currentTranscription ? `${currentTranscription.words.length} words` : 'none'}</span>
+                    {/* Transcription Toggle */}
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={handleToggleTranscriptionEnabled}
+                            className={`px-4 py-2 rounded font-medium transition-colors ${
+                                transcriptionEnabled 
+                                    ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+                                    : 'bg-gray-300 hover:bg-gray-400 text-gray-700'
+                            }`}
+                        >
+                            {transcriptionEnabled ? 'Transcription: ON' : 'Transcription: OFF'}
+                        </button>
+                        {transcriptionEnabled && (
+                            <span className="text-sm text-gray-600">
+                                API calls: {transcriptionApiCallCount}
+                            </span>
+                        )}
                     </div>
 
-                    {/* Transcription Display */}
-                    <TranscriptionDisplay
-                        transcription={currentTranscription}
-                        currentTime={transportPosition / 1000} // Convert milliseconds to seconds
-                        timeOffset={-0.5} // Delay transcription by 0.5 seconds to sync with audio
-                    />
+                    {/* Transcription Controls - only show when enabled */}
+                    {transcriptionEnabled && (
+                        <>
+                            {/* Lyrics Controls */}
+                            <LyricsControls
+                                isTranscribing={isTranscribing}
+                                onToggleTranscription={handleToggleTranscription}
+                                onOptionsChange={handleLyricsOptionsChange}
+                                currentOptions={lyricsOptions}
+                                transcriptionSupported={speechToTextRef.current?.isSupported() || false}
+                                currentText={currentTranscription?.fullText || ''}
+                                onTestLyrics={handleTestLyrics}
+                            />
 
-                    {/* Transcription Service Settings */}
-                    {transcriptionServiceManagerRef.current && (
-                        <TranscriptionSettings
-                            serviceManager={transcriptionServiceManagerRef.current}
-                            onServiceChange={handleTranscriptionServiceChange}
-                        />
+                            {/* Transcription Display */}
+                            <TranscriptionDisplay
+                                transcription={currentTranscription}
+                                currentTime={transportPosition / 1000} // Convert milliseconds to seconds
+                                timeOffset={-0.5} // Delay transcription by 0.5 seconds to sync with audio
+                            />
+
+                            {/* Transcription Service Settings */}
+                            {transcriptionServiceManagerRef.current && (
+                                <TranscriptionSettings
+                                    serviceManager={transcriptionServiceManagerRef.current}
+                                    onServiceChange={handleTranscriptionServiceChange}
+                                />
+                            )}
+                        </>
                     )}
                     
                     {/* Platform-specific recording and sharing */}
