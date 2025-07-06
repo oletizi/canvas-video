@@ -639,6 +639,32 @@ export default function SongPlayer({}: SongPlayerProps) {
                         </div>
                     </div>
                     
+                    {/* Progress indicator */}
+                    {audioDuration > 0 && (
+                        <div className="flex flex-col gap-2">
+                            <div className="flex items-center justify-between text-sm text-gray-600">
+                                <span>Progress</span>
+                                <span>
+                                    {formatTime(transportPosition)} / {formatTime(audioDuration)}
+                                </span>
+                            </div>
+                            <div 
+                                className="w-full bg-gray-200 rounded-full h-2 cursor-pointer hover:bg-gray-300 transition-colors duration-150 relative"
+                                onClick={handleProgressBarClick}
+                                title="Click to seek to position"
+                            >
+                                <div 
+                                    className="bg-blue-500 h-2 rounded-full"
+                                    style={{ 
+                                        width: `${audioDuration > 0 ? Math.min(100, (transportPosition / audioDuration) * 100) : 0}%` 
+                                    }}
+                                />
+                                {/* Hover indicator */}
+                                <div className="absolute inset-0 opacity-0 hover:opacity-20 bg-blue-300 rounded-full transition-opacity duration-150" />
+                            </div>
+                        </div>
+                    )}
+                    
                     {/* Theme selector - show for PulsingEye and Wanderer */}
                     {(animationType === AnimationType.PulsingEye || animationType === AnimationType.Wanderer) && (
                         <ThemeSelector 
@@ -734,32 +760,6 @@ export default function SongPlayer({}: SongPlayerProps) {
                         isRecording={isRecording}
                         videoFormat={videoFormat}
                     />
-                    
-                    {/* Progress indicator */}
-                    {audioDuration > 0 && (
-                        <div className="flex flex-col gap-2">
-                            <div className="flex items-center justify-between text-sm text-gray-600">
-                                <span>Progress</span>
-                                <span>
-                                    {formatTime(transportPosition)} / {formatTime(audioDuration)}
-                                </span>
-                            </div>
-                            <div 
-                                className="w-full bg-gray-200 rounded-full h-2 cursor-pointer hover:bg-gray-300 transition-colors duration-150 relative"
-                                onClick={handleProgressBarClick}
-                                title="Click to seek to position"
-                            >
-                                <div 
-                                    className="bg-blue-500 h-2 rounded-full"
-                                    style={{ 
-                                        width: `${audioDuration > 0 ? Math.min(100, (transportPosition / audioDuration) * 100) : 0}%` 
-                                    }}
-                                />
-                                {/* Hover indicator */}
-                                <div className="absolute inset-0 opacity-0 hover:opacity-20 bg-blue-300 rounded-full transition-opacity duration-150" />
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
         </div>
