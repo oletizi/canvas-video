@@ -265,28 +265,19 @@ export default function SongPlayer({}: SongPlayerProps) {
             songRef.current.startAudioFromBuffer(audioContext, audioBuffer);
             // Reset transport position to beginning for recording
             songRef.current.getTransport().reset();
-            setTransportPosition(0); // This is now in milliseconds
-            // Ensure canvas is rendered and animation is running before capturing
-            if (fabricCanvasRef.current && animationRef.current) {
-                // Don't change background color - keep the existing one
-                animationRef.current.draw(fabricCanvasRef.current);
-                fabricCanvasRef.current.renderAll();
-                await new Promise(resolve => setTimeout(resolve, 200));
-                animationRef.current.draw(fabricCanvasRef.current);
-                fabricCanvasRef.current.renderAll();
-            }
-            // Get canvas stream after ensuring canvas is actively rendered
+            setTransportPosition(0);
+            
+            // Get canvas stream first
             const canvasStream = canvasRef.current.captureStream(framerate);
+            
             // Create a new buffer source for the MediaRecorder 
             bufferSource = audioContext.createBufferSource();
             bufferSource.buffer = audioBuffer;
+            
             // Create media stream destination for recording
             const dest = audioContext.createMediaStreamDestination();
             bufferSource.connect(dest);
-            // Don't connect to audioContext.destination to avoid double audio playback
-            // Start the transport and audio
-            songRef.current.getTransport().start();
-            await new Promise(resolve => setTimeout(resolve, 500));
+            
             // Combine canvas and audio streams
             const videoTracks = canvasStream.getVideoTracks();
             const audioTracks = dest.stream.getAudioTracks();
@@ -294,6 +285,7 @@ export default function SongPlayer({}: SongPlayerProps) {
                 ...videoTracks,
                 ...audioTracks
             ]);
+            
             // Set up MediaRecorder with fallback codec options
             let mimeType = 'video/webm;codecs=vp9,opus';
             if (!MediaRecorder.isTypeSupported(mimeType)) {
@@ -302,16 +294,19 @@ export default function SongPlayer({}: SongPlayerProps) {
                     mimeType = 'video/webm';
                 }
             }
+            
             mediaRecorderRef.current = new MediaRecorder(combinedStream, {
                 mimeType: mimeType
             });
+            
             mediaRecorderRef.current.ondataavailable = (event) => {
                 if (event.data.size > 0) {
                     recordedChunksRef.current.push(event.data);
                 }
             };
+            
             mediaRecorderRef.current.onstop = () => {
-                console.log('Recording stopped - animation should continue');
+                console.log('Recording stopped');
                 const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
                 downloadVideo(blob);
                 setIsRecording(false);
@@ -320,22 +315,26 @@ export default function SongPlayer({}: SongPlayerProps) {
                     currentAudioUrlRef.current = null;
                 }
             };
-            // Start recording
-            mediaRecorderRef.current.start();
-            console.log('Recording started - animation should continue running');
             
-            // Force a redraw of the animation and canvas after starting recording
-            if (animationRef.current && fabricCanvasRef.current) {
-                animationRef.current.draw(fabricCanvasRef.current);
-                fabricCanvasRef.current.renderAll();
-                console.log('Forced redraw after starting recording');
-            }
-            // Start the buffer source for recording (separate from the sample's transport-managed source)
-            bufferSource.start();
+            // Start recording first
+            mediaRecorderRef.current.start();
+            console.log('Recording started');
+            
+            // Wait a moment for the recorder to initialize
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Start both audio and transport simultaneously
+            const startTime = audioContext.currentTime;
+            bufferSource.start(startTime);
+            songRef.current.getTransport().start();
+            
+            console.log('Audio and transport started simultaneously at:', startTime);
+            
             // Calculate recording duration based on audio length or user setting
             const actualDuration = uploadedFile 
-                ? Math.min(audioBuffer.duration * 1000, recordingDuration) // Use audio duration as default, but allow user override
+                ? Math.min(audioBuffer.duration * 1000, recordingDuration)
                 : recordingDuration;
+            
             // Stop recording after specified duration
             setTimeout(() => {
                 if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
@@ -466,91 +465,89 @@ export default function SongPlayer({}: SongPlayerProps) {
                                 {uploadedFile.name} ({(recordingDuration / 1000).toFixed(1)}s)
                             </span>
                         )}
+                        <label className="text-sm font-medium">
+                            Duration (s):
+                            <input 
+                                type="number" 
+                                min="1" 
+                                max={uploadedFile ? Math.ceil(recordingDuration / 1000) : 30} 
+                                value={recordingDuration / 1000}
+                                onChange={(e) => setRecordingDuration(Number(e.target.value) * 1000)}
+                                className="ml-2 px-2 py-1 border border-gray-300 rounded w-16"
+                                disabled={isRecording}
+                            />
+                        </label>
                     </div>
-                    <div className="flex flex-col gap-4">
-                        <div className="flex items-center gap-4">
-                            <label className="text-sm font-medium">
-                                Recording Duration (seconds):
-                                <input 
-                                    type="number" 
-                                    min="1" 
-                                    max={uploadedFile ? Math.ceil(recordingDuration / 1000) : 30} 
-                                    value={recordingDuration / 1000}
-                                    onChange={(e) => setRecordingDuration(Number(e.target.value) * 1000)}
-                                    className="ml-2 px-2 py-1 border border-gray-300 rounded w-16"
-                                    disabled={isRecording}
+                    <div className="flex items-center content-center gap-5">
+                        <TransportView model={songRef.current.getTransport()} />
+                        <AnimationTypeSelector onChange={(v) => {
+                            setAnimationType(v);
+                            // Reset theme to default for new animation type
+                            if (v === AnimationType.PulsingEye) {
+                                setCurrentTheme(PulsingEyeTheme.BlackHole);
+                            } else if (v === AnimationType.Wanderer) {
+                                setCurrentTheme(WandererTheme.BlackHole);
+                            }
+                        }} />
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">VU Level:</span>
+                            <div className="w-32 h-4 bg-gray-200 rounded-full overflow-hidden">
+                                <div 
+                                    className="h-full bg-green-500 transition-all duration-100"
+                                    style={{ width: `${currentVuLevel * 100}%` }}
                                 />
-                            </label>
+                            </div>
+                            <span className="text-sm text-gray-600 w-12">
+                                {(currentVuLevel * 100).toFixed(1)}%
+                            </span>
                         </div>
-                        <div className="flex items-center content-center gap-5">
-                            <TransportView model={songRef.current.getTransport()} />
-                            <AnimationTypeSelector onChange={(v) => {
-                                setAnimationType(v);
-                                // Reset theme to default for new animation type
-                                if (v === AnimationType.PulsingEye) {
-                                    setCurrentTheme(PulsingEyeTheme.BlackHole);
-                                } else if (v === AnimationType.Wanderer) {
-                                    setCurrentTheme(WandererTheme.BlackHole);
-                                }
-                            }} />
-                            <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium">VU Level:</span>
-                                <div className="w-32 h-4 bg-gray-200 rounded-full overflow-hidden">
-                                    <div 
-                                        className="h-full bg-green-500 transition-all duration-100"
-                                        style={{ width: `${currentVuLevel * 100}%` }}
-                                    />
-                                </div>
-                                <span className="text-sm text-gray-600 w-12">
-                                    {(currentVuLevel * 100).toFixed(1)}%
+                    </div>
+                    
+                    {/* Theme selector - show for PulsingEye and Wanderer */}
+                    {(animationType === AnimationType.PulsingEye || animationType === AnimationType.Wanderer) && (
+                        <ThemeSelector 
+                            onChange={setCurrentTheme} 
+                            currentTheme={currentTheme}
+                            themes={getThemesForAnimation(animationType)}
+                        />
+                    )}
+                    
+                    {/* Platform-specific recording and sharing */}
+                    <PlatformRecorder 
+                        onFormatChange={setVideoFormat}
+                        onAspectRatioChange={setAspectRatio}
+                        onStartRecording={startVideoRecording}
+                        videoBlob={recordedVideoBlob}
+                        dimensions={dimensions}
+                        isRecording={isRecording}
+                        videoFormat={videoFormat}
+                    />
+                    
+                    {/* Progress indicator */}
+                    {audioDuration > 0 && (
+                        <div className="flex flex-col gap-2">
+                            <div className="flex items-center justify-between text-sm text-gray-600">
+                                <span>Progress</span>
+                                <span>
+                                    {formatTime(transportPosition)} / {formatTime(audioDuration)}
                                 </span>
                             </div>
-                        </div>
-                        
-                        {/* Platform-specific recording and sharing */}
-                        <PlatformRecorder 
-                            onFormatChange={setVideoFormat}
-                            onAspectRatioChange={setAspectRatio}
-                            onStartRecording={startVideoRecording}
-                            videoBlob={recordedVideoBlob}
-                            dimensions={dimensions}
-                            isRecording={isRecording}
-                            videoFormat={videoFormat}
-                        />
-                        {/* Theme selector - show for PulsingEye and Wanderer */}
-                        {(animationType === AnimationType.PulsingEye || animationType === AnimationType.Wanderer) && (
-                            <ThemeSelector 
-                                onChange={setCurrentTheme} 
-                                currentTheme={currentTheme}
-                                themes={getThemesForAnimation(animationType)}
-                            />
-                        )}
-                        {/* Progress indicator */}
-                        {audioDuration > 0 && (
-                            <div className="flex flex-col gap-2">
-                                <div className="flex items-center justify-between text-sm text-gray-600">
-                                    <span>Progress</span>
-                                    <span>
-                                        {formatTime(transportPosition)} / {formatTime(audioDuration)}
-                                    </span>
-                                </div>
+                            <div 
+                                className="w-full bg-gray-200 rounded-full h-2 cursor-pointer hover:bg-gray-300 transition-colors duration-150 relative"
+                                onClick={handleProgressBarClick}
+                                title="Click to seek to position"
+                            >
                                 <div 
-                                    className="w-full bg-gray-200 rounded-full h-2 cursor-pointer hover:bg-gray-300 transition-colors duration-150 relative"
-                                    onClick={handleProgressBarClick}
-                                    title="Click to seek to position"
-                                >
-                                    <div 
-                                        className="bg-blue-500 h-2 rounded-full"
-                                        style={{ 
-                                            width: `${audioDuration > 0 ? Math.min(100, (transportPosition / audioDuration) * 100) : 0}%` 
-                                        }}
-                                    />
-                                    {/* Hover indicator */}
-                                    <div className="absolute inset-0 opacity-0 hover:opacity-20 bg-blue-300 rounded-full transition-opacity duration-150" />
-                                </div>
+                                    className="bg-blue-500 h-2 rounded-full"
+                                    style={{ 
+                                        width: `${audioDuration > 0 ? Math.min(100, (transportPosition / audioDuration) * 100) : 0}%` 
+                                    }}
+                                />
+                                {/* Hover indicator */}
+                                <div className="absolute inset-0 opacity-0 hover:opacity-20 bg-blue-300 rounded-full transition-opacity duration-150" />
                             </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
