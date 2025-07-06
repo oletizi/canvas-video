@@ -55,7 +55,7 @@ export default function SongPlayer({}: SongPlayerProps) {
     const [lyricsOptions, setLyricsOptions] = useState<LyricsDisplayOptions>({
         fontSize: 24,
         fontFamily: 'Arial, sans-serif',
-        color: '#ffffff',
+        color: '#b8860b',
         backgroundColor: 'rgba(0, 0, 0, 0.7)',
         position: 'bottom',
         alignment: 'center',
