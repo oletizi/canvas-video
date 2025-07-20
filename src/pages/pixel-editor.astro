@@ -1,5 +1,5 @@
 ---
-import SongPlayer from '@/components/SongPlayer';
+import PixelEditor from '@/components/PixelEditor';
 import Navigation from '@/components/Navigation.astro';
 ---
 
@@ -9,10 +9,10 @@ import Navigation from '@/components/Navigation.astro';
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="generator" content={Astro.generator} />
-        <title>Canvas Video - Song</title>
+        <title>Canvas Video - Pixel Editor</title>
     </head>
-    <body class="bg-white text-neutral-800">
+    <body class="bg-gray-100 text-neutral-800 min-h-screen">
         <Navigation />
-        <SongPlayer client:load />
+        <PixelEditor client:load />
     </body>
 </html>
