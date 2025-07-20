@@ -3,6 +3,7 @@ import type { Song } from '@/song/song';
 import { PixelAnimationBase } from '@/video/pixel-animation-base';
 import { PixelConfigManager } from '@/video/pixel-config-manager';
 import type { PixelAnimationConfig } from '@/video/pixel-config-types';
+import { Pixels } from '@/video/pixels';
 
 export class ConfigurablePixelAnimation extends PixelAnimationBase {
   private configId: string;
@@ -90,19 +91,26 @@ export class ConfigurablePixelAnimation extends PixelAnimationBase {
 
   private setupAfterConfigLoad(c: Canvas): void {
     // Update the pixels grid with the new configuration without clearing the canvas
-    // The config was already updated in loadConfiguration(), so we just need to
-    // recreate our pixels grid and apply the initial frame
+    // The config was already updated in loadConfiguration(), so we need to
+    // recreate our pixels grid with the new dimensions and apply the initial frame
     
-    console.log(`Configuration loading - Canvas: ${c.width}x${c.height}, Config: ${this.config.canvas.pixelCols}x${this.config.canvas.pixelRows}`);
+    console.log(`ConfigurablePixelAnimation: Updating pixel grid from old dimensions to new - Canvas: ${c.width}x${c.height}, Config: ${this.config.canvas.pixelCols}x${this.config.canvas.pixelRows}`);
     
-    // Clear and recreate our pixels grid with the new configuration
+    // Clear the existing pixels grid
     this.pixels.clear();
+    
+    // Recreate the pixels grid with the new configuration dimensions
+    console.log(`ConfigurablePixelAnimation: Creating new pixel grid with ${this.config.canvas.pixelCols}x${this.config.canvas.pixelRows} dimensions`);
+    this.pixels = new Pixels(this.config.canvas.pixelCols, this.config.canvas.pixelRows);
+    
+    // Setup the new pixels grid on the canvas
     this.pixels.setup(c);
     
     // Apply the initial frame from the loaded configuration
+    console.log(`ConfigurablePixelAnimation: Applying initial frame with ${this.config.initialFrame.pixels.length} pixels`);
     this.applyInitialFrame();
     
-    console.log(`Configuration loaded and applied: ${this.config.name} (${this.config.canvas.pixelCols}x${this.config.canvas.pixelRows})`);
+    console.log(`ConfigurablePixelAnimation: Configuration successfully applied: ${this.config.name} (${this.config.canvas.pixelCols}x${this.config.canvas.pixelRows})`);
   }
 
   protected setupAdditionalElements(c: Canvas): void {
