@@ -115,10 +115,21 @@ interface ConfigPanelProps {
   onConfigChange: (config: PixelAnimationConfig) => void;
   onSave: () => void;
   onLoad: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onLoadFromFile: (filename: string) => void;
   onNew: () => void;
+  availableConfigs: Array<{
+    id: string;
+    name: string;
+    version: string;
+    created: string;
+    modified: string;
+    pixelCount: number;
+    needsMigration: boolean;
+  }>;
+  onRefreshConfigs: () => void;
 }
 
-function ConfigPanel({ config, onConfigChange, onSave, onLoad, onNew }: ConfigPanelProps) {
+function ConfigPanel({ config, onConfigChange, onSave, onLoad, onLoadFromFile, onNew, availableConfigs, onRefreshConfigs }: ConfigPanelProps) {
   const updateConfig = (updates: Partial<PixelAnimationConfig>) => {
     onConfigChange({ ...config, ...updates });
   };
@@ -199,6 +210,31 @@ function ConfigPanel({ config, onConfigChange, onSave, onLoad, onNew }: ConfigPa
           </div>
         </div>
 
+        <div>
+          <label className="block text-sm font-medium mb-1">Saved Configurations:</label>
+          <div className="flex gap-2 mb-2">
+            <select
+              onChange={(e) => e.target.value && onLoadFromFile(e.target.value)}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+              value=""
+            >
+              <option value="">Select saved config...</option>
+              {availableConfigs.map(config => (
+                <option key={config.id} value={config.id}>
+                  {config.name} {config.needsMigration && '⚠️'} ({config.pixelCount} pixels)
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={onRefreshConfigs}
+              className="px-3 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+              title="Refresh list"
+            >
+              ↻
+            </button>
+          </div>
+        </div>
+
         <div className="flex flex-col gap-2">
           <button
             onClick={onNew}
@@ -211,11 +247,11 @@ function ConfigPanel({ config, onConfigChange, onSave, onLoad, onNew }: ConfigPa
             onClick={onSave}
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
           >
-            Save Configuration
+            Save to ~/.config/canvas-video/
           </button>
           
           <label className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors cursor-pointer text-center">
-            Load Configuration
+            Import from File
             <input
               type="file"
               accept=".json"
@@ -235,6 +271,16 @@ export default function PixelEditor() {
   );
   const [selectedColor, setSelectedColor] = useState('#000000');
   const [isPreviewPlaying, setIsPreviewPlaying] = useState(false);
+  const [availableConfigs, setAvailableConfigs] = useState<Array<{
+    id: string;
+    name: string;
+    version: string;
+    created: string;
+    modified: string;
+    pixelCount: number;
+    needsMigration: boolean;
+  }>>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handlePixelChange = useCallback((x: number, y: number, color: string) => {
     setConfig(prevConfig => {
@@ -257,22 +303,27 @@ export default function PixelEditor() {
     });
   }, []);
 
-  const handleSave = useCallback(() => {
+  const refreshAvailableConfigs = useCallback(async () => {
     try {
-      const configJson = PixelConfigManager.saveConfig(config);
-      const blob = new Blob([configJson], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${config.id}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      const configs = await PixelConfigManager.listConfigFiles();
+      setAvailableConfigs(configs);
+    } catch (error) {
+      console.error('Error refreshing config list:', error);
+    }
+  }, []);
+
+  const handleSave = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const filename = await PixelConfigManager.saveConfigToFile(config);
+      await refreshAvailableConfigs();
+      alert(`Configuration saved as "${filename}"!`);
     } catch (error) {
       alert(`Error saving configuration: ${error}`);
+    } finally {
+      setIsLoading(false);
     }
-  }, [config]);
+  }, [config, refreshAvailableConfigs]);
 
   const handleLoad = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -291,6 +342,18 @@ export default function PixelEditor() {
     reader.readAsText(file);
   }, []);
 
+  const handleLoadFromFile = useCallback(async (filename: string) => {
+    setIsLoading(true);
+    try {
+      const loadedConfig = await PixelConfigManager.loadConfigFromFile(filename);
+      setConfig(loadedConfig);
+    } catch (error) {
+      alert(`Error loading configuration: ${error}`);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   const handleNew = useCallback(() => {
     setConfig(PixelConfigManager.createDefaultConfig(
       `pixel-config-${Date.now()}`,
@@ -298,10 +361,23 @@ export default function PixelEditor() {
     ));
   }, []);
 
+  // Load available configs on component mount
+  useEffect(() => {
+    refreshAvailableConfigs();
+  }, [refreshAvailableConfigs]);
+
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Pixel Animation Editor</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Pixel Animation Editor</h1>
+          {isLoading && (
+            <div className="flex items-center space-x-2 text-blue-600">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+              <span>Loading...</span>
+            </div>
+          )}
+        </div>
         
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
           {/* Main Grid Editor */}
@@ -328,7 +404,10 @@ export default function PixelEditor() {
               onConfigChange={setConfig}
               onSave={handleSave}
               onLoad={handleLoad}
+              onLoadFromFile={handleLoadFromFile}
               onNew={handleNew}
+              availableConfigs={availableConfigs}
+              onRefreshConfigs={refreshAvailableConfigs}
             />
 
             {/* Preview Panel */}

@@ -24,6 +24,98 @@ export class PixelConfigManager {
     }
   }
 
+  static async loadConfigFromFile(filename: string): Promise<PixelAnimationConfig> {
+    try {
+      const response = await fetch(`/api/pixel-configs?filename=${encodeURIComponent(filename)}`);
+      if (!response.ok) {
+        throw new Error(`Failed to load config: ${response.statusText}`);
+      }
+      const config = await response.json() as PixelAnimationConfig;
+      const validation = this.validateConfig(config);
+      
+      if (!validation.isValid) {
+        throw new Error(`Invalid config: ${validation.errors.join(', ')}`);
+      }
+
+      this.configs.set(config.id, config);
+      return config;
+    } catch (error) {
+      console.error('Error loading pixel config from file:', error);
+      throw error;
+    }
+  }
+
+  static async saveConfigToFile(config: PixelAnimationConfig): Promise<string> {
+    try {
+      const validation = this.validateConfig(config);
+      
+      if (!validation.isValid) {
+        throw new Error(`Invalid config: ${validation.errors.join(', ')}`);
+      }
+
+      config.metadata.modified = new Date().toISOString();
+      
+      const response = await fetch('/api/pixel-configs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'save', config }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to save config');
+      }
+
+      const result = await response.json();
+      this.configs.set(config.id, config);
+      
+      return result.filename;
+    } catch (error) {
+      console.error('Error saving pixel config to file:', error);
+      throw error;
+    }
+  }
+
+  static async listConfigFiles(): Promise<Array<{
+    id: string;
+    name: string;
+    version: string;
+    created: string;
+    modified: string;
+    pixelCount: number;
+    needsMigration: boolean;
+  }>> {
+    try {
+      const response = await fetch('/api/pixel-configs');
+      if (!response.ok) {
+        throw new Error(`Failed to list configs: ${response.statusText}`);
+      }
+      const data = await response.json();
+      return data.configs || [];
+    } catch (error) {
+      console.error('Error listing config files:', error);
+      return [];
+    }
+  }
+
+  static async deleteConfigFile(filename: string): Promise<void> {
+    try {
+      const response = await fetch(`/api/pixel-configs?filename=${encodeURIComponent(filename)}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete config');
+      }
+    } catch (error) {
+      console.error('Error deleting config file:', error);
+      throw error;
+    }
+  }
+
   static loadConfigSync(config: PixelAnimationConfig): PixelAnimationConfig {
     const validation = this.validateConfig(config);
     
