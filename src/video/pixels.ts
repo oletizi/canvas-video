@@ -47,6 +47,19 @@ export class Pixels implements SongAnimation {
         }
     }
 
+    clear() {
+        // Remove all pixel rectangles from any canvas they're on
+        for (const row of this.rows) {
+            for (const cell of row) {
+                if (cell.canvas) {
+                    cell.canvas.remove(cell);
+                }
+            }
+            // Clear the row array
+            row.length = 0;
+        }
+    }
+
     draw(c: Canvas) {
         if (c && c.width && c.height) {
             let resize = false

@@ -18,17 +18,19 @@ export class ConfigurablePixelAnimation extends PixelAnimationBase {
 
   async loadConfiguration(): Promise<void> {
     try {
-      console.log(`Loading pixel configuration: ${this.configId}`);
+      console.log(`ConfigurablePixelAnimation: Loading configuration: ${this.configId}`);
       const loadedConfig = await PixelConfigManager.loadConfigFromFile(this.configId);
+      
+      console.log(`ConfigurablePixelAnimation: Configuration loaded, updating from ${this.config.canvas.pixelCols}x${this.config.canvas.pixelRows} to ${loadedConfig.canvas.pixelCols}x${loadedConfig.canvas.pixelRows}`);
       
       // Update the configuration
       super.updateConfig(loadedConfig);
       this.isConfigLoaded = true;
       this.loadError = null;
       
-      console.log(`Successfully loaded configuration: ${loadedConfig.name}`);
+      console.log(`ConfigurablePixelAnimation: Successfully loaded configuration: ${loadedConfig.name}`);
     } catch (error) {
-      console.error(`Failed to load pixel configuration ${this.configId}:`, error);
+      console.error(`ConfigurablePixelAnimation: Failed to load configuration ${this.configId}:`, error);
       this.loadError = error instanceof Error ? error.message : 'Unknown error';
       this.isConfigLoaded = false;
     }
@@ -87,9 +89,20 @@ export class ConfigurablePixelAnimation extends PixelAnimationBase {
   }
 
   private setupAfterConfigLoad(c: Canvas): void {
-    // Clear the canvas and setup with loaded config
-    c.clear();
-    super.setup(c);
+    // Update the pixels grid with the new configuration without clearing the canvas
+    // The config was already updated in loadConfiguration(), so we just need to
+    // recreate our pixels grid and apply the initial frame
+    
+    console.log(`Configuration loading - Canvas: ${c.width}x${c.height}, Config: ${this.config.canvas.pixelCols}x${this.config.canvas.pixelRows}`);
+    
+    // Clear and recreate our pixels grid with the new configuration
+    this.pixels.clear();
+    this.pixels.setup(c);
+    
+    // Apply the initial frame from the loaded configuration
+    this.applyInitialFrame();
+    
+    console.log(`Configuration loaded and applied: ${this.config.name} (${this.config.canvas.pixelCols}x${this.config.canvas.pixelRows})`);
   }
 
   protected setupAdditionalElements(c: Canvas): void {
