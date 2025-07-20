@@ -1,45 +1,28 @@
-import type {SongAnimation} from "@/video/song-animation";
-import {Canvas, Circle, Rect} from "fabric"
-import {Pixels} from "@/video/pixels";
+import {Canvas, Circle} from "fabric"
 import type {Song} from "@/song/song";
-import type {VuMeter} from "@/ts/audio/vu-meter";
 import {scale} from "@/lib/lib-core";
-import faceConfig from "@/config/face-config.json";
+import { PixelAnimationBase } from "@/video/pixel-animation-base";
+import { PixelConfigManager } from "@/video/pixel-config-manager";
+import type { PixelAnimationConfig } from "@/video/pixel-config-types";
+import faceConfigData from "@/config/face-config.json";
 
-export class Face implements SongAnimation {
-    private readonly pixels: Pixels;
+export class Face extends PixelAnimationBase {
     private readonly ball: Circle;
-    private readonly vu: VuMeter;
     private counter = 0
     private direction = 1
 
-    constructor(song: Song, fps: number) {
-        this.vu = song.newVuMeter(0.1, 0.3, fps)
-        this.pixels = new Pixels(16, 16)
+    constructor(song: Song, fps: number, config?: PixelAnimationConfig) {
+        const faceConfig = config || PixelConfigManager.loadConfigSync(faceConfigData as PixelAnimationConfig);
+        super(song, fps, faceConfig);
         this.ball = new Circle({radius: 5, top: 10, left: 10, fill: 'red'})
     }
 
-    setup(c: Canvas): void {
-        // background
-        c.add(new Rect({
-            width: c.width,
-            height: c.height,
-            fill: 'black'
-        }))
-
-        this.pixels.setup(c)
-        faceConfig.initialPixels.forEach(pixel => {
-            this.pixels.set(pixel.x, pixel.y, pixel.color)
-        })
-
+    protected setupAdditionalElements(c: Canvas): void {
         c.add(this.ball)
     }
 
-    draw(c: Canvas): void {
+    protected updateAnimation(c: Canvas): void {
         const level = this.vu.getValue()
-        const mouth = scale(level, 0, 1, 0, 128, .5) + 128
-        this.pixels.set(6, 8, `rgb(${mouth}, ${mouth}, ${mouth})`)
-        this.pixels.draw(c)
         // this.ball.left = this.counter
         this.ball.set({left: level * 500})
         if (this.counter >= 255) {
