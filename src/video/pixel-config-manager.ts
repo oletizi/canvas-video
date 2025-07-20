@@ -115,10 +115,10 @@ export class PixelConfigManager {
         modified: new Date().toISOString()
       },
       canvas: {
-        width: 800,
-        height: 600,
-        pixelCols: 16,
-        pixelRows: 16
+        width: 1920,
+        height: 1080,
+        pixelCols: 32,
+        pixelRows: 18
       },
       initialFrame: {
         name: 'Default Frame',

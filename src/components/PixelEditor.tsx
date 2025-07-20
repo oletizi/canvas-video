@@ -21,20 +21,29 @@ function PixelGrid({ config, onPixelChange, selectedColor }: PixelGridProps) {
     onPixelChange(x, y, selectedColor);
   };
 
+  // Calculate pixel aspect ratio based on canvas aspect ratio
+  const canvasAspectRatio = config.canvas.width / config.canvas.height;
+  const gridAspectRatio = pixelCols / pixelRows;
+  const pixelAspectRatio = canvasAspectRatio / gridAspectRatio;
+
   return (
     <div 
-      className="grid gap-1 p-4 bg-white rounded-lg shadow-md"
+      className="grid gap-1 p-4 bg-white rounded-lg shadow-md overflow-auto"
       style={{
         gridTemplateColumns: `repeat(${pixelCols}, minmax(0, 1fr))`,
-        maxWidth: '600px'
+        maxWidth: '800px',
+        aspectRatio: `${config.canvas.width}/${config.canvas.height}`
       }}
     >
       {Array.from({ length: pixelRows }, (_, y) =>
         Array.from({ length: pixelCols }, (_, x) => (
           <button
             key={`${x}-${y}`}
-            className="w-8 h-8 border border-gray-300 rounded-sm hover:border-gray-500 transition-colors"
-            style={{ backgroundColor: getPixelColor(x, y) }}
+            className="border border-gray-300 rounded-sm hover:border-gray-500 transition-colors"
+            style={{ 
+              backgroundColor: getPixelColor(x, y),
+              aspectRatio: pixelAspectRatio.toString()
+            }}
             onClick={() => handlePixelClick(x, y)}
             title={`Pixel (${x}, ${y})`}
           />
@@ -146,15 +155,35 @@ function ConfigPanel({ config, onConfigChange, onSave, onLoad, onNew }: ConfigPa
           />
         </div>
 
+        <div>
+          <label className="block text-sm font-medium mb-1">Grid Presets:</label>
+          <select
+            onChange={(e) => {
+              const [cols, rows] = e.target.value.split('x').map(Number);
+              if (cols && rows) {
+                updateCanvas({ pixelCols: cols, pixelRows: rows });
+              }
+            }}
+            className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 mb-4"
+          >
+            <option value="">Select a preset...</option>
+            <option value="32x18">32x18 (16:9 Standard)</option>
+            <option value="64x36">64x36 (16:9 High)</option>
+            <option value="16x16">16x16 (Square)</option>
+            <option value="24x24">24x24 (Square)</option>
+            <option value="48x27">48x27 (16:9 Ultra)</option>
+          </select>
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Grid Columns:</label>
             <input
               type="number"
               min="1"
-              max="32"
+              max="64"
               value={config.canvas.pixelCols}
-              onChange={(e) => updateCanvas({ pixelCols: parseInt(e.target.value) || 16 })}
+              onChange={(e) => updateCanvas({ pixelCols: parseInt(e.target.value) || 32 })}
               className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -163,9 +192,9 @@ function ConfigPanel({ config, onConfigChange, onSave, onLoad, onNew }: ConfigPa
             <input
               type="number"
               min="1"
-              max="32"
+              max="64"
               value={config.canvas.pixelRows}
-              onChange={(e) => updateCanvas({ pixelRows: parseInt(e.target.value) || 16 })}
+              onChange={(e) => updateCanvas({ pixelRows: parseInt(e.target.value) || 18 })}
               className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
             />
           </div>

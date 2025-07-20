@@ -19,8 +19,25 @@ export default function PixelPreview({ config, isPlaying }: PixelPreviewProps) {
     if (!ctx) return;
 
     const { pixelCols, pixelRows } = config.canvas;
-    const cellWidth = canvas.width / pixelCols;
-    const cellHeight = canvas.height / pixelRows;
+    
+    // Calculate pixel dimensions to match the actual canvas aspect ratio
+    const canvasAspectRatio = config.canvas.width / config.canvas.height;
+    const displayAspectRatio = canvas.width / canvas.height;
+    
+    let cellWidth = canvas.width / pixelCols;
+    let cellHeight = canvas.height / pixelRows;
+    
+    // Adjust cell dimensions to maintain pixel aspect ratio
+    const targetPixelAspectRatio = canvasAspectRatio / (pixelCols / pixelRows);
+    const currentPixelAspectRatio = cellWidth / cellHeight;
+    
+    if (Math.abs(targetPixelAspectRatio - currentPixelAspectRatio) > 0.01) {
+      if (targetPixelAspectRatio > currentPixelAspectRatio) {
+        cellWidth = cellHeight * targetPixelAspectRatio;
+      } else {
+        cellHeight = cellWidth / targetPixelAspectRatio;
+      }
+    }
 
     // Clear canvas
     ctx.fillStyle = '#000000';
@@ -96,11 +113,15 @@ export default function PixelPreview({ config, isPlaying }: PixelPreviewProps) {
     };
   }, [isPlaying]);
 
+  const canvasAspectRatio = config.canvas.width / config.canvas.height;
+  const previewWidth = 320;
+  const previewHeight = Math.round(previewWidth / canvasAspectRatio);
+
   return (
     <canvas
       ref={canvasRef}
-      width={300}
-      height={300}
+      width={previewWidth}
+      height={previewHeight}
       className="border border-gray-300 rounded bg-black"
       style={{ imageRendering: 'pixelated' }}
     />
