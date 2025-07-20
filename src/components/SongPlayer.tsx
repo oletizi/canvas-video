@@ -17,6 +17,7 @@ import type { LyricsDisplayOptions } from '@/lib/speech-types';
 import TranscriptionSettings from '@/components/transcription-settings';
 import TranscriptionDisplay from '@/components/transcription-display';
 import LyricsControls from '@/components/lyrics-controls';
+import PixelConfigSelector from '@/components/pixel-config-selector';
 
 interface SongPlayerProps {}
 
@@ -71,6 +72,7 @@ export default function SongPlayer({}: SongPlayerProps) {
     const frameInterval = 1000 / framerate;
     const [transcriptionApiCallCount, setTranscriptionApiCallCount] = useState(0);
     const [transcriptionEnabled, setTranscriptionEnabled] = useState(false);
+    const [selectedPixelConfigId, setSelectedPixelConfigId] = useState<string | null>(null);
 
     // Persistent objects as refs
     const songRef = useRef(newSong());
@@ -154,7 +156,7 @@ export default function SongPlayer({}: SongPlayerProps) {
             const lyricsObjects = fabricCanvasRef.current ? 
                 fabricCanvasRef.current.getObjects().filter((obj: any) => obj.lyricsObject === true) : [];
             
-            animationRef.current = newAnimation(animationType, songRef.current, framerate, currentTheme);
+            animationRef.current = newAnimation(animationType, songRef.current, framerate, currentTheme, selectedPixelConfigId || undefined);
             console.log('Animation created:', animationType, 'animation object:', animationRef.current);
             animationRef.current?.setup(fabricCanvasRef.current);
             console.log('Animation setup complete. Canvas objects:', fabricCanvasRef.current.getObjects().length);
@@ -224,7 +226,7 @@ export default function SongPlayer({}: SongPlayerProps) {
                 clearInterval(interval);
             };
         }
-    }, [animationType, currentTheme]);
+    }, [animationType, currentTheme, selectedPixelConfigId]);
 
     // Separate effect to handle canvas resizing when dimensions change
     useEffect(() => {
@@ -624,6 +626,10 @@ export default function SongPlayer({}: SongPlayerProps) {
                             } else if (v === AnimationType.Wanderer) {
                                 setCurrentTheme(WandererTheme.BlackHole);
                             }
+                            // Reset pixel config when switching away from PixelConfig type
+                            if (v !== AnimationType.PixelConfig) {
+                                setSelectedPixelConfigId(null);
+                            }
                         }} />
                         <div className="flex items-center gap-2">
                             <span className="text-sm font-medium">VU Level:</span>
@@ -663,6 +669,15 @@ export default function SongPlayer({}: SongPlayerProps) {
                                 <div className="absolute inset-0 opacity-0 hover:opacity-20 bg-blue-300 rounded-full transition-opacity duration-150" />
                             </div>
                         </div>
+                    )}
+                    
+                    {/* Pixel Config selector - show for PixelConfig */}
+                    {animationType === AnimationType.PixelConfig && (
+                        <PixelConfigSelector
+                            selectedConfigId={selectedPixelConfigId}
+                            onConfigSelect={setSelectedPixelConfigId}
+                            disabled={isRecording}
+                        />
                     )}
                     
                     {/* Theme selector - show for PulsingEye and Wanderer */}

@@ -6,6 +6,7 @@ import type {VuMeter} from "@/ts/audio/vu-meter";
 import {newWave} from "@/video/wave";
 import type {WaveOptions} from "@/video/wave";
 import {Face} from "@/video/face";
+import {ConfigurablePixelAnimation} from "@/video/configurable-pixel-animation";
 import {Canvas} from "fabric";
 
 export enum AnimationType {
@@ -14,6 +15,7 @@ export enum AnimationType {
     Wanderer,
     Waves,
     Face,
+    PixelConfig,
 }
 
 export enum PulsingEyeTheme {
@@ -41,8 +43,8 @@ export function newDefaultAnimation(song: Song, fps: number) {
     return newAnimation(AnimationType.DEFAULT, song, fps)
 }
 
-export function newAnimation(type: AnimationType, song: Song, fps: number, theme?: PulsingEyeTheme | WandererTheme) {
-    console.log(`New animation! type:`, type, `theme:`, theme)
+export function newAnimation(type: AnimationType, song: Song, fps: number, theme?: PulsingEyeTheme | WandererTheme, configId?: string) {
+    console.log(`New animation! type:`, type, `theme:`, theme, `configId:`, configId)
     switch (type) {
         case AnimationType.Wanderer:
             return new Wanderer(song, fps, theme as WandererTheme)
@@ -50,6 +52,12 @@ export function newAnimation(type: AnimationType, song: Song, fps: number, theme
             return new PulsingEye(song, fps, theme as PulsingEyeTheme || PulsingEyeTheme.BlackHole)
         case AnimationType.Waves:
             return new Waves(song, fps)
+        case AnimationType.PixelConfig:
+            if (!configId) {
+                console.warn('PixelConfig animation type requires configId, falling back to Face');
+                return new Face(song, fps);
+            }
+            return new ConfigurablePixelAnimation(song, fps, configId)
         case AnimationType.Face:
         case AnimationType.DEFAULT:
         default:
