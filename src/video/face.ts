@@ -4,6 +4,7 @@ import {Pixels} from "@/video/pixels";
 import type {Song} from "@/song/song";
 import type {VuMeter} from "@/ts/audio/vu-meter";
 import {scale} from "@/lib/lib-core";
+import faceConfig from "@/config/face-config.json";
 
 export class Face implements SongAnimation {
     private readonly pixels: Pixels;
@@ -27,11 +28,9 @@ export class Face implements SongAnimation {
         }))
 
         this.pixels.setup(c)
-        this.pixels.set(4, 4, 'white')
-        this.pixels.set(7, 3, '#ff3f00')
-        this.pixels.set(7, 4, 'white')
-        this.pixels.set(5, 7, 'white')
-        this.pixels.set(6, 7, 'white')
+        faceConfig.initialPixels.forEach(pixel => {
+            this.pixels.set(pixel.x, pixel.y, pixel.color)
+        })
 
         c.add(this.ball)
     }
