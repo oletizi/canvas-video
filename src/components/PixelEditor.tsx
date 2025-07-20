@@ -28,10 +28,9 @@ function PixelGrid({ config, onPixelChange, selectedColor }: PixelGridProps) {
 
   return (
     <div 
-      className="grid gap-1 p-4 bg-white rounded-lg shadow-md overflow-auto"
+      className="grid gap-0.5 p-3 bg-white rounded-lg shadow-md w-full"
       style={{
         gridTemplateColumns: `repeat(${pixelCols}, minmax(0, 1fr))`,
-        maxWidth: '800px',
         aspectRatio: `${config.canvas.width}/${config.canvas.height}`
       }}
     >
@@ -39,7 +38,7 @@ function PixelGrid({ config, onPixelChange, selectedColor }: PixelGridProps) {
         Array.from({ length: pixelCols }, (_, x) => (
           <button
             key={`${x}-${y}`}
-            className="border border-gray-300 rounded-sm hover:border-gray-500 transition-colors"
+            className="border border-gray-300 hover:border-gray-500 transition-colors w-full"
             style={{ 
               backgroundColor: getPixelColor(x, y),
               aspectRatio: pixelAspectRatio.toString()
@@ -304,10 +303,10 @@ export default function PixelEditor() {
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Pixel Animation Editor</h1>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
           {/* Main Grid Editor */}
-          <div className="lg:col-span-2">
-            <div className="bg-white p-6 rounded-lg shadow-md">
+          <div className="xl:col-span-3">
+            <div className="bg-white p-4 rounded-lg shadow-md">
               <h2 className="text-xl font-semibold mb-4">Pixel Grid ({config.canvas.pixelCols}x{config.canvas.pixelRows})</h2>
               <PixelGrid
                 config={config}
