@@ -9,14 +9,6 @@ import { VideoFormat, getPresetByFormat } from '@/components/video-format-preset
 import PlatformRecorder from '@/components/platform-recorder';
 import { TransportView } from '@/ts/components/transport';
 import { Canvas } from 'fabric';
-import { SpeechToText } from '@/lib/speech-to-text';
-import { TranscriptionServiceManager } from '@/lib/transcription-services';
-import type { TranscriptionResult } from '@/lib/speech-types';
-import { LyricsDisplay } from '@/components/lyrics-display';
-import type { LyricsDisplayOptions } from '@/lib/speech-types';
-import TranscriptionSettings from '@/components/transcription-settings';
-import TranscriptionDisplay from '@/components/transcription-display';
-import LyricsControls from '@/components/lyrics-controls';
 import PixelConfigSelector from '@/components/pixel-config-selector';
 
 interface SongPlayerProps {}
@@ -54,24 +46,8 @@ export default function SongPlayer({}: SongPlayerProps) {
     const [currentVuLevel, setCurrentVuLevel] = useState(0);
     const [transportPosition, setTransportPosition] = useState(0); // Current position in milliseconds
     const [audioDuration, setAudioDuration] = useState(0); // Total audio duration in milliseconds
-    const [isTranscribing, setIsTranscribing] = useState(false);
-    const [currentTranscription, setCurrentTranscription] = useState<TranscriptionResult | null>(null);
-    const [lyricsOptions, setLyricsOptions] = useState<LyricsDisplayOptions>({
-        fontSize: 24,
-        fontFamily: 'Arial, sans-serif',
-        color: '#b8860b',
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        position: 'bottom',
-        alignment: 'center',
-        maxWordsPerLine: 8,
-        lineSpacing: 8,
-        highlightCurrentWord: true,
-        currentWordColor: '#ffff00'
-    });
     const framerate = 60;
     const frameInterval = 1000 / framerate;
-    const [transcriptionApiCallCount, setTranscriptionApiCallCount] = useState(0);
-    const [transcriptionEnabled, setTranscriptionEnabled] = useState(false);
     const [selectedPixelConfigId, setSelectedPixelConfigId] = useState<string | null>(null);
 
     // Persistent objects as refs
@@ -81,9 +57,6 @@ export default function SongPlayer({}: SongPlayerProps) {
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const recordedChunksRef = useRef<Blob[]>([]);
     const currentAudioUrlRef = useRef<string | null>(null);
-    const speechToTextRef = useRef<SpeechToText | null>(null);
-    const transcriptionServiceManagerRef = useRef<TranscriptionServiceManager | null>(null);
-    const lyricsDisplayRef = useRef<LyricsDisplay | null>(null);
 
     // Canvas dimensions
     const [dimensions, setDimensions] = useState({ width: 1000, height: 450 });
@@ -131,43 +104,11 @@ export default function SongPlayer({}: SongPlayerProps) {
             fabricCanvasRef.current.backgroundColor = '#444444'; // Slightly lighter for debugging
             fabricCanvasRef.current.renderAll();
             
-            // Initialize speech-to-text
-            speechToTextRef.current = new SpeechToText();
-            
-            // Initialize transcription service manager
-            transcriptionServiceManagerRef.current = new TranscriptionServiceManager();
-            
-            // Initialize lyrics display
-            lyricsDisplayRef.current = new LyricsDisplay(lyricsOptions);
-            lyricsDisplayRef.current.setCanvas(fabricCanvasRef.current);
-            console.log('SongPlayer: Lyrics display initialized');
-            
-            // Set up transcription callback
-            if (speechToTextRef.current) {
-                speechToTextRef.current.onTranscription((result) => {
-                    setCurrentTranscription(result);
-                    if (lyricsDisplayRef.current) {
-                        lyricsDisplayRef.current.updateTranscription(result);
-                    }
-                });
-            }
-            
-            // Save lyrics objects before animation setup
-            const lyricsObjects = fabricCanvasRef.current ? 
-                fabricCanvasRef.current.getObjects().filter((obj: any) => obj.lyricsObject === true) : [];
             
             animationRef.current = newAnimation(animationType, songRef.current, framerate, currentTheme, selectedPixelConfigId || undefined);
             console.log('Animation created:', animationType, 'animation object:', animationRef.current);
             animationRef.current?.setup(fabricCanvasRef.current);
             console.log('Animation setup complete. Canvas objects:', fabricCanvasRef.current.getObjects().length);
-            
-            // Restore lyrics objects after animation setup
-            if (lyricsObjects.length > 0) {
-                lyricsObjects.forEach((obj: any) => {
-                    fabricCanvasRef.current.add(obj);
-                });
-                console.log('Restored', lyricsObjects.length, 'lyrics objects after animation setup');
-            }
             
             // Animation loop
             const transport = songRef.current.getTransport();
@@ -175,14 +116,6 @@ export default function SongPlayer({}: SongPlayerProps) {
                 if (animationRef.current && fabricCanvasRef.current) {
                     animationRef.current.draw(fabricCanvasRef.current);
                     transport.tick();
-                    
-                    // Update lyrics display with current time
-                    if (lyricsDisplayRef.current) {
-                        // Use transport ticks directly for more accurate timing
-                        const transportTicks = transport.getPosition();
-                        const currentTimeInSeconds = transportTicks / 60; // 60fps = 60 ticks per second
-                        lyricsDisplayRef.current.updateTime(currentTimeInSeconds);
-                    }
                     
                     fabricCanvasRef.current.renderAll();
                     
@@ -237,35 +170,13 @@ export default function SongPlayer({}: SongPlayerProps) {
                 height: dimensions.height
             });
             
-            // Update lyrics display canvas reference
-            if (lyricsDisplayRef.current) {
-                lyricsDisplayRef.current.setCanvas(fabricCanvasRef.current);
-                console.log('SongPlayer: Lyrics display canvas updated after resize');
-            }
-            
             // Re-setup the animation with the new canvas dimensions
             if (animationRef.current) {
-                // Save lyrics objects before clearing
-                const lyricsObjects = fabricCanvasRef.current.getObjects().filter((obj: any) => obj.lyricsObject === true);
-                
                 // Clear existing objects
                 fabricCanvasRef.current.clear();
                 // Re-setup the animation
                 animationRef.current.setup(fabricCanvasRef.current);
                 console.log('Canvas resized to:', dimensions.width, 'x', dimensions.height);
-                
-                // Restore lyrics objects after animation setup
-                if (lyricsObjects.length > 0) {
-                    lyricsObjects.forEach((obj: any) => {
-                        fabricCanvasRef.current.add(obj);
-                    });
-                    console.log('Restored', lyricsObjects.length, 'lyrics objects after resize');
-                }
-                
-                // Re-render lyrics if we have any
-                if (lyricsDisplayRef.current) {
-                    lyricsDisplayRef.current.updateTime(0); // Force a re-render
-                }
             }
         }
     }, [dimensions.width, dimensions.height]);
@@ -509,23 +420,6 @@ export default function SongPlayer({}: SongPlayerProps) {
             songRef.current.startAudioFromBuffer(audioContext, audioBuffer);
             songRef.current.getTransport().start();
 
-            // Transcribe the audio file only if transcription is enabled
-            if (transcriptionEnabled && transcriptionServiceManagerRef.current) {
-                setTranscriptionApiCallCount(count => count + 1);
-                console.log('SongPlayer: Starting audio file transcription...');
-                try {
-                    const transcriptionResult = await transcriptionServiceManagerRef.current.transcribe(audioBuffer);
-                    console.log('SongPlayer: Transcription result received:', transcriptionResult);
-                    setCurrentTranscription(transcriptionResult);
-                    if (lyricsDisplayRef.current) {
-                        lyricsDisplayRef.current.updateTranscription(transcriptionResult);
-                    }
-                    console.log('SongPlayer: Audio file transcription complete:', transcriptionResult.words.length, 'words');
-                } catch (error) {
-                    console.error('SongPlayer: Transcription failed:', error);
-                    alert('Transcription failed. Using sample lyrics instead.');
-                }
-            }
         } catch (error) {
             console.error('SongPlayer: Error processing audio file:', error);
         }
@@ -555,59 +449,6 @@ export default function SongPlayer({}: SongPlayerProps) {
         console.log(`Seeking to ${formatTime(newPosition)} (${(clickPercentage * 100).toFixed(1)}% of audio)`);
     };
 
-    const handleToggleTranscription = () => {
-        if (!speechToTextRef.current) return;
-
-        if (isTranscribing) {
-            speechToTextRef.current.stop();
-            setIsTranscribing(false);
-        } else {
-            // Start transcription when audio is playing
-            const transport = songRef.current.getTransport();
-            if (transport.isRunning()) {
-                const audioContext = songRef.current.getAudioContext();
-                if (audioContext) {
-                    speechToTextRef.current.start(audioContext);
-                    setIsTranscribing(true);
-                }
-            } else {
-                alert('Please start playing audio before starting transcription');
-            }
-        }
-    };
-
-    const handleLyricsOptionsChange = (options: Partial<LyricsDisplayOptions>) => {
-        const newOptions = { ...lyricsOptions, ...options };
-        setLyricsOptions(newOptions);
-        if (lyricsDisplayRef.current) {
-            lyricsDisplayRef.current.setOptions(newOptions);
-        }
-    };
-
-    const handleTestLyrics = () => {
-        console.log('SongPlayer: Test lyrics button clicked');
-        if (lyricsDisplayRef.current) {
-            lyricsDisplayRef.current.addTestWords();
-        } else {
-            console.log('SongPlayer: Lyrics display ref is null');
-        }
-    };
-
-    const handleTranscriptionServiceChange = (serviceName: string) => {
-        console.log('SongPlayer: Transcription service changed to:', serviceName);
-        // The service manager will handle the change internally
-    };
-
-    const handleToggleTranscriptionEnabled = () => {
-        setTranscriptionEnabled(!transcriptionEnabled);
-        // Clear transcription when disabling
-        if (transcriptionEnabled) {
-            setCurrentTranscription(null);
-            if (lyricsDisplayRef.current) {
-                lyricsDisplayRef.current.clear();
-            }
-        }
-    };
 
     return (
         <div>
@@ -717,53 +558,8 @@ export default function SongPlayer({}: SongPlayerProps) {
                                 disabled={isRecording}
                             />
                         </label>
-                        <button
-                            onClick={handleToggleTranscriptionEnabled}
-                            className={`px-4 py-2 rounded font-medium transition-colors ${
-                                transcriptionEnabled 
-                                    ? 'bg-blue-500 hover:bg-blue-600 text-white' 
-                                    : 'bg-gray-300 hover:bg-gray-400 text-gray-700'
-                            }`}
-                        >
-                            {transcriptionEnabled ? 'Transcription: ON' : 'Transcription: OFF'}
-                        </button>
-                        {transcriptionEnabled && (
-                            <span className="text-sm text-gray-600">
-                                API calls: {transcriptionApiCallCount}
-                            </span>
-                        )}
                     </div>
 
-                    {/* Transcription Controls - only show when enabled */}
-                    {transcriptionEnabled && (
-                        <>
-                            {/* Lyrics Controls */}
-                            <LyricsControls
-                                isTranscribing={isTranscribing}
-                                onToggleTranscription={handleToggleTranscription}
-                                onOptionsChange={handleLyricsOptionsChange}
-                                currentOptions={lyricsOptions}
-                                transcriptionSupported={speechToTextRef.current?.isSupported() || false}
-                                currentText={currentTranscription?.fullText || ''}
-                                onTestLyrics={handleTestLyrics}
-                            />
-
-                            {/* Transcription Display */}
-                            <TranscriptionDisplay
-                                transcription={currentTranscription}
-                                currentTime={transportPosition / 1000} // Convert milliseconds to seconds
-                                timeOffset={-0.5} // Delay transcription by 0.5 seconds to sync with audio
-                            />
-
-                            {/* Transcription Service Settings */}
-                            {transcriptionServiceManagerRef.current && (
-                                <TranscriptionSettings
-                                    serviceManager={transcriptionServiceManagerRef.current}
-                                    onServiceChange={handleTranscriptionServiceChange}
-                                />
-                            )}
-                        </>
-                    )}
                     
                     {/* Platform-specific recording and sharing */}
                     <PlatformRecorder 
